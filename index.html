@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d7377"/>
+  <meta name="description" content="SEVET – Clínica Veterinaria San Alberto. Cirugías, consultas, vacunas, farmacia y alimentos premium. Atención hasta la 1:00 AM, Lo Prado, Santiago."/>
+  <meta name="keywords" content="clínica veterinaria, Lo Prado, Santiago, SEVET, Dr. Alberto Sánchez, veterinario de urgencia"/>
+  <meta property="og:title" content="SEVET – Ecosistema Pet-Tech 360"/>
+  <meta property="og:description" content="La clínica veterinaria de vanguardia en Lo Prado. Atención hasta la 1:00 AM."/>
+  <meta property="og:type" content="website"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="assets/images/logo.png"/>
+  <title>SEVET – Ecosistema Pet-Tech 360 | Clínica Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ── CURSOR PERSONALIZADO ── -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follower" id="cursorFollower"></div>
+
+<!-- ── CANVAS DE PARTÍCULAS ── -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- ─────────────────────────────────────────
+     LOADER
+     ───────────────────────────────────────── -->
+<div id="loader">
+  <div class="loader-logo">SEVET</div>
+  <div class="loader-subtitle">Ecosistema Pet-Tech 360</div>
+  <div class="loader-track">
+    <div class="loader-bar" id="loaderBar">
+      <span class="loader-dog" id="loaderDog">🐕</span>
+    </div>
+    <span class="loader-finish">🏁</span>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     NAVBAR
+     ───────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <a href="#inicio" class="nav-logo">
+    <div class="nav-logo-icon">🐾</div>
+    <span class="nav-logo-text">SE<span>VET</span></span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#inicio">Inicio</a></li>
+    <li><a href="#especialidades">Servicios</a></li>
+    <li><a href="#ficha">Ficha Clínica</a></li>
+    <li><a href="#tienda">Tienda</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+    <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+  </ul>
+  <div class="nav-burger" id="navBurger" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ─────────────────────────────────────────
+     HERO SECTION
+     ───────────────────────────────────────── -->
+<section class="hero" id="inicio">
+  <div class="hero-slides">
+    <div class="hero-slide active" id="slide1"></div>
+    <div class="hero-slide" id="slide2"></div>
+  </div>
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Atención Activa • Lunes a Viernes
+    </div>
+    <h1 class="hero-title">
+      El futuro del<br/>
+      <span class="grad">cuidado veterinario</span><br/>
+      está aquí
+    </h1>
+    <p class="hero-sub">
+      Clínica Veterinaria San Alberto, dirigida por el <strong>Dr. Alberto Sánchez</strong>.
+      Cirugías, consultas, vacunas y más — en <strong>Av. San Pablo 6106, Lo Prado</strong>.
+    </p>
+    <div class="hero-cta-group">
+      <a href="tel:+56984196310" class="btn-primary" id="btn-urgente">
+        🚨 Agendar Cita Urgente (Hasta la 1:00 AM)
+      </a>
+      <a href="#especialidades" class="btn-secondary">
+        Ver Servicios →
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" data-count="15">0</span>
+        <span class="stat-label">Años de experiencia</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" data-count="8000">0</span>
+        <span class="stat-label">Mascotas atendidas</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" data-count="5">0</span>
+        <span class="stat-label">Especialidades</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <span>DESCUBRIR</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────
+     BARRA DE URGENCIA
+     ───────────────────────────────────────── -->
+<div class="urgency-bar">
+  <div class="urgency-marquee" id="marquee">
+    <span>🌙 Atención Lunes a Viernes hasta la 01:00 AM &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>📍 Av. San Pablo 6106, Lo Prado, Santiago &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>📞 +56 2 2773 1554 / +56 9 8419 6310 &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>🐾 Dr. Alberto Sánchez – Director Médico &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>🌙 Atención Lunes a Viernes hasta la 01:00 AM &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>📍 Av. San Pablo 6106, Lo Prado, Santiago &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>📞 +56 2 2773 1554 / +56 9 8419 6310 &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+    <span>🐾 Dr. Alberto Sánchez – Director Médico &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</span>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PANEL DE ESPECIALIDADES (BENTO GRID)
+     ───────────────────────────────────────── -->
+<section class="section-pad" id="especialidades">
+  <div class="section-header reveal">
+    <p class="section-tag">Ecosistema de Servicios</p>
+    <h2 class="section-title">Especialidades de<br/>Vanguardia Médica</h2>
+    <p class="section-sub">Tecnología clínica de nivel hospitalario para el bienestar integral de tu mascota</p>
+  </div>
+  <div class="bento-grid">
+    <!-- Cirugías – grande -->
+    <div class="bento-card span-6 row-2 featured reveal" style="--delay:0.1s">
+      <div class="card-img-bg" style="background-image:url('assets/images/hero-cat.png')"></div>
+      <div class="card-overlay">
+        <span class="card-icon">🔬</span>
+        <div>
+          <div class="card-tag">Especialidad Premium</div>
+          <div class="card-title">Cirugías de Alta Complejidad</div>
+          <div class="card-desc">Quirófano equipado con tecnología 2026. El Dr. Sánchez lidera intervenciones de precisión milimétrica.</div>
+        </div>
+      </div>
+      <div class="card-badge">Disponible</div>
+    </div>
+    <!-- Consultas -->
+    <div class="bento-card span-3 reveal" style="--delay:0.15s">
+      <div class="card-overlay">
+        <span class="card-icon">🩺</span>
+        <div>
+          <div class="card-tag">Core</div>
+          <div class="card-title">Consultas Médicas</div>
+          <div class="card-desc">Diagnóstico integral con historial digital.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Vacunas -->
+    <div class="bento-card span-3 reveal" style="--delay:0.2s">
+      <div class="card-overlay">
+        <span class="card-icon">💉</span>
+        <div>
+          <div class="card-tag">Preventivo</div>
+          <div class="card-title">Plan de Vacunas</div>
+          <div class="card-desc">Esquema personalizado y recordatorios digitales.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Farmacia -->
+    <div class="bento-card span-4 reveal" style="--delay:0.25s">
+      <div class="card-overlay">
+        <span class="card-icon">💊</span>
+        <div>
+          <div class="card-tag">In-House</div>
+          <div class="card-title">Farmacia Especializada</div>
+          <div class="card-desc">Medicamentos veterinarios de línea completa, disponibles en el acto.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Alimentos Premium -->
+    <div class="bento-card span-8 reveal" style="--delay:0.3s">
+      <div class="card-img-bg" style="background-image:url('assets/images/premium-food.png')"></div>
+      <div class="card-overlay">
+        <span class="card-icon">🥩</span>
+        <div>
+          <div class="card-tag">Nutrición de Élite</div>
+          <div class="card-title">Venta de Alimentos Premium</div>
+          <div class="card-desc">Línea gourmet curada por nuestros veterinarios. Nutrición que se ve en el pelaje, la energía y la salud.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────
+     FICHA CLÍNICA INTELIGENTE
+     ───────────────────────────────────────── -->
+<section class="section-pad dashboard-section" id="ficha">
+  <div class="dashboard-wrapper">
+    <div class="dashboard-info reveal">
+      <div class="section-header">
+        <p class="section-tag">Tecnología Clínica</p>
+        <h2 class="section-title">Ficha Clínica<br/>Inteligente</h2>
+        <p class="section-sub" style="text-align:left;margin-left:0">Accede al historial de salud de tu mascota en tiempo real. Dashboard médico ultra-limpio diseñado para dar tranquilidad.</p>
+      </div>
+      <ul class="dashboard-features">
+        <li><span class="feature-check">✓</span> Historial de vacunas y fechas próximas</li>
+        <li><span class="feature-check">✓</span> Récord de consultas y diagnósticos</li>
+        <li><span class="feature-check">✓</span> Alertas preventivas automáticas</li>
+        <li><span class="feature-check">✓</span> Acceso desde cualquier dispositivo</li>
+        <li><span class="feature-check">✓</span> Compartir con otros veterinarios</li>
+      </ul>
+    </div>
+    <div class="dashboard-ui reveal">
+      <div class="dash-header">
+        <span class="dash-title">🐾 SEVET Dashboard Clínico</span>
+        <span class="dash-status"><span class="dot"></span> En línea</span>
+      </div>
+      <div class="dash-pet-info">
+        <div class="pet-avatar">🐕</div>
+        <div>
+          <div class="pet-name">Max · Golden Retriever</div>
+          <div class="pet-breed">3 años, 28 kg &nbsp;·&nbsp; Propietario: Carlos M.</div>
+        </div>
+      </div>
+      <div class="dash-section-label">Registro de Vacunas</div>
+      <div class="vaccine-list">
+        <div class="vaccine-item">
+          <div><div class="vaccine-name">Polivalente 5 en 1</div><div class="vaccine-date">Mar 2025</div></div>
+          <span class="vaccine-status vs-ok">Al día ✓</span>
+        </div>
+        <div class="vaccine-item">
+          <div><div class="vaccine-name">Rabia</div><div class="vaccine-date">Ene 2025</div></div>
+          <span class="vaccine-status vs-ok">Al día ✓</span>
+        </div>
+        <div class="vaccine-item">
+          <div><div class="vaccine-name">Bordetella</div><div class="vaccine-date">Próxima: Abr 2026</div></div>
+          <span class="vaccine-status vs-due">Próximamente</span>
+        </div>
+        <div class="vaccine-item">
+          <div><div class="vaccine-name">Leptospira</div><div class="vaccine-date">No registrada</div></div>
+          <span class="vaccine-status vs-pending">Pendiente</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem">
+        <span style="font-size:0.8rem;color:rgba(255,255,255,0.45)">Cobertura vacunal</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--teal-400)">75%</span>
+      </div>
+      <div class="dash-progress-bar"><div class="dash-progress-fill"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────
+     TIENDA PREMIUM + CARRUSEL
+     ───────────────────────────────────────── -->
+<section class="section-pad shop-section" id="tienda">
+  <div class="section-header reveal">
+    <p class="section-tag">Tienda Premium</p>
+    <h2 class="section-title">Nutrición de Élite<br/>para tu Compañero</h2>
+    <p class="section-sub">Alimentos seleccionados y aprobados por nuestros veterinarios. Curación editorial, calidad hospitalaria.</p>
+  </div>
+  <div class="carousel-wrapper reveal">
+    <div class="carousel-track" id="carouselTrack">
+      <div class="product-card">
+        <img class="product-img" src="assets/images/premium-food.png" alt="Alimento premium para perros"/>
+        <div class="product-info">
+          <div class="product-tag">🐕 Canino · Adulto</div>
+          <div class="product-name">Royal Veterinary Adult Pro</div>
+          <div class="product-desc">Fórmula balanceada de alta digestibilidad. Omega-3, arándanos y proteína de salmón.</div>
+          <div class="product-price">$28.990 <small>/ 15 kg</small></div>
+          <button class="product-btn">Consultar Disponibilidad →</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <img class="product-img" src="assets/images/premium-food.png" alt="Alimento premium para gatos"/>
+        <div class="product-info">
+          <div class="product-tag">🐈 Felino · Indoor</div>
+          <div class="product-name">NutriVet Feline Elite</div>
+          <div class="product-desc">Control de peso y pelaje brillante. Taurina natural, extracto de manzanilla.</div>
+          <div class="product-price">$19.490 <small>/ 7 kg</small></div>
+          <button class="product-btn">Consultar Disponibilidad →</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <img class="product-img" src="assets/images/premium-food.png" alt="Suplementos veterinarios"/>
+        <div class="product-info">
+          <div class="product-tag">💊 Suplemento</div>
+          <div class="product-name">VetComplex Articular Pro</div>
+          <div class="product-desc">Glucosamina + Condroitina + MSM. Para articulaciones sanas y movilidad óptima.</div>
+          <div class="product-price">$14.990 <small>/ 60 cápsulas</small></div>
+          <button class="product-btn">Consultar Disponibilidad →</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <img class="product-img" src="assets/images/premium-food.png" alt="Snacks premium naturales"/>
+        <div class="product-info">
+          <div class="product-tag">🥩 Snack · Natural</div>
+          <div class="product-name">Wild Bites Grain Free</div>
+          <div class="product-desc">Treats de venado y arándano silvestres. 100% natural, sin granos, sin aditivos.</div>
+          <div class="product-price">$5.990 <small>/ 150 gr</small></div>
+          <button class="product-btn">Consultar Disponibilidad →</button>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-nav">
+      <button class="carousel-btn" onclick="carouselPrev()">←</button>
+      <button class="carousel-btn" onclick="carouselNext()">→</button>
+    </div>
+  </div>
+
+  <!-- ANTES / DESPUÉS -->
+  <div style="margin-top:5rem">
+    <div class="section-header reveal">
+      <p class="section-tag">Impacto Real</p>
+      <h2 class="section-title">La Diferencia que<br/>hace la Nutrición</h2>
+    </div>
+    <div class="comparison-wrapper reveal">
+      <div class="comparison-container" id="comparisonContainer">
+        <div class="comparison-before"></div>
+        <div class="comparison-after" id="comparisonAfter"></div>
+        <div class="comparison-divider" id="comparisonDivider"></div>
+        <div class="comparison-handle" id="comparisonHandle">↔</div>
+        <div class="comparison-label before">ANTES</div>
+        <div class="comparison-label after">DESPUÉS</div>
+      </div>
+      <p style="text-align:center;margin-top:1rem;color:rgba(255,255,255,0.4);font-size:0.85rem">← Desliza para ver la transformación →</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────
+     FOOTER
+     ───────────────────────────────────────── -->
+<footer class="footer" id="contacto">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:1rem">
+        <div class="nav-logo-icon">🐾</div>
+        <span class="nav-logo-text">SE<span>VET</span></span>
+      </div>
+      <p class="footer-desc">
+        Clínica Veterinaria San Alberto, dirigida por el Dr. Alberto Sánchez.
+        Atención ininterrumpida de lunes a viernes hasta la 01:00 AM.
+        Salud, tecnología y amor por las mascotas.
+      </p>
+      <div class="social-links">
+        <a href="https://www.facebook.com" target="_blank" rel="noopener" class="social-btn" title="Facebook SEVET">📘</a>
+        <a href="https://wa.me/56984196310" target="_blank" rel="noopener" class="social-btn" title="WhatsApp">💬</a>
+        <a href="tel:+56227731554" class="social-btn" title="Teléfono">📞</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-title">Servicios</div>
+      <ul class="footer-links">
+        <li><a href="#especialidades">Cirugías</a></li>
+        <li><a href="#especialidades">Consultas Médicas</a></li>
+        <li><a href="#especialidades">Plan de Vacunas</a></li>
+        <li><a href="#especialidades">Farmacia</a></li>
+        <li><a href="#tienda">Alimentos Premium</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-title">Clínica</div>
+      <ul class="footer-links">
+        <li><a href="#ficha">Ficha Clínica</a></li>
+        <li><a href="#inicio">Dr. Alberto Sánchez</a></li>
+        <li><a href="https://www.facebook.com" target="_blank">Comunidad Facebook</a></li>
+        <li><a href="tel:+56984196310">Agendar Cita</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-title">Contacto</div>
+      <div class="footer-contact-item">
+        <span class="contact-icon">📍</span>
+        <span class="contact-text"><strong>Dirección</strong>Av. San Pablo 6106, Lo Prado, Santiago</span>
+      </div>
+      <div class="footer-contact-item">
+        <span class="contact-icon">📞</span>
+        <span class="contact-text"><strong>Teléfonos</strong>+56 2 2773 1554<br/>+56 9 8419 6310</span>
+      </div>
+      <div class="footer-contact-item">
+        <span class="contact-icon">🌙</span>
+        <span class="contact-text"><strong>Horario</strong>Lunes a Viernes hasta 01:00 AM</span>
+      </div>
+      <div class="map-mini">
+        <iframe
+          src="https://maps.google.com/maps?q=Av.+San+Pablo+6106,+Lo+Prado,+Santiago&output=embed&t=&z=15"
+          allow="fullscreen"
+          loading="lazy"
+          title="Ubicación SEVET Lo Prado">
+        </iframe>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2026 Clínica Veterinaria San Alberto (SEVET). Todos los derechos reservados.</p>
+    <div class="footer-legal">
+      <a href="#">Privacidad</a>
+      <a href="#">Términos</a>
+      <a href="#">Accesibilidad</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ─────────────────────────────────────────
+     WIDGET IA FLOTANTE
+     ───────────────────────────────────────── -->
+<div class="ai-widget">
+  <div class="ai-chat" id="aiChat">
+    <div class="ai-chat-header">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div class="ai-name">SEVET IA Assistant</div>
+        <div class="ai-status">● Disponible ahora</div>
+      </div>
+    </div>
+    <div class="ai-messages" id="aiMessages">
+      <div class="ai-msg bot">¡Hola! 👋 Soy el asistente virtual de SEVET. ¿En qué puedo ayudarte hoy?</div>
+    </div>
+    <div class="ai-quick-btns">
+      <button class="ai-quick-btn" onclick="aiQuick('¿Cuáles son los horarios de atención?')">🕐 Horarios de atención</button>
+      <button class="ai-quick-btn" onclick="aiQuick('¿Cuánto cuesta una consulta?')">💰 Precios de consultas</button>
+      <button class="ai-quick-btn" onclick="aiQuick('¿Es urgente? Quiero ir ahora.')">🚨 Urgencia veterinaria</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" type="text" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')aiSend()"/>
+      <button class="ai-send" onclick="aiSend()">➤</button>
+    </div>
+  </div>
+  <button class="ai-toggle" id="aiToggle" onclick="toggleAI()" title="Asistente SEVET IA">🤖</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
