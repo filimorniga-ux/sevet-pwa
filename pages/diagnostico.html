@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d7377"/>
+  <title>Diagnóstico – SEVET Pet-Tech 360</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+  <canvas id="particles-canvas"></canvas>
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo"><div class="nav-logo-icon">🐾</div><span class="nav-logo-text">SE<span>VET</span></span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li><li><a href="/pages/agendar.html">Agendar</a></li><li><a href="/pages/mi-mascota.html">Mi Mascota</a></li><li><a href="/pages/tienda.html">Tienda</a></li><li><a href="tel:+56227731554" class="nav-cta">📞 Llamar</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header reveal">
+      <p class="section-tag">Imágenes Diagnósticas</p>
+      <h1 class="section-title">Visor de<br/><span class="grad">Radiografías & Lab</span></h1>
+      <p class="section-sub">Panel Dark Mode con lupa mágica IA para resaltar zonas de interés en imágenes médicas.</p>
+    </div>
+    <div class="dashboard-wrapper">
+      <div class="dashboard-ui reveal" style="grid-column:span 2">
+        <div class="dash-header"><span class="dash-title">🔬 Visor Diagnóstico</span><span class="dash-status"><span class="dot"></span> Módulo Fase 3</span></div>
+        <div style="padding:4rem;text-align:center;color:rgba(255,255,255,0.3)">
+          <div style="font-size:4rem;margin-bottom:1rem">🩻</div>
+          <p style="font-size:1.1rem">Visor de radiografías, ecografías y análisis de laboratorio</p>
+          <p style="margin-top:1rem;color:var(--teal-400);font-weight:700">🔧 En desarrollo – Fase 3</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d7377"/>
+  <title>Peluquería & Guardería – SEVET Pet-Tech 360</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+  <canvas id="particles-canvas"></canvas>
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo"><div class="nav-logo-icon">🐾</div><span class="nav-logo-text">SE<span>VET</span></span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li><li><a href="/pages/agendar.html">Agendar</a></li><li><a href="/pages/mi-mascota.html">Mi Mascota</a></li><li><a href="/pages/tienda.html">Tienda</a></li><li><a href="tel:+56227731554" class="nav-cta">📞 Llamar</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header reveal">
+      <p class="section-tag">Servicios Adicionales</p>
+      <h1 class="section-title">Peluquería &<br/><span class="grad">Guardería Canina</span></h1>
+      <p class="section-sub">Sigue el proceso en tiempo real: Recepción → Baño → Corte → Entrega. Timeline visual interactivo.</p>
+    </div>
+    <div class="bento-grid" style="grid-auto-rows:auto">
+      <div class="bento-card span-3 reveal" style="--delay:0.1s;text-align:center;padding:2rem">
+        <span style="font-size:3rem;display:block;margin-bottom:0.75rem">🐕</span>
+        <div class="card-tag">Paso 1</div>
+        <div class="card-title">Recepción</div>
+      </div>
+      <div class="bento-card span-3 reveal" style="--delay:0.2s;text-align:center;padding:2rem">
+        <span style="font-size:3rem;display:block;margin-bottom:0.75rem">🛁</span>
+        <div class="card-tag">Paso 2</div>
+        <div class="card-title">Baño</div>
+      </div>
+      <div class="bento-card span-3 reveal" style="--delay:0.3s;text-align:center;padding:2rem">
+        <span style="font-size:3rem;display:block;margin-bottom:0.75rem">✂️</span>
+        <div class="card-tag">Paso 3</div>
+        <div class="card-title">Corte</div>
+      </div>
+      <div class="bento-card span-3 reveal" style="--delay:0.4s;text-align:center;padding:2rem">
+        <span style="font-size:3rem;display:block;margin-bottom:0.75rem">🎀</span>
+        <div class="card-tag">Paso 4</div>
+        <div class="card-title">Entrega</div>
+      </div>
+      <div class="bento-card span-12 reveal" style="--delay:0.5s;text-align:center;padding:2rem">
+        <button class="btn-primary" disabled>🐾 Agendar Servicio de Peluquería →</button>
+        <p style="margin-top:1rem;color:var(--teal-400);font-size:0.85rem;font-weight:700">🔧 Módulo en construcción – Fase 2</p>
+      </div>
+    </div>
+  </section>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

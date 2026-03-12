@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d7377"/>
+  <meta name="description" content="SEVET – Tienda Premium de alimentos, medicamentos y accesorios veterinarios"/>
+  <title>Tienda Premium – SEVET Pet-Tech 360</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🐾</div>
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
+      <li><a href="/pages/tienda.html" class="active">Tienda</a></li>
+      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <section class="section-pad shop-section" style="margin-top:80px">
+    <div class="section-header reveal">
+      <p class="section-tag">Boutique & Farmacia Veterinaria</p>
+      <h1 class="section-title">Nutrición de Élite<br/><span class="grad">para tu Compañero</span></h1>
+      <p class="section-sub">Catálogo premium curado por nuestros veterinarios. Nutrición que se ve en el pelaje, la energía y la salud.</p>
+    </div>
+
+    <!-- Filtros de categoría -->
+    <div style="display:flex;gap:0.75rem;justify-content:center;margin-bottom:3rem;flex-wrap:wrap" class="reveal">
+      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="all">🛒 Todos</button>
+      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="alimento">🥩 Alimentos</button>
+      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="medicamento">💊 Medicamentos</button>
+      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="suplemento">💪 Suplementos</button>
+      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="accesorio">🎾 Accesorios</button>
+    </div>
+
+    <!-- Grid de productos (se llenará desde Supabase) -->
+    <div id="productsGrid" class="bento-grid reveal" style="grid-auto-rows:auto">
+      <div class="bento-card span-12" style="text-align:center;padding:4rem 2rem">
+        <span style="font-size:3rem;display:block;margin-bottom:1rem">🏪</span>
+        <div class="card-title">Cargando catálogo...</div>
+        <div class="card-desc" style="margin-top:0.5rem">Los productos se cargarán desde Supabase en tiempo real.</div>
+        <p style="margin-top:1.5rem;color:var(--teal-400);font-size:0.85rem;font-weight:700">🔧 Conectando con base de datos</p>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

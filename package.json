@@ -1,0 +1,21 @@
+{
+  "name": "sevet-pwa",
+  "version": "1.0.0",
+  "description": "SEVET – Ecosistema Pet-Tech 360 | Clínica Veterinaria San Alberto",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 4242 --open",
+    "build": "vite build",
+    "preview": "vite preview --port 4242"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/filimorniga-ux/sevet-pwa.git"
+  },
+  "author": "filimorniga-ux",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "vite": "^8.0.0"
+  }
+}

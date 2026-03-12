@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d7377"/>
+  <meta name="description" content="SEVET – Agenda tu cita veterinaria con sistema inteligente de triage"/>
+  <title>Agendar Cita – SEVET Pet-Tech 360</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🐾</div>
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/agendar.html" class="active">Agendar</a></li>
+      <li><a href="#especialidades">Servicios</a></li>
+      <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
+      <li><a href="/pages/tienda.html">Tienda</a></li>
+      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header reveal">
+      <p class="section-tag">Agendamiento Inteligente</p>
+      <h1 class="section-title">Reserva tu Cita<br/><span class="grad">con Triage IA</span></h1>
+      <p class="section-sub">Selecciona el tipo de atención, elige fecha y hora, y nuestro sistema de triage priorizará tu caso automáticamente.</p>
+    </div>
+
+    <div class="bento-grid" style="grid-auto-rows:auto">
+      <!-- Selector de Servicios -->
+      <div class="bento-card span-4 reveal" style="--delay:0.1s" id="serviceConsulta">
+        <div class="card-overlay">
+          <span class="card-icon">🩺</span>
+          <div>
+            <div class="card-tag">Servicio</div>
+            <div class="card-title">Consulta Médica</div>
+            <div class="card-desc">Diagnóstico integral con historial digital.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bento-card span-4 reveal" style="--delay:0.15s" id="serviceVacuna">
+        <div class="card-overlay">
+          <span class="card-icon">💉</span>
+          <div>
+            <div class="card-tag">Preventivo</div>
+            <div class="card-title">Vacunación</div>
+            <div class="card-desc">Esquema personalizado y recordatorios.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bento-card span-4 reveal" style="--delay:0.2s" id="serviceUrgencia">
+        <div class="card-overlay">
+          <span class="card-icon">🚨</span>
+          <div>
+            <div class="card-tag">Prioritario</div>
+            <div class="card-title">Urgencia</div>
+            <div class="card-desc">Atención inmediata hasta la 01:00 AM.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendario placeholder -->
+      <div class="bento-card span-8 row-2 reveal" style="--delay:0.25s">
+        <div class="card-overlay" style="justify-content:center;align-items:center">
+          <span class="card-icon" style="margin-bottom:0">📅</span>
+          <div style="text-align:center">
+            <div class="card-title">Selecciona Fecha y Hora</div>
+            <div class="card-desc" style="margin-top:0.5rem">El calendario interactivo se conectará con Supabase<br/>para mostrar disponibilidad en tiempo real.</div>
+            <p style="margin-top:1.5rem;color:var(--teal-400);font-size:0.85rem;font-weight:700">🔧 Módulo en construcción</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div class="bento-card span-4 row-2 reveal" style="--delay:0.3s">
+        <div class="card-overlay">
+          <span class="card-icon">📋</span>
+          <div>
+            <div class="card-tag">Resumen</div>
+            <div class="card-title">Tu Reserva</div>
+            <div class="card-desc">Servicio, mascota, fecha y hora seleccionados aparecerán aquí antes de confirmar.</div>
+            <button class="btn-primary" style="margin-top:1.5rem;width:100%;justify-content:center" disabled>
+              Confirmar Cita →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
