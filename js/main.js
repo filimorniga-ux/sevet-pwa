@@ -3,6 +3,7 @@
    Ecosistema Pet-Tech 360
    ========================================= */
 
+import '../styles.css';
 import { initAuth } from './auth.js';
 
 // ── Registro Service Worker (Offline-First) ──
@@ -90,7 +91,7 @@ function initParticles() {
 
   document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-  const TEAL = '13, 115, 119';
+  const BLUE = '37, 99, 235';
   const particles = Array.from({ length: 70 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
@@ -115,7 +116,7 @@ function initParticles() {
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${TEAL}, ${p.alpha})`;
+      ctx.fillStyle = `rgba(${BLUE}, ${p.alpha})`;
       ctx.fill();
     });
 
@@ -128,7 +129,7 @@ function initParticles() {
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(${TEAL}, ${0.12 * (1 - d / 110)})`;
+          ctx.strokeStyle = `rgba(${BLUE}, ${0.12 * (1 - d / 110)})`;
           ctx.lineWidth = 0.6;
           ctx.stroke();
         }
