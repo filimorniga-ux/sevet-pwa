@@ -181,7 +181,18 @@
     });
 
     document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-      e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/';
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Sign out error (forcing redirect):', err);
+      }
+      // Clear any lingering auth state
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) localStorage.removeItem(key);
+      });
+      window.location.href = '/';
     });
 
     // Panel switching
