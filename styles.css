@@ -188,6 +188,13 @@ body {
   position: relative; overflow: hidden;
   box-shadow: 0 4px 16px rgba(37,99,235,0.3);
 }
+.nav-logo-img {
+  height: 42px; width: auto; border-radius: 8px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+  transition: var(--transition);
+}
+.nav-logo-img:hover { transform: scale(1.05); }
 .nav-logo-icon::after {
   content: '';
   position: absolute; inset: 0;

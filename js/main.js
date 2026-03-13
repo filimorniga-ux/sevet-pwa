@@ -238,6 +238,9 @@ function updateCarousel() {
   carouselIndex = Math.max(0, Math.min(carouselIndex, maxIndex));
   track.style.transform = `translateX(-${carouselIndex * (cardWidth + gap)}px)`;
 }
+function initCarousel() {
+  updateCarousel();
+}
 window.carouselNext = function() { carouselIndex++; updateCarousel(); };
 window.carouselPrev = function() { carouselIndex--; updateCarousel(); };
 window.addEventListener('resize', updateCarousel);

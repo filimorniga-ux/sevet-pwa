@@ -27,16 +27,16 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Skip non-GET and API/Supabase requests
   if (e.request.method !== 'GET') return;
+
   const url = new URL(e.request.url);
   if (url.hostname.includes('supabase') || url.hostname.includes('openai')) return;
 
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
+
       return fetch(e.request).then(response => {
-        // Cache successful responses for assets
         if (response.ok && url.pathname.match(/\.(js|css|png|jpg|webp|woff2?)$/)) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
