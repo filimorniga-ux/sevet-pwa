@@ -15,11 +15,8 @@ const STATIC_ASSETS = [
   '/pages/mi-mascota.html',
 ];
 
-// Install — cache essential assets
+// Install
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
   self.skipWaiting();
 });
 
