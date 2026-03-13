@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#2563eb"/>
-  <meta name="description" content="SEVET – Panel administrativo con KPIs, tendencias financieras y seguimiento operacional."/>
-  <title>Panel Administrativo – SEVET Pet-Tech 360</title>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Panel administrativo con KPIs, métricas y gestión de la clínica."/>
+  <title>Dashboard Admin – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <canvas id="particles-canvas"></canvas>
@@ -18,27 +20,509 @@
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="/">Inicio</a></li>
-      <li><a href="/pages/agendar.html">Agendar</a></li>
-      <li><a href="/pages/financiero.html">Finanzas</a></li>
-      <li><a href="/pages/historial.html">Historial</a></li>
-      <li><a href="/pages/tienda.html">Tienda</a></li>
-      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+      <li><a href="/pages/mi-agenda.html">Mi Agenda</a></li>
+      <li><a href="/pages/gestion-citas.html">Gestión Citas</a></li>
+      <li><a href="/pages/admin.html" class="active">Dashboard</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
     </ul>
     <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
   </nav>
 
   <section class="section-pad" style="margin-top:80px">
-    <div class="section-header reveal">
-      <p class="section-tag">Dashboard Administrativo</p>
-      <h1 class="section-title">Panel <span class="grad">Operacional</span></h1>
-      <p class="section-sub">Visión ejecutiva del negocio: ingresos, rendimiento de servicios, clientes de alto valor y transacciones recientes.</p>
+    <div class="section-header">
+      <p class="section-tag">Panel Administrativo</p>
+      <h1 class="section-title">Dashboard <span class="grad">Operacional</span></h1>
+      <p class="section-sub" id="adminGreeting">Cargando...</p>
     </div>
 
-    <div class="reveal" id="financiero-container">
-      <p class="summary-empty">Cargando panel admin...</p>
+    <!-- Navigation Tabs -->
+    <div class="specialty-tabs" style="margin-bottom:2rem">
+      <button class="spec-tab active" onclick="showPanel('overview', this)">📊 Resumen</button>
+      <button class="spec-tab" onclick="showPanel('services', this)">🩺 Servicios</button>
+      <button class="spec-tab" onclick="showPanel('users', this)">👥 Usuarios</button>
+      <button class="spec-tab" onclick="showPanel('timeoff', this)">🏖️ Permisos</button>
+    </div>
+
+    <!-- OVERVIEW PANEL -->
+    <div class="admin-panel active" id="panelOverview">
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-value" id="kpiTodayAppts">-</div>
+          <div class="kpi-label">Citas Hoy</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📆</div>
+          <div class="kpi-value" id="kpiWeekAppts">-</div>
+          <div class="kpi-label">Citas Semana</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-value" id="kpiRevenue">-</div>
+          <div class="kpi-label">Ingresos Mes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🐾</div>
+          <div class="kpi-value" id="kpiPatients">-</div>
+          <div class="kpi-label">Pacientes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-value" id="kpiCompleted">-</div>
+          <div class="kpi-label">Completadas Hoy</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-value" id="kpiPending">-</div>
+          <div class="kpi-label">Pendientes</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>📈 Citas por Día (Últimos 7 días)</h3>
+          <canvas id="chartWeekly" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>🩺 Servicios Más Demandados</h3>
+          <canvas id="chartServices" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>📊 Estado de Citas Hoy</h3>
+          <canvas id="chartStatus" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>💰 Ingresos por Servicio (Mes)</h3>
+          <canvas id="chartRevenue" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Appointments -->
+      <div class="chart-card" style="margin-top:1.5rem">
+        <h3>🕐 Últimas Citas Registradas</h3>
+        <div id="recentAppointments" class="appointments-list"></div>
+      </div>
+    </div>
+
+    <!-- SERVICES PANEL -->
+    <div class="admin-panel" id="panelServices">
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <h3>🩺 Gestión de Servicios</h3>
+          <button class="btn-primary" onclick="showServiceForm()" style="padding:0.5rem 1rem">➕ Nuevo Servicio</button>
+        </div>
+        <div id="serviceFormContainer" class="hidden" style="margin-bottom:1.5rem">
+          <div class="confirmation-card">
+            <div class="auth-field"><label>Nombre</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
+            <div class="auth-field"><label>Categoría</label>
+              <select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+                <option value="consulta">Consulta</option><option value="cirugia">Cirugía</option>
+                <option value="laboratorio">Laboratorio</option><option value="peluqueria">Peluquería</option>
+                <option value="urgencia">Urgencia</option>
+              </select>
+            </div>
+            <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
+            <div class="auth-field"><label>Precio ($CLP)</label><input type="number" id="svcPrice" placeholder="25000"/></div>
+            <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
+            <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
+            <div class="auth-field"><label>Especialidad</label><input type="text" id="svcSpecialty" placeholder="general"/></div>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar</button>
+              <button class="btn-back" onclick="hideServiceForm()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <div id="servicesTable" class="appointments-list"><div class="loading-spinner">Cargando servicios...</div></div>
+      </div>
+    </div>
+
+    <!-- USERS PANEL -->
+    <div class="admin-panel" id="panelUsers">
+      <div class="chart-card">
+        <h3>👥 Gestión de Usuarios</h3>
+        <div id="usersTable" class="appointments-list"><div class="loading-spinner">Cargando usuarios...</div></div>
+      </div>
+    </div>
+
+    <!-- TIME OFF PANEL -->
+    <div class="admin-panel" id="panelTimeoff">
+      <div class="chart-card">
+        <h3>🏖️ Solicitudes de Permisos (Pendientes)</h3>
+        <div id="timeOffRequests" class="appointments-list"><div class="loading-spinner">Cargando solicitudes...</div></div>
+      </div>
     </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    let adminProfile = null;
+
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+      
+      if (!profile || !['admin','owner'].includes(profile.role)) {
+        window.location.href = '/'; return;
+      }
+
+      adminProfile = profile;
+      document.getElementById('adminGreeting').textContent = 
+        `Bienvenido, ${profile.full_name} — Panel de Control`;
+
+      loadOverview();
+
+      document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/';
+      });
+    }
+    init();
+
+    // Panel switching
+    window.showPanel = function(panel, btn) {
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.spec-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel${panel.charAt(0).toUpperCase() + panel.slice(1)}`).classList.add('active');
+
+      if (panel === 'overview') loadOverview();
+      if (panel === 'services') loadServicesAdmin();
+      if (panel === 'users') loadUsers();
+      if (panel === 'timeoff') loadTimeOffRequests();
+    };
+
+    // ── OVERVIEW ──
+    async function loadOverview() {
+      const today = new Date().toISOString().split('T')[0];
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      const monthStart = today.slice(0, 7) + '-01';
+
+      // KPIs
+      const [todayRes, weekRes, monthRes, petsRes] = await Promise.all([
+        supabase.from('appointments').select('id, status, service_type', { count: 'exact' })
+          .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`),
+        supabase.from('appointments').select('id', { count: 'exact' })
+          .gte('date_time', `${today}T00:00:00`).lte('date_time', new Date(Date.now() + 7*86400000).toISOString()),
+        supabase.from('appointments').select('id, service_id, services(price, name, icon), status')
+          .gte('date_time', `${monthStart}T00:00:00`).eq('status', 'completada'),
+        supabase.from('pets').select('id', { count: 'exact' }),
+      ]);
+
+      const todayAppts = todayRes.data || [];
+      document.getElementById('kpiTodayAppts').textContent = todayAppts.length;
+      document.getElementById('kpiWeekAppts').textContent = weekRes.count || 0;
+      document.getElementById('kpiPatients').textContent = petsRes.count || 0;
+      document.getElementById('kpiCompleted').textContent = todayAppts.filter(a => a.status === 'completada').length;
+      document.getElementById('kpiPending').textContent = todayAppts.filter(a => a.status === 'pendiente').length;
+
+      const monthData = monthRes.data || [];
+      const revenue = monthData.reduce((sum, a) => sum + (a.services?.price || 0), 0);
+      document.getElementById('kpiRevenue').textContent = `$${revenue.toLocaleString('es-CL')}`;
+
+      // Charts
+      await renderWeeklyChart(weekAgo);
+      await renderServicesChart(monthStart);
+      renderStatusChart(todayAppts);
+      renderRevenueChart(monthData);
+      await loadRecentAppointments();
+    }
+
+    async function renderWeeklyChart(startDate) {
+      const { data } = await supabase.from('appointments').select('date_time')
+        .gte('date_time', `${startDate}T00:00:00`).order('date_time');
+
+      const days = {};
+      const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        const key = d.toISOString().split('T')[0];
+        days[key] = { label: dayNames[d.getDay()] + ' ' + d.getDate(), count: 0 };
+      }
+      (data || []).forEach(a => {
+        const key = a.date_time.split('T')[0];
+        if (days[key]) days[key].count++;
+      });
+
+      const ctx = document.getElementById('chartWeekly');
+      if (ctx._chart) ctx._chart.destroy();
+      ctx._chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.values(days).map(d => d.label),
+          datasets: [{ label: 'Citas', data: Object.values(days).map(d => d.count),
+            backgroundColor: 'rgba(139,45,139,0.6)', borderRadius: 8 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      });
+    }
+
+    async function renderServicesChart(monthStart) {
+      const { data } = await supabase.from('appointments').select('service_type')
+        .gte('date_time', `${monthStart}T00:00:00`);
+
+      const counts = {};
+      (data || []).forEach(a => { counts[a.service_type] = (counts[a.service_type] || 0) + 1; });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      const colors = ['#8b2d8b','#3b82f6','#f59e0b','#16a34a','#ef4444','#6366f1'];
+
+      const ctx = document.getElementById('chartServices');
+      if (ctx._chart) ctx._chart.destroy();
+      ctx._chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: sorted.map(s => s[0] || 'otros'),
+          datasets: [{ data: sorted.map(s => s[1]), backgroundColor: colors }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function renderStatusChart(todayAppts) {
+      const statuses = { pendiente: 0, confirmada: 0, en_curso: 0, completada: 0, cancelada: 0 };
+      todayAppts.forEach(a => { if (statuses[a.status] !== undefined) statuses[a.status]++; });
+
+      const ctx = document.getElementById('chartStatus');
+      if (ctx._chart) ctx._chart.destroy();
+      ctx._chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pendiente','Confirmada','En Curso','Completada','Cancelada'],
+          datasets: [{ data: Object.values(statuses),
+            backgroundColor: ['#f59e0b','#3b82f6','#8b5cf6','#16a34a','#ef4444'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function renderRevenueChart(monthData) {
+      const byService = {};
+      monthData.forEach(a => {
+        const name = a.services?.name || 'Otro';
+        byService[name] = (byService[name] || 0) + (a.services?.price || 0);
+      });
+
+      const sorted = Object.entries(byService).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      const colors = ['#8b2d8b','#3b82f6','#f59e0b','#16a34a','#ef4444','#6366f1'];
+
+      const ctx = document.getElementById('chartRevenue');
+      if (ctx._chart) ctx._chart.destroy();
+      ctx._chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(s => s[0]),
+          datasets: [{ label: 'CLP', data: sorted.map(s => s[1]),
+            backgroundColor: colors, borderRadius: 8 }]
+        },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } }
+      });
+    }
+
+    async function loadRecentAppointments() {
+      const { data } = await supabase.from('appointments')
+        .select('*, services(name, icon)').order('created_at', { ascending: false }).limit(5);
+
+      const container = document.getElementById('recentAppointments');
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay citas registradas</p>'; return; }
+
+      const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
+      container.innerHTML = data.map(a => {
+        const dt = new Date(a.date_time);
+        return `<div class="appointment-row">
+          <span class="apt-date">${dt.toLocaleDateString('es-CL')}</span>
+          <span class="apt-time">${dt.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span>
+          <span class="apt-service">${a.services?.icon||'🩺'} ${a.services?.name||a.service_type}</span>
+          <span class="apt-status" style="color:${statusColors[a.status]}">${a.status}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${a.source || 'web'}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ── SERVICES CRUD ──
+    let editingServiceId = null;
+
+    async function loadServicesAdmin() {
+      const { data } = await supabase.from('services').select('*').order('specialty').order('name');
+      const container = document.getElementById('servicesTable');
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay servicios</p>'; return; }
+
+      container.innerHTML = data.map(s => `
+        <div class="appointment-row">
+          <span style="font-size:1.5rem">${s.icon||'🩺'}</span>
+          <span class="apt-service" style="flex:2">${s.name}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${s.specialty}</span>
+          <span style="font-weight:700;color:var(--blue-600)">$${(s.price||0).toLocaleString('es-CL')}</span>
+          <span style="font-size:0.78rem">${s.duration_min} min</span>
+          <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700">${s.active?'Activo':'Inactivo'}</span>
+          <div class="apt-actions">
+            <button onclick="editService('${s.id}')" title="Editar">✏️</button>
+            <button onclick="toggleServiceActive('${s.id}', ${!s.active})" title="${s.active?'Desactivar':'Activar'}">${s.active?'⏸️':'▶️'}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.showServiceForm = () => { editingServiceId = null; clearServiceForm(); document.getElementById('serviceFormContainer').classList.remove('hidden'); };
+    window.hideServiceForm = () => document.getElementById('serviceFormContainer').classList.add('hidden');
+
+    function clearServiceForm() {
+      ['svcName','svcCategory','svcDesc','svcPrice','svcDuration','svcIcon','svcSpecialty']
+        .forEach(id => document.getElementById(id).value = '');
+    }
+
+    window.editService = async function(id) {
+      const { data } = await supabase.from('services').select('*').eq('id', id).single();
+      if (!data) return;
+      editingServiceId = id;
+      document.getElementById('svcName').value = data.name || '';
+      document.getElementById('svcCategory').value = data.category || 'consulta';
+      document.getElementById('svcDesc').value = data.description || '';
+      document.getElementById('svcPrice').value = data.price || '';
+      document.getElementById('svcDuration').value = data.duration_min || '';
+      document.getElementById('svcIcon').value = data.icon || '';
+      document.getElementById('svcSpecialty').value = data.specialty || '';
+      document.getElementById('serviceFormContainer').classList.remove('hidden');
+    };
+
+    window.saveService = async function() {
+      const svc = {
+        name: document.getElementById('svcName').value,
+        category: document.getElementById('svcCategory').value,
+        description: document.getElementById('svcDesc').value,
+        price: parseInt(document.getElementById('svcPrice').value) || 0,
+        duration_min: parseInt(document.getElementById('svcDuration').value) || 30,
+        icon: document.getElementById('svcIcon').value || '🩺',
+        specialty: document.getElementById('svcSpecialty').value || 'general',
+        active: true,
+      };
+
+      const { error } = editingServiceId
+        ? await supabase.from('services').update(svc).eq('id', editingServiceId)
+        : await supabase.from('services').insert(svc);
+
+      if (error) { alert('Error: ' + error.message); return; }
+      hideServiceForm();
+      loadServicesAdmin();
+    };
+
+    window.toggleServiceActive = async function(id, active) {
+      await supabase.from('services').update({ active }).eq('id', id);
+      loadServicesAdmin();
+    };
+
+    // ── USERS ──
+    async function loadUsers() {
+      const { data } = await supabase.from('profiles').select('*').order('role').order('full_name');
+      const container = document.getElementById('usersTable');
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay usuarios</p>'; return; }
+
+      const roleColors = { admin: '#8b2d8b', owner: '#8b2d8b', vet: '#3b82f6', groomer: '#f59e0b', receptionist: '#16a34a', client: '#6b7280' };
+      const roleLabels = { admin: 'Admin', owner: 'Director', vet: 'Veterinario', groomer: 'Peluquero', receptionist: 'Recepcionista', client: 'Cliente' };
+
+      container.innerHTML = data.map(u => `
+        <div class="appointment-row">
+          <span style="font-size:1.3rem">${u.avatar_url ? `<img src="${u.avatar_url}" style="width:30px;height:30px;border-radius:50%;object-fit:cover">` : '👤'}</span>
+          <span class="apt-service">${u.full_name || 'Sin nombre'}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${u.email || ''}</span>
+          <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
+          <span style="color:${u.is_active !== false ? '#16a34a':'#ef4444'};font-size:0.78rem">${u.is_active !== false ? '● Activo':'● Inactivo'}</span>
+          <select onchange="changeUserRole('${u.id}', this.value)" style="padding:0.3rem;border-radius:4px;border:1px solid #ccc;font-size:0.78rem">
+            ${Object.entries(roleLabels).map(([k,v]) => `<option value="${k}" ${u.role===k?'selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+      `).join('');
+    }
+
+    window.changeUserRole = async function(id, role) {
+      await supabase.from('profiles').update({ role }).eq('id', id);
+      loadUsers();
+    };
+
+    // ── TIME OFF MANAGEMENT ──
+    async function loadTimeOffRequests() {
+      const { data } = await supabase.from('staff_time_off')
+        .select('*, profiles!staff_time_off_staff_id_fkey(full_name, role)')
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('timeOffRequests');
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay solicitudes pendientes</p>'; return; }
+
+      const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };
+      const statusColors = { pending: '#f59e0b', approved: '#16a34a', rejected: '#ef4444' };
+
+      container.innerHTML = data.map(t => `
+        <div class="appointment-row">
+          <span class="apt-service">${t.profiles?.full_name || 'Desconocido'}</span>
+          <span>${typeLabels[t.type] || t.type}</span>
+          <span style="font-size:0.82rem">${t.start_date} → ${t.end_date}</span>
+          <span style="color:${statusColors[t.status]};font-weight:700">${t.status}</span>
+          ${t.status === 'pending' ? `
+            <div class="apt-actions">
+              <button onclick="approveTimeOff('${t.id}')" title="Aprobar">✅</button>
+              <button onclick="rejectTimeOff('${t.id}')" title="Rechazar">❌</button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.approveTimeOff = async function(id) {
+      await supabase.from('staff_time_off').update({ status: 'approved', approved_by: adminProfile.id }).eq('id', id);
+      loadTimeOffRequests();
+    };
+
+    window.rejectTimeOff = async function(id) {
+      await supabase.from('staff_time_off').update({ status: 'rejected' }).eq('id', id);
+      loadTimeOffRequests();
+    };
+  </script>
+
+  <style>
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--white); border-radius: var(--radius-xl); padding: 1.5rem;
+      text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--gray-100);
+      transition: var(--transition);
+    }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); }
+    .kpi-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .kpi-value { font-size: 2rem; font-weight: 800; color: var(--blue-700); }
+    .kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+
+    .charts-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .chart-card {
+      background: var(--white); border-radius: var(--radius-xl); padding: 1.5rem;
+      box-shadow: var(--card-shadow); border: 1px solid var(--gray-100);
+    }
+    .chart-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--blue-800); margin-bottom: 1rem; }
+
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+      .kpi-value { font-size: 1.5rem; }
+    }
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .kpi-card { padding: 1rem; }
+      .kpi-value { font-size: 1.3rem; }
+    }
+  </style>
 </body>
 </html>
