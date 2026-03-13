@@ -89,36 +89,43 @@
 
     // Auth check
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '/pages/auth.html'; return; }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '/pages/auth.html'; return; }
 
-      const { data: profile } = await supabase.from('profiles')
-        .select('*').eq('user_id', session.user.id).single();
-      
-      if (!profile || !['receptionist','admin','owner'].includes(profile.role)) {
-        window.location.href = '/'; return;
+        const { data: profile } = await supabase.from('profiles')
+          .select('*').eq('user_id', session.user.id).single();
+        
+        if (!profile || !['vet','groomer','receptionist','admin','owner'].includes(profile.role)) {
+          window.location.href = '/'; return;
+        }
+
+        // Set today's date
+        document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+
+        // Load vet filter options
+        const { data: vets } = await supabase.from('profiles')
+          .select('id, full_name').in('role', ['vet','groomer','owner']);
+        const vetSelect = document.getElementById('filterVet');
+        (vets || []).forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id; opt.textContent = v.full_name;
+          vetSelect.appendChild(opt);
+        });
+
+        loadAllAppointments();
+
+        document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await supabase.auth.signOut(); } catch(err) {}
+          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+          window.location.href = '/';
+        });
+      } catch (err) {
+        console.error('Init error:', err);
+        document.getElementById('appointmentsBody').innerHTML = 
+          '<tr><td colspan="7">Error al inicializar: ' + err.message + '</td></tr>';
       }
-
-      // Set today's date
-      document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
-
-      // Load vet filter options
-      const { data: vets } = await supabase.from('profiles')
-        .select('id, full_name').in('role', ['vet','groomer','owner']);
-      const vetSelect = document.getElementById('filterVet');
-      (vets || []).forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.id; opt.textContent = v.full_name;
-        vetSelect.appendChild(opt);
-      });
-
-      loadAllAppointments();
-
-      document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await supabase.auth.signOut();
-        window.location.href = '/';
-      });
     }
     init();
 
