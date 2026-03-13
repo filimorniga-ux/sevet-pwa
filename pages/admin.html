@@ -165,30 +165,29 @@
 
     let adminProfile = null;
 
-    document.addEventListener('auth:login', (e) => {
-      const profile = e.detail.profile;
+    // Direct init — no race condition with auth events
+    async function initAdmin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile, error } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+
       if (!profile || !['admin','owner'].includes(profile.role)) {
         window.location.href = '/'; return;
       }
+
       adminProfile = profile;
-      document.getElementById('adminGreeting').textContent = 
+      document.getElementById('adminGreeting').textContent =
         `Bienvenido, ${profile.full_name} — Panel de Control`;
       loadOverview();
-    });
+    }
+    initAdmin();
 
-    document.addEventListener('auth:logout', () => {
-      window.location.href = '/pages/auth.html';
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    // Logout
+    document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
       e.preventDefault();
-      e.stopPropagation();
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.warn('Sign out error (forcing redirect):', err);
-      }
-      // Clear any lingering auth state
+      try { await supabase.auth.signOut(); } catch(err) {}
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-')) localStorage.removeItem(key);
       });
