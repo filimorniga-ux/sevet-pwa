@@ -9,8 +9,13 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentProfile = null;
 
+let initialized = false;
+
 // ── Inicializar Auth Listener ──
 export function initAuth() {
+  if (initialized) return;
+  initialized = true;
+
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
       currentUser = session.user;
@@ -67,7 +72,9 @@ async function fetchProfile(userId) {
     .select('*')
     .eq('user_id', userId)
     .single();
-  if (error && error.code !== 'PGRST116') console.warn('Perfil no encontrado:', error.message);
+  if (error && error.code !== 'PGRST116' && error.name !== 'AbortError') {
+    console.warn('Perfil no encontrado:', error.message);
+  }
   return data;
 }
 

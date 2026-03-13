@@ -35,17 +35,24 @@ self.addEventListener('activate', (event) => {
 
 // Fetch — network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET, cross-origin, and unsupported schemes (like chrome-extension)
-  if (event.request.method !== 'GET') return;
-  if (!event.request.url.startsWith(self.location.origin)) return;
-  if (!event.request.url.startsWith('http')) return;
-
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        // Only cache successful, same-origin GET responses with http/https scheme
+        if (
+          event.request.method === 'GET' &&
+          response.status === 200 &&
+          event.request.url.startsWith(self.location.origin) &&
+          event.request.url.startsWith('http')
+        ) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone).catch(e => {
+              // Ignore errors for unsupported schemes or other caching issues
+              // console.debug('Cache put ignored:', e.message);
+            });
+          });
+        }
         return response;
       })
       .catch(() => caches.match(event.request))
