@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Gestión de citas. Administra todas las citas de la clínica."/>
+  <title>Gestión de Citas – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <img class="nav-logo-img" src="/assets/images/logo-sevet-banner.jpg" alt="SEVET San Alberto" />
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/mi-agenda.html">Mi Agenda</a></li>
+      <li><a href="/pages/gestion-citas.html" class="active">Gestión Citas</a></li>
+      <li><a href="/pages/admin.html">Dashboard</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header">
+      <p class="section-tag">Recepción / Admin</p>
+      <h1 class="section-title">Gestión de <span class="grad">Citas</span></h1>
+      <p class="section-sub">Administra todas las citas de la clínica</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <input type="date" id="filterDate" class="filter-input" />
+      <select id="filterStatus" class="filter-input">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="confirmada">Confirmada</option>
+        <option value="en_curso">En curso</option>
+        <option value="completada">Completada</option>
+        <option value="cancelada">Cancelada</option>
+      </select>
+      <select id="filterVet" class="filter-input">
+        <option value="">Todos los profesionales</option>
+      </select>
+      <button class="btn-primary" onclick="loadAllAppointments()" style="padding:0.5rem 1.2rem">
+        🔍 Buscar
+      </button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPendiente" style="color:#f59e0b">0</div><div class="stat-label">Pendientes</div></div>
+      <div class="stat-card"><div class="stat-num" id="statEnCurso" style="color:#8b5cf6">0</div><div class="stat-label">En Curso</div></div>
+      <div class="stat-card"><div class="stat-num" id="statCompleted" style="color:#16a34a">0</div><div class="stat-label">Completadas</div></div>
+    </div>
+
+    <!-- Appointments table -->
+    <div class="appointments-table-container">
+      <table class="appointments-table" id="appointmentsTable">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Servicio</th>
+            <th>Mascota</th>
+            <th>Profesional</th>
+            <th>Estado</th>
+            <th>Notas</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsBody">
+          <tr><td colspan="7" class="loading-spinner">Cargando citas...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    // Auth check
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+      
+      if (!profile || !['receptionist','admin','owner'].includes(profile.role)) {
+        window.location.href = '/'; return;
+      }
+
+      // Set today's date
+      document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+
+      // Load vet filter options
+      const { data: vets } = await supabase.from('profiles')
+        .select('id, full_name').in('role', ['vet','groomer','owner']);
+      const vetSelect = document.getElementById('filterVet');
+      (vets || []).forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id; opt.textContent = v.full_name;
+        vetSelect.appendChild(opt);
+      });
+
+      loadAllAppointments();
+
+      document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      });
+    }
+    init();
+
+    window.loadAllAppointments = async function() {
+      const body = document.getElementById('appointmentsBody');
+      body.innerHTML = '<tr><td colspan="7" class="loading-spinner">Cargando...</td></tr>';
+
+      const date = document.getElementById('filterDate').value;
+      const status = document.getElementById('filterStatus').value;
+      const vetId = document.getElementById('filterVet').value;
+
+      let query = supabase.from('appointments')
+        .select('*, services(name, icon), pets(name, species), profiles!appointments_vet_id_fkey(full_name)')
+        .order('date_time');
+
+      if (date) {
+        query = query.gte('date_time', `${date}T00:00:00`).lte('date_time', `${date}T23:59:59`);
+      }
+      if (status) query = query.eq('status', status);
+      if (vetId) query = query.eq('vet_id', vetId);
+
+      const { data, error } = await query;
+      if (error) { body.innerHTML = '<tr><td colspan="7">Error al cargar</td></tr>'; return; }
+      if (!data?.length) { body.innerHTML = '<tr><td colspan="7" class="summary-empty">No hay citas</td></tr>'; return; }
+
+      // Stats
+      document.getElementById('statTotal').textContent = data.length;
+      document.getElementById('statPendiente').textContent = data.filter(a => a.status === 'pendiente').length;
+      document.getElementById('statEnCurso').textContent = data.filter(a => a.status === 'en_curso').length;
+      document.getElementById('statCompleted').textContent = data.filter(a => a.status === 'completada').length;
+
+      const statusColors = {
+        pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6',
+        completada: '#16a34a', cancelada: '#ef4444'
+      };
+
+      body.innerHTML = data.map(a => {
+        const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <tr>
+            <td>${time}</td>
+            <td>${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</td>
+            <td>${a.pets?.name || 'N/A'} ${a.pets?.species ? `(${a.pets.species})` : ''}</td>
+            <td>${a.profiles?.full_name || 'Sin asignar'}</td>
+            <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.notes || ''}">${a.notes || '-'}</td>
+            <td>
+              <select onchange="changeStatus('${a.id}', this.value)" style="padding:0.3rem;border-radius:4px;border:1px solid #ccc;font-size:0.8rem">
+                <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
+                <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
+                <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    window.changeStatus = async function(id, status) {
+      await supabase.from('appointments').update({ status }).eq('id', id);
+      loadAllAppointments();
+    };
+  </script>
+
+  <style>
+    .filters-bar {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 1.5rem; padding: 0 1rem;
+    }
+    .filter-input {
+      padding: 0.5rem 0.75rem; border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+      font-family: inherit; font-size: 0.88rem; background: var(--white);
+    }
+    .stats-row {
+      display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--white); border-radius: var(--radius-lg); padding: 1rem 1.5rem;
+      text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--gray-100);
+      min-width: 100px;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--blue-700); }
+    .stat-label { font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; }
+    .appointments-table-container { overflow-x: auto; padding: 0 0.5rem; }
+    .appointments-table {
+      width: 100%; border-collapse: collapse; background: var(--white);
+      border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--card-shadow);
+    }
+    .appointments-table th {
+      background: var(--blue-50); padding: 0.75rem 1rem; text-align: left;
+      font-size: 0.78rem; font-weight: 700; color: var(--blue-700);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .appointments-table td {
+      padding: 0.65rem 1rem; border-bottom: 1px solid var(--gray-100);
+      font-size: 0.88rem; color: var(--gray-700);
+    }
+    .appointments-table tr:hover td { background: var(--blue-50); }
+    @media (max-width: 768px) {
+      .filters-bar { flex-direction: column; }
+      .filter-input { width: 100%; }
+      .appointments-table { font-size: 0.78rem; }
+      .appointments-table th, .appointments-table td { padding: 0.5rem; }
+    }
+  </style>
+</body>
+</html>

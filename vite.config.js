@@ -26,6 +26,8 @@ export default defineConfig({
         historial: resolve(__dirname, 'pages/historial.html'),
         imagenes: resolve(__dirname, 'pages/imagenes.html'),
         quienesSomos: resolve(__dirname, 'pages/quienes-somos.html'),
+        miAgenda: resolve(__dirname, 'pages/mi-agenda.html'),
+        gestionCitas: resolve(__dirname, 'pages/gestion-citas.html'),
       },
     },
   },

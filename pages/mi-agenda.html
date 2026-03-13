@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Mi agenda profesional. Gestiona tus citas, horarios y disponibilidad."/>
+  <title>Mi Agenda – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <img class="nav-logo-img" src="/assets/images/logo-sevet-banner.jpg" alt="SEVET San Alberto" />
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/mi-agenda.html" class="active">Mi Agenda</a></li>
+      <li><a href="/pages/gestion-citas.html">Gestión Citas</a></li>
+      <li><a href="/pages/admin.html">Dashboard</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header">
+      <p class="section-tag">Panel Profesional</p>
+      <h1 class="section-title">Mi <span class="grad">Agenda</span></h1>
+      <p class="section-sub" id="staffGreeting">Cargando...</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="specialty-tabs" style="margin-bottom:2rem">
+      <button class="spec-tab active" onclick="showAgendaTab('today', this)">📅 Hoy</button>
+      <button class="spec-tab" onclick="showAgendaTab('week', this)">📆 Semana</button>
+      <button class="spec-tab" onclick="showAgendaTab('schedule', this)">⏰ Mi Horario</button>
+      <button class="spec-tab" onclick="showAgendaTab('timeoff', this)">🏖️ Días Libres</button>
+    </div>
+
+    <!-- Today's Appointments -->
+    <div class="agenda-panel active" id="panelToday">
+      <div class="dash-section-label">Citas de Hoy</div>
+      <div id="todayAppointments" class="appointments-list">
+        <div class="loading-spinner">Cargando citas...</div>
+      </div>
+    </div>
+
+    <!-- Week View -->
+    <div class="agenda-panel" id="panelWeek">
+      <div class="dash-section-label">Citas de la Semana</div>
+      <div id="weekAppointments" class="appointments-list">
+        <div class="loading-spinner">Cargando citas...</div>
+      </div>
+    </div>
+
+    <!-- My Schedule -->
+    <div class="agenda-panel" id="panelSchedule">
+      <div class="dash-section-label">Mi Horario Semanal</div>
+      <div id="mySchedule" class="schedule-grid">
+        <div class="loading-spinner">Cargando horario...</div>
+      </div>
+      <button class="btn-primary" id="saveScheduleBtn" style="margin-top:1rem">
+        💾 Guardar Horario
+      </button>
+    </div>
+
+    <!-- Time Off Requests -->
+    <div class="agenda-panel" id="panelTimeoff">
+      <div class="dash-section-label">Solicitudes de Días Libres</div>
+      <div id="timeOffList" class="appointments-list">
+        <div class="loading-spinner">Cargando solicitudes...</div>
+      </div>
+      <button class="btn-primary" onclick="showTimeOffForm()" style="margin-top:1rem">
+        ➕ Solicitar Día Libre
+      </button>
+      <div id="timeOffForm" class="hidden" style="margin-top:1rem">
+        <div class="confirmation-card">
+          <h3 style="margin-bottom:1rem;color:var(--blue-800)">Nueva Solicitud</h3>
+          <div class="auth-field">
+            <label>Tipo</label>
+            <select id="toType" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="vacation">Vacaciones</option>
+              <option value="sick_leave">Licencia Médica</option>
+              <option value="personal">Personal</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>Fecha Inicio</label>
+            <input type="date" id="toStart" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"/>
+          </div>
+          <div class="auth-field">
+            <label>Fecha Fin</label>
+            <input type="date" id="toEnd" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"/>
+          </div>
+          <div class="auth-field">
+            <label>Notas</label>
+            <textarea id="toNotes" rows="2" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-family:inherit;resize:vertical" placeholder="Motivo..."></textarea>
+          </div>
+          <button class="btn-primary" onclick="submitTimeOff()" style="width:100%;justify-content:center">
+            Enviar Solicitud
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    let staffProfile = null;
+
+    // Auth check
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+      
+      if (!profile || !['vet','groomer','admin','owner'].includes(profile.role)) {
+        window.location.href = '/'; return;
+      }
+
+      staffProfile = profile;
+      document.getElementById('staffGreeting').textContent = 
+        `Bienvenido/a, ${profile.full_name} — ${profile.specialty || profile.role}`;
+
+      loadTodayAppointments();
+
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      });
+    }
+    init();
+
+    // Tab switching
+    window.showAgendaTab = function(tab, btn) {
+      document.querySelectorAll('.agenda-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.spec-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+
+      if (tab === 'today') loadTodayAppointments();
+      if (tab === 'week') loadWeekAppointments();
+      if (tab === 'schedule') loadMySchedule();
+      if (tab === 'timeoff') loadTimeOff();
+    };
+
+    async function loadTodayAppointments() {
+      const container = document.getElementById('todayAppointments');
+      const today = new Date().toISOString().split('T')[0];
+
+      let query = supabase.from('appointments')
+        .select('*, services(name, icon)')
+        .gte('date_time', `${today}T00:00:00`)
+        .lte('date_time', `${today}T23:59:59`)
+        .order('date_time');
+
+      if (staffProfile.role !== 'admin' && staffProfile.role !== 'owner') {
+        query = query.eq('vet_id', staffProfile.id);
+      }
+
+      const { data, error } = await query;
+      if (error || !data?.length) {
+        container.innerHTML = '<p class="summary-empty">🎉 No tienes citas programadas para hoy</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(a => {
+        const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
+        return `
+          <div class="appointment-row">
+            <span class="apt-time">${time}</span>
+            <span class="apt-service">${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</span>
+            <span class="apt-status" style="color:${statusColors[a.status] || '#888'}">${a.status}</span>
+            <div class="apt-actions">
+              <button onclick="updateStatus('${a.id}', 'en_curso')" title="Iniciar">▶️</button>
+              <button onclick="updateStatus('${a.id}', 'completada')" title="Completar">✅</button>
+              <button onclick="updateStatus('${a.id}', 'cancelada')" title="Cancelar">❌</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadWeekAppointments() {
+      const container = document.getElementById('weekAppointments');
+      const today = new Date();
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      let query = supabase.from('appointments')
+        .select('*, services(name, icon)')
+        .gte('date_time', today.toISOString())
+        .lte('date_time', weekEnd.toISOString())
+        .order('date_time');
+
+      if (staffProfile.role !== 'admin' && staffProfile.role !== 'owner') {
+        query = query.eq('vet_id', staffProfile.id);
+      }
+
+      const { data } = await query;
+      if (!data?.length) {
+        container.innerHTML = '<p class="summary-empty">No hay citas esta semana</p>';
+        return;
+      }
+
+      const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      container.innerHTML = data.map(a => {
+        const dt = new Date(a.date_time);
+        const day = days[dt.getDay()];
+        const date = dt.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const time = dt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="appointment-row">
+            <span class="apt-date">${day} ${date}</span>
+            <span class="apt-time">${time}</span>
+            <span class="apt-service">${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</span>
+            <span class="apt-status">${a.status}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadMySchedule() {
+      const container = document.getElementById('mySchedule');
+      const dayNames = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+      
+      const { data } = await supabase.from('staff_schedules')
+        .select('*').eq('staff_id', staffProfile.id).order('day_of_week');
+
+      const schedMap = {};
+      (data || []).forEach(s => { schedMap[s.day_of_week] = s; });
+
+      container.innerHTML = dayNames.map((name, i) => {
+        const s = schedMap[i];
+        return `
+          <div class="schedule-row">
+            <span class="sched-day">${name}</span>
+            <input type="time" class="sched-input" data-day="${i}" data-field="start" value="${s?.start_time?.slice(0,5) || '09:00'}" />
+            <span>a</span>
+            <input type="time" class="sched-input" data-day="${i}" data-field="end" value="${s?.end_time?.slice(0,5) || '18:00'}" />
+            <label class="sched-toggle">
+              <input type="checkbox" data-day="${i}" data-field="active" ${s?.is_active !== false ? 'checked' : ''} />
+              Activo
+            </label>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('saveScheduleBtn')?.addEventListener('click', async () => {
+      const rows = document.querySelectorAll('.schedule-row');
+      const schedules = [];
+      rows.forEach((row, i) => {
+        const start = row.querySelector(`[data-day="${i}"][data-field="start"]`)?.value;
+        const end = row.querySelector(`[data-day="${i}"][data-field="end"]`)?.value;
+        const active = row.querySelector(`[data-day="${i}"][data-field="active"]`)?.checked;
+        schedules.push({
+          staff_id: staffProfile.id, day_of_week: i,
+          start_time: start + ':00', end_time: end + ':00', is_active: active
+        });
+      });
+
+      const { error } = await supabase.from('staff_schedules')
+        .upsert(schedules, { onConflict: 'staff_id,day_of_week' });
+
+      alert(error ? 'Error al guardar' : '✅ Horario guardado');
+    });
+
+    async function loadTimeOff() {
+      const container = document.getElementById('timeOffList');
+      const { data } = await supabase.from('staff_time_off')
+        .select('*').eq('staff_id', staffProfile.id).order('start_date', { ascending: false });
+
+      if (!data?.length) {
+        container.innerHTML = '<p class="summary-empty">No tienes solicitudes registradas</p>';
+        return;
+      }
+
+      const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };
+      const statusColors = { pending: '#f59e0b', approved: '#16a34a', rejected: '#ef4444' };
+
+      container.innerHTML = data.map(t => `
+        <div class="appointment-row">
+          <span>${typeLabels[t.type] || t.type}</span>
+          <span>${t.start_date} → ${t.end_date}</span>
+          <span style="color:${statusColors[t.status]};font-weight:700">${t.status}</span>
+        </div>
+      `).join('');
+    }
+
+    window.showTimeOffForm = () => document.getElementById('timeOffForm').classList.toggle('hidden');
+
+    window.submitTimeOff = async function() {
+      const { error } = await supabase.from('staff_time_off').insert({
+        staff_id: staffProfile.id,
+        type: document.getElementById('toType').value,
+        start_date: document.getElementById('toStart').value,
+        end_date: document.getElementById('toEnd').value,
+        notes: document.getElementById('toNotes').value,
+        status: 'pending'
+      });
+      if (error) { alert('Error: ' + error.message); return; }
+      alert('✅ Solicitud enviada');
+      document.getElementById('timeOffForm').classList.add('hidden');
+      loadTimeOff();
+    };
+
+    window.updateStatus = async function(id, status) {
+      await supabase.from('appointments').update({ status }).eq('id', id);
+      loadTodayAppointments();
+    };
+  </script>
+
+  <style>
+    .agenda-panel { display: none; }
+    .agenda-panel.active { display: block; animation: fadeIn 0.3s ease; }
+    .appointments-list { max-width: 800px; margin: 0 auto; }
+    .appointment-row {
+      display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
+      background: var(--white); border-radius: var(--radius-lg); margin-bottom: 0.5rem;
+      border: 1px solid var(--gray-100); box-shadow: var(--card-shadow);
+      flex-wrap: wrap;
+    }
+    .apt-time { font-weight: 700; color: var(--blue-700); min-width: 50px; }
+    .apt-date { font-weight: 600; color: var(--gray-600); min-width: 80px; }
+    .apt-service { flex: 1; font-weight: 600; color: var(--blue-800); }
+    .apt-status { font-weight: 700; font-size: 0.82rem; text-transform: uppercase; }
+    .apt-actions { display: flex; gap: 0.3rem; }
+    .apt-actions button {
+      background: none; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+      padding: 0.3rem 0.5rem; cursor: pointer; font-size: 0.85rem; transition: var(--transition);
+    }
+    .apt-actions button:hover { background: var(--blue-50); border-color: var(--blue-300); }
+    .schedule-grid { max-width: 600px; margin: 0 auto; }
+    .schedule-row {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+      background: var(--white); border-radius: var(--radius-md); margin-bottom: 0.5rem;
+      border: 1px solid var(--gray-100); flex-wrap: wrap;
+    }
+    .sched-day { font-weight: 700; color: var(--blue-800); min-width: 90px; }
+    .sched-input {
+      padding: 0.4rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: inherit; font-weight: 600;
+    }
+    .sched-toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; font-weight: 600; color: var(--gray-600); cursor: pointer; }
+    @media (max-width: 768px) {
+      .appointment-row { flex-direction: column; align-items: flex-start; }
+      .schedule-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</body>
+</html>

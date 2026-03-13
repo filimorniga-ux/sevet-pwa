@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#2563eb"/>
-  <meta name="description" content="SEVET – Agenda tu cita veterinaria con sistema inteligente de triage"/>
-  <title>Agendar Cita – SEVET Pet-Tech 360</title>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="Agenda tu cita veterinaria en Veterinaria San Alberto. Selecciona especialidad, profesional y horario."/>
+  <title>Agendar Cita – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
@@ -18,11 +19,11 @@
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/quienes-somos.html">Quiénes Somos</a></li>
       <li><a href="/pages/agendar.html" class="active">Agendar</a></li>
-      <li><a href="#especialidades">Servicios</a></li>
       <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
-      <li><a href="/pages/tienda.html">Tienda</a></li>
-      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+      <li><a href="/pages/auth.html" class="nav-login-btn">🔐 Iniciar sesión</a></li>
+      <li><a href="tel:+5622775421" class="nav-cta">📞 Llamar Ahora</a></li>
     </ul>
     <div class="nav-burger" id="navBurger" onclick="toggleNav()">
       <span></span><span></span><span></span>
@@ -30,99 +31,178 @@
   </nav>
 
   <section class="section-pad" style="margin-top:80px">
-    <div class="section-header reveal">
-      <p class="section-tag">Agendamiento Inteligente</p>
-      <h1 class="section-title">Reserva tu Cita<br/><span class="grad">con Triage IA</span></h1>
-      <p class="section-sub">Selecciona el tipo de atención, elige fecha y hora, y nuestro sistema de triage priorizará tu caso automáticamente.</p>
-    </div>
-
-    <!-- ── Selector de Servicios ── -->
-    <div class="services-selector reveal">
-      <div class="service-card" data-service="consulta">
-        <div class="service-icon">🩺</div>
-        <div class="service-info">
-          <div class="service-name">Consulta Médica</div>
-          <div class="service-desc">Diagnóstico integral · 30 min</div>
-        </div>
-        <div class="service-triage triage-normal">NORMAL</div>
+    <!-- Progress Steps -->
+    <div class="booking-progress">
+      <div class="progress-step active" data-step="1">
+        <div class="step-circle">1</div>
+        <span>Especialidad</span>
       </div>
-      <div class="service-card" data-service="vacuna">
-        <div class="service-icon">💉</div>
-        <div class="service-info">
-          <div class="service-name">Vacunación</div>
-          <div class="service-desc">Esquema personalizado · 20 min</div>
-        </div>
-        <div class="service-triage triage-normal">NORMAL</div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="2">
+        <div class="step-circle">2</div>
+        <span>Profesional</span>
       </div>
-      <div class="service-card" data-service="urgencia">
-        <div class="service-icon">🚨</div>
-        <div class="service-info">
-          <div class="service-name">Urgencia</div>
-          <div class="service-desc">Atención inmediata · 45 min</div>
-        </div>
-        <div class="service-triage triage-urgente">URGENTE</div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">3</div>
+        <span>Fecha y Hora</span>
       </div>
-      <div class="service-card" data-service="cirugia">
-        <div class="service-icon">🔬</div>
-        <div class="service-info">
-          <div class="service-name">Cirugía</div>
-          <div class="service-desc">Intervención programada · 90 min</div>
-        </div>
-        <div class="service-triage triage-prioritario">PRIORITARIO</div>
-      </div>
-      <div class="service-card" data-service="control">
-        <div class="service-icon">📋</div>
-        <div class="service-info">
-          <div class="service-name">Control</div>
-          <div class="service-desc">Seguimiento post-consulta · 20 min</div>
-        </div>
-        <div class="service-triage triage-normal">NORMAL</div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">4</div>
+        <span>Confirmar</span>
       </div>
     </div>
 
-    <!-- ── Calendario + Horarios + Resumen ── -->
-    <div class="booking-grid reveal" id="calendarSection">
-      <!-- Calendario -->
-      <div class="booking-calendar">
-        <div class="cal-header">
-          <button class="cal-nav" id="prevMonth">←</button>
-          <span class="cal-month" id="calendarMonthLabel">Marzo 2026</span>
-          <button class="cal-nav" id="nextMonth">→</button>
-        </div>
-        <div class="cal-weekdays">
-          <span>Dom</span><span>Lun</span><span>Mar</span>
-          <span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
-        </div>
-        <div class="cal-grid" id="calendarGrid"></div>
+    <!-- STEP 1: Especialidad / Servicio -->
+    <div class="booking-step active" id="step1">
+      <div class="section-header reveal">
+        <p class="section-tag">Paso 1</p>
+        <h1 class="section-title">Selecciona el <span class="grad">servicio</span></h1>
+        <p class="section-sub">¿Qué tipo de atención necesita tu mascota?</p>
+      </div>
 
-        <!-- Horarios (aparece al seleccionar fecha) -->
-        <div id="timeSlots" style="display:none;margin-top:1.5rem">
+      <!-- Specialty filter tabs -->
+      <div class="specialty-tabs" id="specialtyTabs">
+        <button class="spec-tab active" data-specialty="all">Todos</button>
+        <button class="spec-tab" data-specialty="general">General</button>
+        <button class="spec-tab" data-specialty="cirugia">Cirugía</button>
+        <button class="spec-tab" data-specialty="laboratorio">Laboratorio</button>
+        <button class="spec-tab" data-specialty="peluqueria">Peluquería</button>
+        <button class="spec-tab" data-specialty="urgencia">Urgencia</button>
+      </div>
+
+      <div class="services-grid" id="servicesGrid">
+        <!-- Loaded dynamically from Supabase -->
+        <div class="loading-spinner">Cargando servicios...</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Profesional -->
+    <div class="booking-step" id="step2">
+      <div class="section-header reveal">
+        <p class="section-tag">Paso 2</p>
+        <h1 class="section-title">Elige tu <span class="grad">profesional</span></h1>
+        <p class="section-sub" id="step2Subtitle">Profesionales disponibles para este servicio</p>
+      </div>
+      <div class="professionals-grid" id="professionalsGrid">
+        <div class="loading-spinner">Cargando profesionales...</div>
+      </div>
+      <button class="btn-back" onclick="goToStep(1)">← Cambiar servicio</button>
+    </div>
+
+    <!-- STEP 3: Fecha y Hora -->
+    <div class="booking-step" id="step3">
+      <div class="section-header reveal">
+        <p class="section-tag">Paso 3</p>
+        <h1 class="section-title">Fecha y <span class="grad">hora</span></h1>
+        <p class="section-sub" id="step3Subtitle">Selecciona cuándo quieres agendar</p>
+      </div>
+
+      <div class="booking-grid">
+        <div class="booking-calendar">
+          <div class="cal-header">
+            <button class="cal-nav" id="prevMonth">←</button>
+            <span class="cal-month" id="calendarMonthLabel"></span>
+            <button class="cal-nav" id="nextMonth">→</button>
+          </div>
+          <div class="cal-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mié</span>
+            <span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          </div>
+          <div class="cal-grid" id="calendarGrid"></div>
+        </div>
+
+        <div class="time-slots-panel">
           <div class="dash-section-label">Horarios Disponibles</div>
-        </div>
-
-        <!-- Selector de Veterinario -->
-        <div style="margin-top:1.5rem">
-          <div class="dash-section-label">Elige tu Profesional</div>
-          <div id="vetSelector" class="vet-selector-grid" style="display:none"></div>
+          <div class="time-slots-grid" id="timeSlotsGrid">
+            <p class="summary-empty">Selecciona una fecha para ver horarios disponibles</p>
+          </div>
         </div>
       </div>
+      <button class="btn-back" onclick="goToStep(2)">← Cambiar profesional</button>
+    </div>
 
-      <!-- Resumen de reserva -->
-      <div class="booking-summary">
-        <div class="summary-header">
-          <span class="card-icon" style="font-size:1.5rem;margin-bottom:0">📋</span>
-          <div class="card-title" style="font-size:1.1rem">Resumen de tu Cita</div>
+    <!-- STEP 4: Confirmar -->
+    <div class="booking-step" id="step4">
+      <div class="section-header reveal">
+        <p class="section-tag">Paso 4</p>
+        <h1 class="section-title">Confirma tu <span class="grad">cita</span></h1>
+        <p class="section-sub">Revisa los datos antes de confirmar</p>
+      </div>
+
+      <div class="confirmation-card">
+        <div class="conf-row">
+          <span class="conf-icon">🩺</span>
+          <div><strong>Servicio</strong><p id="confService">-</p></div>
         </div>
-        <div id="bookingSummary">
-          <p class="summary-empty">Selecciona un servicio, fecha y hora para ver el resumen de tu reserva.</p>
+        <div class="conf-row">
+          <span class="conf-icon">👨‍⚕️</span>
+          <div><strong>Profesional</strong><p id="confProfessional">-</p></div>
         </div>
-        <button class="btn-primary" id="confirmBtn" onclick="window._confirmBooking()" disabled style="width:100%;justify-content:center;margin-top:1.5rem">
-          Completa la selección
+        <div class="conf-row">
+          <span class="conf-icon">📅</span>
+          <div><strong>Fecha</strong><p id="confDate">-</p></div>
+        </div>
+        <div class="conf-row">
+          <span class="conf-icon">🕐</span>
+          <div><strong>Hora</strong><p id="confTime">-</p></div>
+        </div>
+        <div class="conf-row">
+          <span class="conf-icon">⏱️</span>
+          <div><strong>Duración</strong><p id="confDuration">-</p></div>
+        </div>
+        <div class="conf-row">
+          <span class="conf-icon">💰</span>
+          <div><strong>Valor</strong><p id="confPrice">-</p></div>
+        </div>
+
+        <!-- Contact info for guests -->
+        <div class="conf-contact" id="guestContact">
+          <h3>Datos de contacto</h3>
+          <div class="auth-field">
+            <label>Nombre</label>
+            <input type="text" id="guestName" placeholder="Tu nombre completo" />
+          </div>
+          <div class="auth-field">
+            <label>Teléfono</label>
+            <input type="tel" id="guestPhone" placeholder="+56 9 1234 5678" />
+          </div>
+          <div class="auth-field">
+            <label>Email</label>
+            <input type="email" id="guestEmail" placeholder="tu@email.com" />
+          </div>
+          <div class="auth-field">
+            <label>Nombre de la mascota</label>
+            <input type="text" id="guestPetName" placeholder="Nombre de tu mascota" />
+          </div>
+          <div class="auth-field">
+            <label>Notas adicionales</label>
+            <textarea id="guestNotes" placeholder="Síntomas, alergias, información relevante..." rows="3" style="width:100%;resize:vertical;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-family:inherit;"></textarea>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="confirmBookingBtn" style="width:100%;justify-content:center;margin-top:1.5rem">
+          ✅ Confirmar Cita
         </button>
+        <button class="btn-back" onclick="goToStep(3)" style="margin-top:0.5rem">← Cambiar horario</button>
+      </div>
+
+      <!-- Success -->
+      <div class="booking-success hidden" id="bookingSuccess">
+        <div class="success-icon">🎉</div>
+        <h2>¡Cita Agendada!</h2>
+        <p>Tu cita ha sido registrada exitosamente. Recibirás una confirmación por email.</p>
+        <div class="success-actions">
+          <a href="/" class="btn-primary">🏠 Volver al Inicio</a>
+          <a href="/pages/agendar.html" class="btn-secondary">📅 Agendar Otra</a>
+        </div>
       </div>
     </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
+  <script type="module" src="/js/modules/booking.js"></script>
+
 </body>
 </html>
