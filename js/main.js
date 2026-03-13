@@ -8,6 +8,8 @@ import { initAuth } from './auth.js';
 import { initAgendamiento } from './modules/agendamiento.js';
 import { initMiMascota } from './modules/mi-mascota.js';
 import { initTienda } from './modules/tienda.js';
+import { initPeluqueria } from './modules/peluqueria.js';
+import { initChatbot } from './modules/chatbot.js';
 
 // ── Registro Service Worker (Offline-First) ──
 if ('serviceWorker' in navigator) {
@@ -43,6 +45,8 @@ function initApp() {
   initAgendamiento();
   initMiMascota();
   initTienda();
+  initPeluqueria();
+  initChatbot();
   initCursor();
   initParticles();
   initNavScroll();
