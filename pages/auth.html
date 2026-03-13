@@ -91,6 +91,9 @@
             <span>🏥</span> Administrativo
           </button>
         </div>
+        <p class="auth-footer-text" style="margin-top:-0.2rem;margin-bottom:0.75rem">
+          El alta de personal clínico y administrativo se gestiona internamente por dirección.
+        </p>
         <div class="auth-field">
           <label>Nombre completo</label>
           <input type="text" id="regName" placeholder="Tu nombre" required autocomplete="name" />
@@ -151,11 +154,21 @@
     // Role selection
     let selectedRole = 'client';
     window._selectRole = function(role, btn) {
-      selectedRole = role;
+      if (role !== 'client') {
+        selectedRole = 'client';
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.role-btn')?.classList.add('active');
+        document.getElementById('staffCodeField').style.display = 'none';
+        document.getElementById('adminCodeField').style.display = 'none';
+        showMessage('El registro de personal se realiza por invitación interna de la clínica.', 'error');
+        return;
+      }
+
+      selectedRole = 'client';
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('staffCodeField').style.display = role === 'staff' ? 'block' : 'none';
-      document.getElementById('adminCodeField').style.display = role === 'admin' ? 'block' : 'none';
+      document.getElementById('staffCodeField').style.display = 'none';
+      document.getElementById('adminCodeField').style.display = 'none';
     };
 
     // Show message helper
@@ -235,25 +248,11 @@
       const email = document.getElementById('regEmail').value;
       const phone = document.getElementById('regPhone').value;
       const password = document.getElementById('regPassword').value;
-      const staffCode = document.getElementById('staffCode').value;
-      const adminCode = document.getElementById('adminCode').value;
+      const role = 'client';
 
-      // Determine role
-      let role = 'client';
-      if (selectedRole === 'staff') {
-        if (staffCode === 'SEVET-STAFF-2026') {
-          role = 'vet';
-        } else {
-          showMessage('Código de staff inválido. Solicítalo a la clínica.', 'error');
-          return;
-        }
-      } else if (selectedRole === 'admin') {
-        if (adminCode === 'SEVET-ADMIN-2026') {
-          role = 'admin';
-        } else {
-          showMessage('Código administrativo inválido. Solicítalo a la dirección.', 'error');
-          return;
-        }
+      if (selectedRole !== 'client') {
+        showMessage('El registro de personal se realiza por invitación interna de la clínica.', 'error');
+        return;
       }
 
       const { data, error } = await supabase.auth.signUp({

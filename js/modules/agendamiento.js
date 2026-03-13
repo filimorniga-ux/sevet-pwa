@@ -39,9 +39,14 @@ let availableVets = [
 // ── Inicializar módulo ──
 export function initAgendamiento() {
   const calendarEl = document.getElementById('calendarGrid');
-  if (!calendarEl) return;
+  const legacyServiceCards = document.querySelectorAll('[data-service]');
+  const summaryEl = document.getElementById('bookingSummary');
+  const confirmBtn = document.getElementById('confirmBtn');
 
-  document.querySelectorAll('[data-service]').forEach(card => {
+  // Guard: evita conflicto con el booking multi-step v2 (pages/agendar.html)
+  if (!calendarEl || !summaryEl || !confirmBtn || legacyServiceCards.length === 0) return;
+
+  legacyServiceCards.forEach(card => {
     card.addEventListener('click', () => selectService(card.dataset.service));
   });
 
@@ -215,7 +220,6 @@ window._confirmBooking = async function() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      const msg = document.getElementById('authMessage') || confirmBtn;
       if (confirmBtn) {
         confirmBtn.textContent = '🔐 Debes iniciar sesión';
         confirmBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';

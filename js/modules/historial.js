@@ -78,10 +78,10 @@ export function initHistorial() {
           </div>
         </div>
         <div class="historial-filters">
-          <button class="historial-filter active" onclick="window._filterRecords('all')">Todos</button>
-          <button class="historial-filter" onclick="window._filterRecords('consulta')">🩺 Consultas</button>
-          <button class="historial-filter" onclick="window._filterRecords('vacunacion')">💉 Vacunas</button>
-          <button class="historial-filter" onclick="window._filterRecords('cirugia')">🔪 Cirugías</button>
+          <button class="historial-filter active" onclick="window._filterRecords('all', this)">Todos</button>
+          <button class="historial-filter" onclick="window._filterRecords('consulta', this)">🩺 Consultas</button>
+          <button class="historial-filter" onclick="window._filterRecords('vacunacion', this)">💉 Vacunas</button>
+          <button class="historial-filter" onclick="window._filterRecords('cirugia', this)">🔪 Cirugías</button>
         </div>
       </aside>
       <div class="historial-records" id="historialRecords"></div>
@@ -90,9 +90,9 @@ export function initHistorial() {
   renderRecords('all');
 }
 
-window._filterRecords = function(type) {
+window._filterRecords = function(type, triggerEl) {
   document.querySelectorAll('.historial-filter').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (triggerEl) triggerEl.classList.add('active');
   renderRecords(type);
 };
 

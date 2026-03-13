@@ -98,7 +98,7 @@
           <canvas id="chartStatus" height="200"></canvas>
         </div>
         <div class="chart-card">
-          <h3>💰 Ingresos por Servicio (Mes)</h3>
+          <h3>📦 Volumen por Servicio (Mes)</h3>
           <canvas id="chartRevenue" height="200"></canvas>
         </div>
       </div>
@@ -131,7 +131,6 @@
             <div class="auth-field"><label>Precio ($CLP)</label><input type="number" id="svcPrice" placeholder="25000"/></div>
             <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
             <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
-            <div class="auth-field"><label>Especialidad</label><input type="text" id="svcSpecialty" placeholder="general"/></div>
             <div style="display:flex;gap:0.5rem">
               <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar</button>
               <button class="btn-back" onclick="hideServiceForm()">Cancelar</button>
@@ -223,7 +222,7 @@
           .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`),
         supabase.from('appointments').select('id', { count: 'exact' })
           .gte('date_time', `${today}T00:00:00`).lte('date_time', new Date(Date.now() + 7*86400000).toISOString()),
-        supabase.from('appointments').select('id, service_id, services(price, name, icon), status')
+        supabase.from('appointments').select('id, service_type, status')
           .gte('date_time', `${monthStart}T00:00:00`).eq('status', 'completada'),
         supabase.from('pets').select('id', { count: 'exact' }),
       ]);
@@ -236,8 +235,7 @@
       document.getElementById('kpiPending').textContent = todayAppts.filter(a => a.status === 'pendiente').length;
 
       const monthData = monthRes.data || [];
-      const revenue = monthData.reduce((sum, a) => sum + (a.services?.price || 0), 0);
-      document.getElementById('kpiRevenue').textContent = `$${revenue.toLocaleString('es-CL')}`;
+      document.getElementById('kpiRevenue').textContent = 'N/D';
 
       // Charts
       await renderWeeklyChart(weekAgo);
@@ -318,8 +316,8 @@
     function renderRevenueChart(monthData) {
       const byService = {};
       monthData.forEach(a => {
-        const name = a.services?.name || 'Otro';
-        byService[name] = (byService[name] || 0) + (a.services?.price || 0);
+        const name = a.service_type || 'otro';
+        byService[name] = (byService[name] || 0) + 1;
       });
 
       const sorted = Object.entries(byService).sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -331,7 +329,7 @@
         type: 'bar',
         data: {
           labels: sorted.map(s => s[0]),
-          datasets: [{ label: 'CLP', data: sorted.map(s => s[1]),
+          datasets: [{ label: 'Citas', data: sorted.map(s => s[1]),
             backgroundColor: colors, borderRadius: 8 }]
         },
         options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } }
@@ -340,7 +338,9 @@
 
     async function loadRecentAppointments() {
       const { data } = await supabase.from('appointments')
-        .select('*, services(name, icon)').order('created_at', { ascending: false }).limit(5);
+        .select('id, date_time, service_type, status, source, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       const container = document.getElementById('recentAppointments');
       if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay citas registradas</p>'; return; }
@@ -351,7 +351,7 @@
         return `<div class="appointment-row">
           <span class="apt-date">${dt.toLocaleDateString('es-CL')}</span>
           <span class="apt-time">${dt.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span>
-          <span class="apt-service">${a.services?.icon||'🩺'} ${a.services?.name||a.service_type}</span>
+          <span class="apt-service">🩺 ${a.service_type || 'consulta'}</span>
           <span class="apt-status" style="color:${statusColors[a.status]}">${a.status}</span>
           <span style="font-size:0.78rem;color:var(--gray-500)">${a.source || 'web'}</span>
         </div>`;
@@ -362,15 +362,19 @@
     let editingServiceId = null;
 
     async function loadServicesAdmin() {
-      const { data } = await supabase.from('services').select('*').order('specialty').order('name');
+      const { data, error } = await supabase.from('services').select('*').order('category').order('name');
       const container = document.getElementById('servicesTable');
+      if (error) {
+        container.innerHTML = `<p class="summary-empty">No se pudo cargar servicios: ${error.message}</p>`;
+        return;
+      }
       if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay servicios</p>'; return; }
 
       container.innerHTML = data.map(s => `
         <div class="appointment-row">
           <span style="font-size:1.5rem">${s.icon||'🩺'}</span>
           <span class="apt-service" style="flex:2">${s.name}</span>
-          <span style="font-size:0.78rem;color:var(--gray-500)">${s.specialty}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${s.category || 'general'}</span>
           <span style="font-weight:700;color:var(--blue-600)">$${(s.price||0).toLocaleString('es-CL')}</span>
           <span style="font-size:0.78rem">${s.duration_min} min</span>
           <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700">${s.active?'Activo':'Inactivo'}</span>
@@ -386,7 +390,7 @@
     window.hideServiceForm = () => document.getElementById('serviceFormContainer').classList.add('hidden');
 
     function clearServiceForm() {
-      ['svcName','svcCategory','svcDesc','svcPrice','svcDuration','svcIcon','svcSpecialty']
+      ['svcName','svcCategory','svcDesc','svcPrice','svcDuration','svcIcon']
         .forEach(id => document.getElementById(id).value = '');
     }
 
@@ -400,7 +404,6 @@
       document.getElementById('svcPrice').value = data.price || '';
       document.getElementById('svcDuration').value = data.duration_min || '';
       document.getElementById('svcIcon').value = data.icon || '';
-      document.getElementById('svcSpecialty').value = data.specialty || '';
       document.getElementById('serviceFormContainer').classList.remove('hidden');
     };
 
@@ -412,7 +415,6 @@
         price: parseInt(document.getElementById('svcPrice').value) || 0,
         duration_min: parseInt(document.getElementById('svcDuration').value) || 30,
         icon: document.getElementById('svcIcon').value || '🩺',
-        specialty: document.getElementById('svcSpecialty').value || 'general',
         active: true,
       };
 
@@ -460,11 +462,15 @@
 
     // ── TIME OFF MANAGEMENT ──
     async function loadTimeOffRequests() {
-      const { data } = await supabase.from('staff_time_off')
+      const { data, error } = await supabase.from('staff_time_off')
         .select('*, profiles!staff_time_off_staff_id_fkey(full_name, role)')
         .order('created_at', { ascending: false });
 
       const container = document.getElementById('timeOffRequests');
+      if (error) {
+        container.innerHTML = '<p class="summary-empty">Módulo de permisos no habilitado en la base de datos actual.</p>';
+        return;
+      }
       if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay solicitudes pendientes</p>'; return; }
 
       const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };

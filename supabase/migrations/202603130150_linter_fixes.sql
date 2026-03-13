@@ -2,7 +2,6 @@
 -- Safe to run multiple times.
 
 BEGIN;
-
 -- 1) SECURITY: function_search_path_mutable
 DO $$
 DECLARE
@@ -21,7 +20,6 @@ BEGIN
     );
   END LOOP;
 END $$;
-
 -- 2) PERFORMANCE: auth_rls_initplan
 DO $$
 DECLARE
@@ -82,7 +80,6 @@ BEGIN
     END IF;
   END LOOP;
 END $$;
-
 -- 3) PERFORMANCE: multiple_permissive_policies
 DO $$
 DECLARE
@@ -171,5 +168,4 @@ BEGIN
     END LOOP;
   END LOOP;
 END $$;
-
 COMMIT;

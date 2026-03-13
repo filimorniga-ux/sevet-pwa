@@ -56,7 +56,6 @@ async function loadServices() {
     .from('services')
     .select('*')
     .eq('active', true)
-    .order('specialty')
     .order('name');
 
   if (error) {
@@ -74,7 +73,7 @@ function renderServices(specialty) {
   const grid = document.getElementById('servicesGrid');
   const filtered = specialty === 'all' 
     ? state.services 
-    : state.services.filter(s => s.specialty === specialty);
+    : state.services.filter(s => matchesSpecialtyFilter(s, specialty));
 
   if (!filtered.length) {
     grid.innerHTML = '<p class="summary-empty">No hay servicios disponibles en esta categoría</p>';
@@ -93,18 +92,37 @@ function renderServices(specialty) {
           <span class="svc-price">💰 $${(s.price || 0).toLocaleString('es-CL')}</span>
         </div>
       </div>
-      <span class="svc-specialty-badge">${getSpecialtyLabel(s.specialty)}</span>
+      <span class="svc-specialty-badge">${getSpecialtyLabel(getServiceClassifier(s))}</span>
     </div>
   `).join('');
 }
 
 function getSpecialtyLabel(spec) {
   const labels = {
+    consulta: 'Consulta',
     general: 'General', cirugia: 'Cirugía', dermatologia: 'Dermatología',
     cardiologia: 'Cardiología', traumatologia: 'Traumatología',
-    peluqueria: 'Peluquería', laboratorio: 'Laboratorio', urgencia: 'Urgencia'
+    peluqueria: 'Peluquería', laboratorio: 'Laboratorio', urgencia: 'Urgencia',
+    estetica: 'Peluquería', preventivo: 'Preventivo', teleconsulta: 'Telemedicina',
+    guarderia: 'Guardería', nutricion: 'Nutrición'
   };
   return labels[spec] || spec;
+}
+
+function getServiceClassifier(service) {
+  return (service?.specialty || service?.category || 'general').toLowerCase();
+}
+
+function matchesSpecialtyFilter(service, filter) {
+  const classifier = getServiceClassifier(service);
+  if (classifier === filter) return true;
+
+  const aliases = {
+    general: ['consulta', 'preventivo', 'nutricion', 'teleconsulta'],
+    peluqueria: ['estetica', 'grooming'],
+  };
+
+  return (aliases[filter] || []).includes(classifier);
 }
 
 window.selectService = function(id) {
@@ -133,7 +151,9 @@ async function loadProfessionals() {
   subtitle.textContent = `Profesionales disponibles para: ${state.selectedService.name}`;
 
   // For peluqueria, show groomers; for medical, show vets/owner
-  const roles = state.selectedService.requires_vet !== false ? ['vet', 'owner'] : ['groomer'];
+  const classifier = getServiceClassifier(state.selectedService);
+  const isGrooming = ['peluqueria', 'estetica', 'grooming'].includes(classifier);
+  const roles = isGrooming ? ['groomer'] : ['vet', 'owner'];
   
   const { data, error } = await supabase
     .from('profiles')
@@ -144,14 +164,14 @@ async function loadProfessionals() {
 
   // Always show "any available" option + individual professionals
   grid.innerHTML = `
-    <div class="prof-card ${!state.selectedProfessional?.id ? 'selected' : ''}" onclick="selectProfessional(null)">
+    <div class="prof-card ${!state.selectedProfessional?.id ? 'selected' : ''}" onclick="selectProfessional(null, this)">
       <div class="prof-avatar">🏥</div>
       <div class="prof-name">Cualquier disponible</div>
       <div class="prof-specialty">Primer profesional libre</div>
     </div>
     ${(data || []).map(p => `
       <div class="prof-card ${state.selectedProfessional?.id === p.id ? 'selected' : ''}" 
-           onclick="selectProfessional('${p.id}')">
+           onclick="selectProfessional('${p.id}', this)">
         <div class="prof-avatar">${p.avatar_url ? `<img src="${p.avatar_url}" alt="${p.full_name}"/>` : (p.role === 'groomer' ? '✂️' : '👨‍⚕️')}</div>
         <div class="prof-name">${p.full_name}</div>
         <div class="prof-specialty">${p.specialty || getRoleLabel(p.role)}</div>
@@ -165,7 +185,7 @@ function getRoleLabel(role) {
   return labels[role] || role;
 }
 
-window.selectProfessional = function(id) {
+window.selectProfessional = function(id, el) {
   if (id) {
     state.selectedProfessional = state.professionals.find(p => p.id === id);
   } else {
@@ -173,7 +193,7 @@ window.selectProfessional = function(id) {
   }
   // Visual feedback
   document.querySelectorAll('.prof-card').forEach(c => c.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  if (el) el.classList.add('selected');
   setTimeout(() => goToStep(3), 300);
 };
 
@@ -262,7 +282,7 @@ async function loadTimeSlots() {
   const dateStr = state.selectedDate.toISOString().split('T')[0];
   let query = supabase
     .from('appointments')
-    .select('date_time, duration_min')
+    .select('date_time')
     .gte('date_time', `${dateStr}T00:00:00`)
     .lte('date_time', `${dateStr}T23:59:59`)
     .not('status', 'eq', 'cancelada');
@@ -302,14 +322,14 @@ async function loadTimeSlots() {
 
   grid.innerHTML = availableSlots.map(s => {
     const isSelected = state.selectedTime === s;
-    return `<button class="time-slot ${isSelected ? 'selected' : ''}" onclick="selectTime('${s}')">${s}</button>`;
+    return `<button class="time-slot ${isSelected ? 'selected' : ''}" onclick="selectTime('${s}', this)">${s}</button>`;
   }).join('');
 }
 
-window.selectTime = function(time) {
+window.selectTime = function(time, el) {
   state.selectedTime = time;
   document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  if (el) el.classList.add('selected');
   setTimeout(() => goToStep(4), 300);
 };
 
@@ -352,29 +372,33 @@ async function confirmBooking() {
     const { data: { session } } = await supabase.auth.getSession();
     
     let petId = null;
-    let bookedBy = null;
     const notes = document.getElementById('guestNotes')?.value || '';
     const guestName = document.getElementById('guestName')?.value || '';
     const guestPhone = document.getElementById('guestPhone')?.value || '';
     const guestEmail = document.getElementById('guestEmail')?.value || '';
     const guestPetName = document.getElementById('guestPetName')?.value || '';
 
-    if (session) {
-      // Get user's profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .single();
-      bookedBy = profile?.id;
+    if (!session) {
+      throw new Error('Debes iniciar sesión para confirmar la cita.');
+    }
 
-      // Get first pet (or create one)
-      const { data: pets } = await supabase
-        .from('pets')
-        .select('id')
-        .eq('owner_id', profile?.id)
-        .limit(1);
-      petId = pets?.[0]?.id;
+    // Get user's profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .single();
+
+    // Get first pet (mínimo requerido por schema base)
+    const { data: pets } = await supabase
+      .from('pets')
+      .select('id')
+      .eq('owner_id', profile?.id)
+      .limit(1);
+    petId = pets?.[0]?.id;
+
+    if (!petId) {
+      throw new Error('Debes registrar al menos una mascota antes de agendar.');
     }
 
     // Build combined notes with guest info
@@ -387,20 +411,21 @@ async function confirmBooking() {
     ].filter(Boolean).join(' | ');
 
     // Determine service_type from service
-    const serviceType = mapServiceType(state.selectedService.specialty);
+    const classifier = getServiceClassifier(state.selectedService);
+    const serviceType = mapServiceType(classifier);
 
     const { error } = await supabase.from('appointments').insert({
-      pet_id: petId || null,
+      pet_id: petId,
+      service_id: state.selectedService?.id || null,
       vet_id: state.selectedProfessional?.id || null,
+      booked_by: profile?.id || null,
       service_type: serviceType,
-      service_id: state.selectedService.id,
       date_time: dateTime.toISOString(),
-      status: 'pendiente',
-      triage_level: state.selectedService.specialty === 'urgencia' ? 'urgente' : 'normal',
-      notes: combinedNotes,
-      booked_by: bookedBy || null,
       source: 'web',
-      duration_min: state.selectedService.duration_min,
+      duration_min: state.selectedService?.duration_min || 30,
+      status: 'pendiente',
+      triage_level: classifier === 'urgencia' ? 'urgente' : 'normal',
+      notes: combinedNotes,
     });
 
     if (error) throw error;
@@ -424,8 +449,17 @@ async function confirmBooking() {
 
 function mapServiceType(specialty) {
   const map = {
-    general: 'consulta', cirugia: 'cirugia', urgencia: 'urgencia',
-    peluqueria: 'peluqueria', laboratorio: 'control',
+    general: 'consulta',
+    consulta: 'consulta',
+    cirugia: 'cirugia',
+    urgencia: 'urgencia',
+    peluqueria: 'peluqueria',
+    estetica: 'peluqueria',
+    guarderia: 'guarderia',
+    laboratorio: 'control',
+    preventivo: 'control',
+    nutricion: 'control',
+    teleconsulta: 'consulta',
     dermatologia: 'consulta', cardiologia: 'consulta', traumatologia: 'consulta'
   };
   return map[specialty] || 'consulta';
