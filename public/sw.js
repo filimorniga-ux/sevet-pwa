@@ -2,18 +2,7 @@
  * SEVET Service Worker
  * Offline caching + push notification support
  */
-const CACHE_NAME = 'sevet-v2';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/manifest.json',
-  '/assets/images/logo.png',
-  '/pages/agendar.html',
-  '/pages/auth.html',
-  '/pages/quienes-somos.html',
-  '/pages/mi-mascota.html',
-];
+const CACHE_NAME = 'sevet-v3';
 
 // Install
 self.addEventListener('install', (event) => {

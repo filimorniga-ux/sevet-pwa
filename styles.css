@@ -236,8 +236,14 @@ body {
 }
 .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(139,45,139,0.5); }
 .nav-cta::after { display: none !important; }
-.nav-burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+.nav-burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; z-index: 10001; position: relative; }
 .nav-burger span { width: 24px; height: 2px; background: var(--gray-800); border-radius: 99px; transition: var(--transition); }
+.nav-close-btn {
+  display: none; position: absolute; top: 1.5rem; right: 1.5rem;
+  background: none; border: none; font-size: 2rem; cursor: pointer;
+  color: var(--gray-700); z-index: 10002; line-height: 1;
+}
+.nav-close-btn:hover { color: var(--blue-600); }
 
 /* ─────────────────────────────────────────
    HERO SECTION
@@ -901,13 +907,16 @@ section { position: relative; z-index: 1; }
   .product-card { min-width: calc(50% - 0.75rem); }
 }
 @media (max-width: 768px) {
-  .nav-links { display: none; }
+  .nav-links { display: none !important; }
   .nav-links.open {
-    display: flex; flex-direction: column; position: fixed; inset: 0;
-    background: var(--white); align-items: center; justify-content: center;
-    gap: 2rem; font-size: 1.5rem; z-index: 999;
+    display: flex !important; flex-direction: column; position: fixed; inset: 0;
+    background: #ffffff; align-items: center; justify-content: center;
+    gap: 1.5rem; font-size: 1.3rem; z-index: 10000;
+    padding: 2rem; overflow-y: auto;
   }
-  .nav-links.open a { color: var(--gray-800); }
+  .nav-links.open a { color: var(--gray-800); font-size: 1.1rem; }
+  .nav-links.open a:hover { color: var(--blue-600); }
+  .nav-links.open .nav-close-btn { display: block; }
   .nav-burger { display: flex; }
   .bento-card.span-4, .bento-card.span-6, .bento-card.span-3, .bento-card.span-8 { grid-column: span 12; }
   .footer-grid { grid-template-columns: 1fr; }
@@ -2512,7 +2521,7 @@ section { position: relative; z-index: 1; }
   .team-grid { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: 1fr; }
   .stats-grid, .kpi-grid { grid-template-columns: 1fr; }
-  .nav-links { display: none; }
+  /* Bug fix: removed duplicate .nav-links display:none that blocked .open */
   .hero-content h1 { font-size: 1.7rem; }
   .identity-hero-content { padding: 2rem 1rem; }
   .identity-section { padding: 2.5rem 1rem; }
