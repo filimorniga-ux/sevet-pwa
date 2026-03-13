@@ -5,11 +5,11 @@
 
 import { supabase } from '../supabase.js';
 
-// ── Estado del formulario ──
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
-let currentMonth = new Date();
+let selectedVet = null;
+let currentMonth = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
 
 // ── Servicios disponibles ──
 const SERVICES = {
@@ -18,6 +18,8 @@ const SERVICES = {
   urgencia: { label: 'Urgencia', icon: '🚨', triage: 'urgente', duration: 45 },
   cirugia:  { label: 'Cirugía', icon: '🔬', triage: 'prioritario', duration: 90 },
   control:  { label: 'Control', icon: '📋', triage: 'normal', duration: 20 },
+  peluqueria: { label: 'Peluquería', icon: '✂️', triage: 'normal', duration: 60 },
+  guarderia:  { label: 'Guardería', icon: '🏠', triage: 'normal', duration: 480 },
 };
 
 // ── Horarios disponibles ──
@@ -29,42 +31,75 @@ const TIME_SLOTS = [
   '22:00', '22:30', '23:00', '23:30', '00:00', '00:30',
 ];
 
+// ── Veterinarios (cargados desde Supabase o fallback) ──
+let availableVets = [
+  { id: null, name: 'Sin preferencia', specialty: 'Cualquier disponible' },
+];
+
 // ── Inicializar módulo ──
 export function initAgendamiento() {
   const calendarEl = document.getElementById('calendarGrid');
-  if (!calendarEl) return; // no estamos en la página de agendar
+  if (!calendarEl) return;
 
-  // Service cards click
   document.querySelectorAll('[data-service]').forEach(card => {
     card.addEventListener('click', () => selectService(card.dataset.service));
   });
 
-  // Nav buttons
   document.getElementById('prevMonth')?.addEventListener('click', () => changeMonth(-1));
   document.getElementById('nextMonth')?.addEventListener('click', () => changeMonth(1));
 
+  loadVets();
   renderCalendar();
 }
 
-// ── Seleccionar servicio ──
+// ── Cargar veterinarios desde Supabase ──
+async function loadVets() {
+  try {
+    const { data } = await supabase.from('profiles').select('id, full_name, role').eq('role', 'vet');
+    if (data && data.length > 0) {
+      availableVets = [
+        { id: null, name: 'Sin preferencia', specialty: 'Cualquier disponible' },
+        ...data.map(v => ({ id: v.id, name: v.full_name, specialty: 'Veterinario' }))
+      ];
+    }
+  } catch { /* use fallback vets */ }
+  renderVetSelector();
+}
+
+// ── Renderizar selector de veterinario ──
+function renderVetSelector() {
+  const container = document.getElementById('vetSelector');
+  if (!container) return;
+  container.innerHTML = availableVets.map(v => `
+    <button class="vet-option ${selectedVet === v.id ? 'selected' : ''}" onclick="window._selectVet(${v.id === null ? 'null' : `'${v.id}'`})">
+      <span class="vet-icon">🩺</span>
+      <span class="vet-name">${v.name}</span>
+      <span class="vet-spec">${v.specialty}</span>
+    </button>
+  `).join('');
+  container.style.display = 'grid';
+}
+
+window._selectVet = function(id) {
+  selectedVet = id;
+  renderVetSelector();
+  updateSummary();
+};
+
 function selectService(type) {
   selectedService = type;
   document.querySelectorAll('[data-service]').forEach(card => {
     card.classList.toggle('selected', card.dataset.service === type);
   });
   updateSummary();
-
-  // Scroll suave al calendario
   document.getElementById('calendarSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// ── Cambiar mes ──
 function changeMonth(delta) {
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
   renderCalendar();
 }
 
-// ── Renderizar calendario ──
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const label = document.getElementById('calendarMonthLabel');
@@ -72,24 +107,20 @@ function renderCalendar() {
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   label.textContent = `${monthNames[month]} ${year}`;
 
-  // Primer día y total de días
-  const firstDay = new Date(year, month, 1).getDay(); // 0=Dom
+  const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Generar HTML
   let html = '';
-  // Días vacíos al inicio
   for (let i = 0; i < firstDay; i++) {
     html += '<div class="cal-day empty"></div>';
   }
-  // Días del mes
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d);
     const isPast = date < today;
@@ -109,7 +140,6 @@ function renderCalendar() {
   grid.innerHTML = html;
 }
 
-// ── Seleccionar fecha (expuesta a window para onclick) ──
 window._selectDate = function(dateStr) {
   selectedDate = new Date(dateStr + 'T00:00:00');
   renderCalendar();
@@ -117,7 +147,6 @@ window._selectDate = function(dateStr) {
   updateSummary();
 };
 
-// ── Renderizar horarios ──
 function renderTimeSlots() {
   const container = document.getElementById('timeSlots');
   if (!container || !selectedDate) return;
@@ -132,14 +161,12 @@ function renderTimeSlots() {
   container.style.display = 'block';
 }
 
-// ── Seleccionar hora ──
 window._selectTime = function(time) {
   selectedTime = time;
   renderTimeSlots();
   updateSummary();
 };
 
-// ── Actualizar resumen ──
 function updateSummary() {
   const summaryEl = document.getElementById('bookingSummary');
   const confirmBtn = document.getElementById('confirmBtn');
@@ -154,7 +181,7 @@ function updateSummary() {
     html += `<div class="summary-item"><span class="summary-label">Duración est.</span><span class="summary-value">${svc.duration} min</span></div>`;
   }
   if (selectedDate) {
-    const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Santiago' };
     html += `<div class="summary-item"><span class="summary-label">Fecha</span><span class="summary-value">${selectedDate.toLocaleDateString('es-CL', opts)}</span></div>`;
   }
   if (selectedTime) {
@@ -174,7 +201,7 @@ function updateSummary() {
   }
 }
 
-// ── Confirmar cita ──
+// ── Confirmar cita → Supabase ──
 window._confirmBooking = async function() {
   if (!selectedService || !selectedDate || !selectedTime) return;
 
@@ -184,29 +211,83 @@ window._confirmBooking = async function() {
     confirmBtn.textContent = '⏳ Procesando...';
   }
 
-  // TODO: Verificar autenticación y crear cita en Supabase
-  // Por ahora, mostrar éxito simulado
-  setTimeout(() => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      const msg = document.getElementById('authMessage') || confirmBtn;
+      if (confirmBtn) {
+        confirmBtn.textContent = '🔐 Debes iniciar sesión';
+        confirmBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        setTimeout(() => { window.location.href = '/pages/auth.html'; }, 1500);
+      }
+      return;
+    }
+
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    const dateTime = `${dateStr}T${selectedTime}:00-03:00`;
+
+    const { error } = await supabase.from('appointments').insert({
+      pet_id: null,
+      vet_id: selectedVet || null,
+      service_type: selectedService,
+      date_time: dateTime,
+      status: 'pendiente',
+      triage_level: SERVICES[selectedService]?.triage || 'normal',
+      notes: `Reserva online - ${SERVICES[selectedService]?.label}`,
+    });
+
+    if (error) throw error;
+
     if (confirmBtn) {
       confirmBtn.textContent = '✅ ¡Cita Reservada!';
       confirmBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    }
 
-      // Reset después de 3 seg
+    // Webhook a Make.com para notificaciones
+    try {
+      await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'new_appointment',
+          service: SERVICES[selectedService]?.label,
+          date: dateStr,
+          time: selectedTime,
+          userEmail: user.email,
+        }),
+      });
+    } catch { /* webhook failure is non-blocking */ }
+
+    // Reset after 3s
+    setTimeout(() => {
+      selectedService = null;
+      selectedDate = null;
+      selectedTime = null;
+      selectedVet = null;
+      document.querySelectorAll('[data-service]').forEach(c => c.classList.remove('selected'));
+      renderCalendar();
+      const timeSlots = document.getElementById('timeSlots');
+      if (timeSlots) timeSlots.style.display = 'none';
+      renderVetSelector();
+      updateSummary();
+      if (confirmBtn) {
+        confirmBtn.textContent = 'Completa la selección';
+        confirmBtn.disabled = true;
+        confirmBtn.style.background = '';
+      }
+    }, 3000);
+
+  } catch (err) {
+    console.error('Error booking:', err);
+    if (confirmBtn) {
+      confirmBtn.textContent = '❌ Error al reservar. Intenta de nuevo.';
+      confirmBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
       setTimeout(() => {
-        selectedService = null;
-        selectedDate = null;
-        selectedTime = null;
-        document.querySelectorAll('[data-service]').forEach(c => c.classList.remove('selected'));
-        renderCalendar();
-        const timeSlots = document.getElementById('timeSlots');
-        if (timeSlots) timeSlots.style.display = 'none';
-        updateSummary();
-        if (confirmBtn) {
-          confirmBtn.textContent = 'Completa la selección';
-          confirmBtn.disabled = true;
-          confirmBtn.style.background = '';
-        }
+        confirmBtn.textContent = 'Confirmar Cita →';
+        confirmBtn.disabled = false;
+        confirmBtn.style.background = '';
       }, 3000);
     }
-  }, 1200);
+  }
 };

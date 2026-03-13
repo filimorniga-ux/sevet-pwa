@@ -243,7 +243,7 @@ window.carouselPrev = function() { carouselIndex--; updateCarousel(); };
 window.addEventListener('resize', updateCarousel);
 
 // ── WIDGET IA (OpenAI via Supabase Edge Function) ──
-const CHAT_AI_URL = 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/chat-ai';
+const CHAT_AI_URL = import.meta.env.VITE_CHAT_AI_URL || 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/chat-ai';
 let chatHistory = [];
 
 window.toggleAI = function() {

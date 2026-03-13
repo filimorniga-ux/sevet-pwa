@@ -2,14 +2,14 @@
   "name": "SEVET – Ecosistema Pet-Tech 360",
   "short_name": "SEVET",
   "description": "Clínica Veterinaria San Alberto – Atención hasta la 1:00 AM",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a1628",
-  "theme_color": "#0d7377",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "assets/images/logo.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/images/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/assets/images/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/images/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "categories": ["health", "medical", "lifestyle"],
   "lang": "es-CL"

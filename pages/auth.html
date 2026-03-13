@@ -41,11 +41,11 @@
         </div>
         <div class="auth-field">
           <label>Email</label>
-          <input type="email" id="loginEmail" placeholder="tu@email.com" required />
+          <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="email" />
         </div>
         <div class="auth-field">
           <label>Contraseña</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" required />
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
         </div>
         <button type="submit" class="auth-submit">Iniciar Sesión</button>
         <div class="auth-divider"><span>o continúa con</span></div>
@@ -74,19 +74,19 @@
         </div>
         <div class="auth-field">
           <label>Nombre completo</label>
-          <input type="text" id="regName" placeholder="Tu nombre" required />
+          <input type="text" id="regName" placeholder="Tu nombre" required autocomplete="name" />
         </div>
         <div class="auth-field">
           <label>Email</label>
-          <input type="email" id="regEmail" placeholder="tu@email.com" required />
+          <input type="email" id="regEmail" placeholder="tu@email.com" required autocomplete="email" />
         </div>
         <div class="auth-field">
           <label>Teléfono</label>
-          <input type="tel" id="regPhone" placeholder="+56 9 1234 5678" />
+          <input type="tel" id="regPhone" placeholder="+56 9 1234 5678" autocomplete="tel" pattern="\+?56\s?9?\s?\d{4}\s?\d{4}" />
         </div>
         <div class="auth-field">
           <label>Contraseña</label>
-          <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" required minlength="8" />
+          <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password" />
         </div>
         <div class="auth-field" id="staffCodeField" style="display:none">
           <label>Código de Staff</label>

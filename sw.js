@@ -1,18 +1,21 @@
-const CACHE_NAME = 'sevet-v1.0.0';
+const CACHE_NAME = 'sevet-v2.0.0';
 const ASSETS = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
   '/assets/images/hero-dog.png',
   '/assets/images/hero-cat.png',
-  '/assets/images/premium-food.png',
   '/assets/images/logo.png',
+  '/assets/images/product-dog-food.png',
+  '/assets/images/product-cat-food.png',
+  '/assets/images/product-supplements.png',
+  '/assets/images/product-treats.png',
   '/assets/images/before-after.png'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
@@ -24,7 +27,22 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Skip non-GET and API/Supabase requests
+  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if (url.hostname.includes('supabase') || url.hostname.includes('openai')) return;
+
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match('/index.html')))
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(response => {
+        // Cache successful responses for assets
+        if (response.ok && url.pathname.match(/\.(js|css|png|jpg|webp|woff2?)$/)) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match('/index.html'));
+    })
   );
 });
