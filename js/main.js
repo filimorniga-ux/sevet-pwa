@@ -136,12 +136,29 @@ function initNavScroll() {
 }
 
 // ── MENÚ MOBILE ──
+let scrollPos = 0;
 window.toggleNav = function() {
-  document.getElementById('navLinks').classList.toggle('open');
+  const navLinks = document.getElementById('navLinks');
+  const isOpen = navLinks.classList.contains('open');
+  
+  if (isOpen) {
+    // Close menu — restore scroll
+    navLinks.classList.remove('open');
+    document.body.classList.remove('nav-open');
+    window.scrollTo(0, scrollPos);
+  } else {
+    // Open menu — lock scroll
+    scrollPos = window.pageYOffset;
+    navLinks.classList.add('open');
+    document.body.classList.add('nav-open');
+    document.body.style.top = `-${scrollPos}px`;
+  }
 };
 document.addEventListener('click', e => {
   if (e.target.closest('#navLinks a')) {
     document.getElementById('navLinks').classList.remove('open');
+    document.body.classList.remove('nav-open');
+    window.scrollTo(0, scrollPos);
   }
 });
 

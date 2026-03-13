@@ -909,15 +909,30 @@ section { position: relative; z-index: 1; }
 @media (max-width: 768px) {
   .nav-links { display: none !important; }
   .nav-links.open {
-    display: flex !important; flex-direction: column; position: fixed; inset: 0;
-    background: #ffffff; align-items: center; justify-content: center;
-    gap: 1.5rem; font-size: 1.3rem; z-index: 10000;
-    padding: 2rem; overflow-y: auto;
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh; /* iOS safe dynamic viewport height */
+    background: #ffffff;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 1.3rem;
+    z-index: 99999;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    list-style: none;
   }
   .nav-links.open a { color: var(--gray-800); font-size: 1.1rem; }
   .nav-links.open a:hover { color: var(--blue-600); }
   .nav-links.open .nav-close-btn { display: block; }
   .nav-burger { display: flex; }
+  body.nav-open { overflow: hidden !important; position: fixed; width: 100%; }
   .bento-card.span-4, .bento-card.span-6, .bento-card.span-3, .bento-card.span-8 { grid-column: span 12; }
   .footer-grid { grid-template-columns: 1fr; }
   .hero-content { padding: 0 5%; }
