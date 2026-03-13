@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --port 4242 --open",
     "build": "vite build",
-    "preview": "vite preview --port 4242"
+    "preview": "vite preview --port 4242",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -17,5 +19,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
     "vite": "^8.0.0"
+  },
+  "devDependencies": {
+    "jsdom": "^28.1.0",
+    "vitest": "^4.1.0"
   }
 }

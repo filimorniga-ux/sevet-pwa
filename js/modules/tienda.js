@@ -1,143 +1,250 @@
 /* =========================================
-   SEVET – Módulo Tienda Premium
-   Catálogo de productos con carrito y filtros
+   SEVET – Módulo Farmacia Inteligente
+   Catálogo conectado a Supabase con carrito,
+   subcategorías, stock real y validación receta
    ========================================= */
 
-const PRODUCTS = [
-  {
-    id: 1, name: 'Royal Canin Veterinary Diet', category: 'alimento',
-    price: 45990, oldPrice: 52990, image: '🥫', rating: 4.8,
-    desc: 'Alimento terapéutico para perros con sensibilidad digestiva. 10kg.',
-    badge: 'Más vendido', tags: ['perro', 'digestivo']
-  },
-  {
-    id: 2, name: 'Hills Science Diet Indoor', category: 'alimento',
-    price: 38990, oldPrice: null, image: '🍗', rating: 4.6,
-    desc: 'Fórmula para gatos de interior. Control de peso y bolas de pelo. 7kg.',
-    badge: null, tags: ['gato', 'indoor']
-  },
-  {
-    id: 3, name: 'Frontline Plus Triple Acción', category: 'farmacia',
-    price: 18990, oldPrice: 22990, image: '💊', rating: 4.9,
-    desc: 'Pipeta antiparasitaria. Protección 30 días contra pulgas y garrapatas.',
-    badge: 'Oferta', tags: ['perro', 'gato', 'desparasitante']
-  },
-  {
-    id: 4, name: 'Collar Isabelino Premium', category: 'accesorios',
-    price: 12990, oldPrice: null, image: '🛡️', rating: 4.3,
-    desc: 'Collar protector post-operatorio transparente. Ajustable y cómodo.',
-    badge: null, tags: ['perro', 'post-cirugía']
-  },
-  {
-    id: 5, name: 'Kit Dental Veterinario', category: 'higiene',
-    price: 15990, oldPrice: 19990, image: '🪥', rating: 4.7,
-    desc: 'Cepillo triple acción + pasta enzimática sabor pollo. Uso profesional.',
-    badge: 'Recomendado', tags: ['perro', 'gato', 'dental']
-  },
-  {
-    id: 6, name: 'Pro Plan Cachorro Razas Medianas', category: 'alimento',
-    price: 42990, oldPrice: null, image: '🐶', rating: 4.5,
-    desc: 'Alimento premium con OptiStart para cachorros de 2-12 meses. 12kg.',
-    badge: null, tags: ['perro', 'cachorro']
-  },
-  {
-    id: 7, name: 'Shampoo Medicado Clorhexidina', category: 'higiene',
-    price: 8990, oldPrice: null, image: '🧴', rating: 4.4,
-    desc: 'Shampoo antibacteriano y antifúngico. Para dermatitis y pioderma.',
-    badge: null, tags: ['perro', 'dermatología']
-  },
-  {
-    id: 8, name: 'Suplemento Articular Condroitina', category: 'farmacia',
-    price: 24990, oldPrice: 29990, image: '💪', rating: 4.8,
-    desc: 'Glucosamina + Condroitina + MSM. Para articulaciones de perros senior.',
-    badge: 'Veterinario recomienda', tags: ['perro', 'senior', 'articular']
-  },
-];
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://zyvwcxsqdbegzjlmgtou.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5dndjeHNxZGJlZ3pqbG1ndG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTgwODMsImV4cCI6MjA4ODkzNDA4M30.aSdgRgNZI35jQ3MawGjDNzsDqdzCrRbZikX4MElnJKI';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos', icon: '🏪' },
   { id: 'alimento', label: 'Alimentos', icon: '🥫' },
-  { id: 'farmacia', label: 'Farmacia', icon: '💊' },
+  { id: 'medicamento', label: 'Farmacia', icon: '💊' },
+  { id: 'suplemento', label: 'Suplementos', icon: '💪' },
   { id: 'higiene', label: 'Higiene', icon: '🧴' },
-  { id: 'accesorios', label: 'Accesorios', icon: '🛡️' },
+  { id: 'accesorio', label: 'Accesorios', icon: '🛡️' },
 ];
 
-let activeCategory = 'todos';
-let cart = [];
+const SUBCATEGORIES = {
+  medicamento: [
+    { id: 'all', label: 'Todos' },
+    { id: 'antiparasitario_interno', label: '🪱 Antiparasitario Interno' },
+    { id: 'antiparasitario_externo', label: '🦟 Antiparasitario Externo' },
+    { id: 'dermatologia', label: '🧴 Dermatología' },
+    { id: 'otico', label: '👂 Ótico' },
+    { id: 'urgencia', label: '🚨 Urgencia' },
+  ],
+  suplemento: [
+    { id: 'all', label: 'Todos' },
+    { id: 'articular', label: '🦴 Articular' },
+    { id: 'digestivo', label: '🫧 Digestivo' },
+    { id: 'renal', label: '🫘 Renal' },
+    { id: 'cardiovascular', label: '❤️ Cardiovascular' },
+  ],
+};
 
-export function initTienda() {
+// Emoji fallback por categoría
+const CAT_EMOJI = {
+  alimento: '🥫', medicamento: '💊', suplemento: '💪',
+  higiene: '🧴', accesorio: '🛡️',
+};
+
+let products = [];
+let activeCategory = 'todos';
+let activeSubcategory = 'all';
+let cart = JSON.parse(localStorage.getItem('sevet_cart') || '[]');
+
+export async function initTienda() {
   const container = document.getElementById('tienda-container');
   if (!container) return;
+
   renderCategoryFilters();
-  renderProducts();
   renderCart();
+
+  // Fetch products from Supabase
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_active', true)
+    .order('category')
+    .order('name');
+
+  if (error) {
+    console.error('Error cargando productos:', error);
+    document.getElementById('productsGrid').innerHTML = `
+      <div class="tienda-error">
+        <span>⚠️</span>
+        <p>No se pudieron cargar los productos. Intenta de nuevo.</p>
+        <button class="btn-secondary" onclick="location.reload()">Reintentar</button>
+      </div>`;
+    return;
+  }
+
+  products = data || [];
+  renderProducts();
 }
 
 function renderCategoryFilters() {
   const filtersEl = document.getElementById('categoryFilters');
   if (!filtersEl) return;
-  filtersEl.innerHTML = CATEGORIES.map(c => `
-    <button class="cat-filter ${c.id === activeCategory ? 'active' : ''}"
-            onclick="window._filterCategory('${c.id}')">
-      <span class="cat-icon">${c.icon}</span>
-      <span class="cat-label">${c.label}</span>
-    </button>
-  `).join('');
+
+  filtersEl.innerHTML = `
+    <div class="cat-filters-main">
+      ${CATEGORIES.map(c => `
+        <button class="cat-filter ${c.id === activeCategory ? 'active' : ''}"
+                onclick="window._filterCategory('${c.id}')">
+          <span class="cat-icon">${c.icon}</span>
+          <span class="cat-label">${c.label}</span>
+        </button>
+      `).join('')}
+    </div>
+    ${SUBCATEGORIES[activeCategory] ? `
+      <div class="cat-filters-sub">
+        ${SUBCATEGORIES[activeCategory].map(s => `
+          <button class="cat-sub-filter ${s.id === activeSubcategory ? 'active' : ''}"
+                  onclick="window._filterSubcategory('${s.id}')">
+            ${s.label}
+          </button>
+        `).join('')}
+      </div>` : ''}
+  `;
 }
 
 window._filterCategory = function(cat) {
   activeCategory = cat;
+  activeSubcategory = 'all';
   renderCategoryFilters();
   renderProducts();
 };
 
+window._filterSubcategory = function(sub) {
+  activeSubcategory = sub;
+  renderCategoryFilters();
+  renderProducts();
+};
+
+function getStockInfo(stock) {
+  if (stock <= 0) return { class: 'stock-out', label: 'Agotado', color: '#ef4444' };
+  if (stock <= 5) return { class: 'stock-low', label: `¡Solo ${stock}!`, color: '#f59e0b' };
+  if (stock <= 15) return { class: 'stock-med', label: `${stock} disponibles`, color: '#3b82f6' };
+  return { class: 'stock-ok', label: 'En stock', color: '#10b981' };
+}
+
 function renderProducts() {
   const grid = document.getElementById('productsGrid');
   if (!grid) return;
-  const filtered = activeCategory === 'todos'
-    ? PRODUCTS
-    : PRODUCTS.filter(p => p.category === activeCategory);
 
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card">
-      ${p.badge ? `<div class="product-badge">${p.badge}</div>` : ''}
-      <div class="product-image">${p.image}</div>
-      <div class="product-info">
-        <h4 class="product-name">${p.name}</h4>
-        <p class="product-desc">${p.desc}</p>
-        <div class="product-rating">
-          ${'★'.repeat(Math.floor(p.rating))}${'☆'.repeat(5 - Math.floor(p.rating))}
-          <span class="rating-num">${p.rating}</span>
+  let filtered = products;
+  if (activeCategory !== 'todos') {
+    filtered = filtered.filter(p => p.category === activeCategory);
+  }
+  if (activeSubcategory !== 'all') {
+    filtered = filtered.filter(p => p.subcategory === activeSubcategory);
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="tienda-empty">
+      <span>🔍</span><p>No hay productos en esta categoría</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const stock = getStockInfo(p.stock);
+    const emoji = CAT_EMOJI[p.category] || '📦';
+    return `
+      <div class="product-card ${p.stock <= 0 ? 'out-of-stock' : ''}">
+        ${p.is_prescription ? '<div class="product-badge rx-badge">🔒 Requiere Receta</div>' : ''}
+        ${p.stock <= 5 && p.stock > 0 ? '<div class="product-badge low-stock-badge">⚡ Últimas unidades</div>' : ''}
+        <div class="product-image">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}"/>` : `<span class="product-emoji">${emoji}</span>`}</div>
+        <div class="product-info">
+          <div class="product-cat-tag">${p.subcategory ? p.subcategory.replace(/_/g, ' ') : p.category}</div>
+          <h4 class="product-name">${p.name}</h4>
+          <p class="product-desc">${p.description || ''}</p>
+          <div class="product-stock-row">
+            <span class="stock-indicator" style="background:${stock.color}"></span>
+            <span class="stock-label">${stock.label}</span>
+          </div>
+          <div class="product-pricing">
+            <span class="product-price">$${p.price_clp.toLocaleString('es-CL')}</span>
+          </div>
+          <button class="product-add-btn" 
+                  ${p.stock <= 0 ? 'disabled' : ''}
+                  onclick="window._addToCart('${p.id}')">
+            ${p.stock <= 0 ? '🚫 Agotado' : '🛒 Agregar'}
+          </button>
         </div>
-        <div class="product-pricing">
-          <span class="product-price">$${p.price.toLocaleString('es-CL')}</span>
-          ${p.oldPrice ? `<span class="product-old-price">$${p.oldPrice.toLocaleString('es-CL')}</span>` : ''}
-        </div>
-        <button class="product-add-btn" onclick="window._addToCart(${p.id})">
-          🛒 Agregar
-        </button>
-      </div>
-    </div>
-  `).join('');
+      </div>`;
+  }).join('');
 }
 
 window._addToCart = function(id) {
+  const product = products.find(p => p.id === id);
+  if (!product || product.stock <= 0) return;
+
   const existing = cart.find(c => c.id === id);
   if (existing) {
+    if (existing.qty >= product.stock) {
+      showToast('⚠️ No hay más stock disponible');
+      return;
+    }
     existing.qty++;
   } else {
-    const product = PRODUCTS.find(p => p.id === id);
-    cart.push({ ...product, qty: 1 });
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: product.price_clp,
+      category: product.category,
+      is_prescription: product.is_prescription,
+      image: CAT_EMOJI[product.category] || '📦',
+      qty: 1,
+    });
   }
+  saveCart();
   renderCart();
-  // Flash animation
-  const badge = document.getElementById('cartBadge');
-  if (badge) { badge.classList.add('pop'); setTimeout(() => badge.classList.remove('pop'), 300); }
+  showToast(`✅ ${product.name} agregado`);
 };
 
 window._removeFromCart = function(id) {
   cart = cart.filter(c => c.id !== id);
+  saveCart();
   renderCart();
+};
+
+window._updateQty = function(id, delta) {
+  const item = cart.find(c => c.id === id);
+  if (!item) return;
+  const product = products.find(p => p.id === id);
+  item.qty += delta;
+  if (item.qty <= 0) { cart = cart.filter(c => c.id !== id); }
+  else if (product && item.qty > product.stock) {
+    item.qty = product.stock;
+    showToast('⚠️ Stock máximo alcanzado');
+  }
+  saveCart();
+  renderCart();
+};
+
+function saveCart() { localStorage.setItem('sevet_cart', JSON.stringify(cart)); }
+
+function showToast(msg) {
+  const existing = document.querySelector('.tienda-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'tienda-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+window._checkout = async function() {
+  // Check prescription products
+  const rxItems = cart.filter(c => c.is_prescription);
+  if (rxItems.length > 0) {
+    const names = rxItems.map(r => r.name).join(', ');
+    const confirmed = confirm(
+      `⚠️ Los siguientes productos requieren receta veterinaria:\n\n${names}\n\n¿Tienes una receta vigente del Dr. Sánchez o de otro veterinario?`
+    );
+    if (!confirmed) return;
+  }
+
+  showToast('🛒 Procesando pedido...');
+  // Future: integrate with payment gateway
 };
 
 function renderCart() {
@@ -168,9 +275,15 @@ function renderCart() {
           <span class="cart-item-icon">${item.image}</span>
           <div class="cart-item-info">
             <div class="cart-item-name">${item.name}</div>
-            <div class="cart-item-qty">×${item.qty} · $${(item.price * item.qty).toLocaleString('es-CL')}</div>
+            ${item.is_prescription ? '<div class="cart-rx-tag">🔒 Receta</div>' : ''}
+            <div class="cart-item-qty-controls">
+              <button class="qty-btn" onclick="window._updateQty('${item.id}', -1)">−</button>
+              <span class="qty-num">${item.qty}</span>
+              <button class="qty-btn" onclick="window._updateQty('${item.id}', 1)">+</button>
+              <span class="cart-item-subtotal">$${(item.price * item.qty).toLocaleString('es-CL')}</span>
+            </div>
           </div>
-          <button class="cart-remove" onclick="window._removeFromCart(${item.id})">✕</button>
+          <button class="cart-remove" onclick="window._removeFromCart('${item.id}')">✕</button>
         </div>
       `).join('')}
     </div>
@@ -178,5 +291,5 @@ function renderCart() {
       <span>Total</span>
       <span class="cart-total-price">$${totalPrice.toLocaleString('es-CL')}</span>
     </div>
-    <button class="btn-cta cart-checkout">Proceder al Pago →</button>`;
+    <button class="btn-cta cart-checkout" onclick="window._checkout()">Proceder al Pago →</button>`;
 }

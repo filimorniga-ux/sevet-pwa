@@ -124,6 +124,12 @@ function renderRecords(filter) {
 }
 
 function renderSOAP(record) {
+  // Extract medication names from plan text
+  const planLines = record.soap.plan.split('\n');
+  const medications = planLines
+    .filter(l => /clorhexidina|cefalexina|meloxicam|tramadol|ivermectina|antibiótico|analgesia/i.test(l))
+    .map(l => l.replace(/^\d+\.\s*/, '').trim());
+
   return `
     <div class="soap-section">
       <div class="soap-block">
@@ -159,8 +165,21 @@ function renderSOAP(record) {
           <strong>📎 Adjuntos:</strong>
           ${record.attachments.map(a => `<span class="attachment-chip">${a}</span>`).join('')}
         </div>` : ''}
+      ${medications.length > 0 ? `
+        <div class="soap-actions">
+          <button class="soap-buy-btn" onclick="window._buyTreatment(${JSON.stringify(medications).replace(/"/g, '&quot;')})">
+            🛒 Comprar Tratamiento
+          </button>
+          <span class="soap-buy-hint">${medications.length} medicamento${medications.length > 1 ? 's' : ''} en el plan</span>
+        </div>` : ''}
     </div>`;
 }
+
+window._buyTreatment = function(medications) {
+  // Store in sessionStorage so tienda can pick them up
+  sessionStorage.setItem('sevet_prescription_items', JSON.stringify(medications));
+  window.location.href = '/pages/tienda.html?from=prescription';
+};
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');

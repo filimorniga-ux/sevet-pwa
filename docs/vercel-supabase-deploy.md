@@ -31,6 +31,16 @@ supabase secrets set OPENAI_API_KEY=sk-... --project-ref zyvwcxsqdbegzjlmgtou
 
 Luego vuelve a desplegar la funcion `chat-ai` si corresponde.
 
+## Secreto en Supabase (Edge Function webhook-appointment)
+
+Para habilitar envio a Make.com desde el webhook puente:
+
+```bash
+supabase secrets set MAKE_WEBHOOK_URL=https://hook.make.com/tu-webhook --project-ref zyvwcxsqdbegzjlmgtou
+```
+
+Luego vuelve a desplegar la funcion `webhook-appointment` si corresponde.
+
 ## GitHub Actions recomendadas (sin deploy)
 
 Se mantienen:
