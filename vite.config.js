@@ -25,6 +25,7 @@ export default defineConfig({
         teleconsulta: resolve(__dirname, 'pages/teleconsulta.html'),
         historial: resolve(__dirname, 'pages/historial.html'),
         imagenes: resolve(__dirname, 'pages/imagenes.html'),
+        quienesSomos: resolve(__dirname, 'pages/quienes-somos.html'),
       },
     },
   },
