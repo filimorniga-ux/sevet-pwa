@@ -7,6 +7,7 @@ import '../styles.css';
 import { initAuth } from './auth.js';
 import { initAgendamiento } from './modules/agendamiento.js';
 import { initMiMascota } from './modules/mi-mascota.js';
+import { initTienda } from './modules/tienda.js';
 
 // ── Registro Service Worker (Offline-First) ──
 if ('serviceWorker' in navigator) {
@@ -41,6 +42,7 @@ function initApp() {
   initAuth();
   initAgendamiento();
   initMiMascota();
+  initTienda();
   initCursor();
   initParticles();
   initNavScroll();

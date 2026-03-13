@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#0d7377"/>
-  <meta name="description" content="SEVET – Tienda Premium de alimentos, medicamentos y accesorios veterinarios"/>
-  <title>Tienda Premium – SEVET Pet-Tech 360</title>
-  <link rel="stylesheet" href="/styles.css"/>
+  <meta name="theme-color" content="#2563eb"/>
+  <meta name="description" content="SEVET – Tienda veterinaria premium. Alimentos, farmacia y accesorios para tu mascota."/>
+  <title>Tienda – SEVET Pet-Tech 360</title>
   <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
@@ -22,6 +21,7 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="/">Inicio</a></li>
       <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="#especialidades">Servicios</a></li>
       <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
       <li><a href="/pages/tienda.html" class="active">Tienda</a></li>
       <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
@@ -31,32 +31,30 @@
     </div>
   </nav>
 
-  <section class="section-pad shop-section" style="margin-top:80px">
+  <section class="section-pad" style="margin-top:80px">
     <div class="section-header reveal">
-      <p class="section-tag">Boutique & Farmacia Veterinaria</p>
-      <h1 class="section-title">Nutrición de Élite<br/><span class="grad">para tu Compañero</span></h1>
-      <p class="section-sub">Catálogo premium curado por nuestros veterinarios. Nutrición que se ve en el pelaje, la energía y la salud.</p>
+      <p class="section-tag">Tienda Premium</p>
+      <h1 class="section-title">Productos <span class="grad">Veterinarios</span></h1>
+      <p class="section-sub">Alimentos terapéuticos, farmacia, higiene y accesorios seleccionados por nuestros veterinarios.</p>
     </div>
 
     <!-- Filtros de categoría -->
-    <div style="display:flex;gap:0.75rem;justify-content:center;margin-bottom:3rem;flex-wrap:wrap" class="reveal">
-      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="all">🛒 Todos</button>
-      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="alimento">🥩 Alimentos</button>
-      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="medicamento">💊 Medicamentos</button>
-      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="suplemento">💪 Suplementos</button>
-      <button class="btn-secondary" style="padding:0.6rem 1.2rem;font-size:0.85rem" data-category="accesorio">🎾 Accesorios</button>
-    </div>
+    <div class="category-filters reveal" id="categoryFilters"></div>
 
-    <!-- Grid de productos (se llenará desde Supabase) -->
-    <div id="productsGrid" class="bento-grid reveal" style="grid-auto-rows:auto">
-      <div class="bento-card span-12" style="text-align:center;padding:4rem 2rem">
-        <span style="font-size:3rem;display:block;margin-bottom:1rem">🏪</span>
-        <div class="card-title">Cargando catálogo...</div>
-        <div class="card-desc" style="margin-top:0.5rem">Los productos se cargarán desde Supabase en tiempo real.</div>
-        <p style="margin-top:1.5rem;color:var(--teal-400);font-size:0.85rem;font-weight:700">🔧 Conectando con base de datos</p>
-      </div>
+    <!-- Layout: Productos + Carrito -->
+    <div class="tienda-layout reveal" id="tienda-container">
+      <div class="products-grid" id="productsGrid"></div>
+      <aside class="cart-sidebar" id="cartPanel">
+        <h3 class="panel-title">🛒 Tu Carrito</h3>
+        <div class="cart-empty">
+          <span class="cart-empty-icon">🛍️</span>
+          <p>Tu carrito está vacío</p>
+        </div>
+      </aside>
     </div>
   </section>
+
+  <span class="cart-badge" id="cartBadge">0</span>
 
   <script type="module" src="/js/main.js"></script>
 </body>
