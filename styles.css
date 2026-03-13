@@ -740,6 +740,13 @@ section { position: relative; z-index: 1; }
   border-radius: 16px; font-size: 0.85rem; line-height: 1.5;
 }
 .ai-msg.bot { background: var(--blue-50); color: var(--gray-700); border-radius: 4px 16px 16px 16px; align-self: flex-start; }
+.ai-msg.ai-typing span {
+  display: inline-block; animation: typingDot 1.2s infinite;
+  font-size: 0.9rem; margin: 0 1px; color: var(--blue-400);
+}
+.ai-msg.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-msg.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingDot { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
 .ai-msg.user { background: var(--blue-600); color: var(--white); border-radius: 16px 16px 4px 16px; align-self: flex-end; text-align: right; }
 .ai-quick-btns { padding: 0 1rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .ai-quick-btn {

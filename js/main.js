@@ -242,12 +242,15 @@ window.carouselNext = function() { carouselIndex++; updateCarousel(); };
 window.carouselPrev = function() { carouselIndex--; updateCarousel(); };
 window.addEventListener('resize', updateCarousel);
 
-// ── WIDGET IA ──
+// ── WIDGET IA (OpenAI via Supabase Edge Function) ──
+const CHAT_AI_URL = 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/chat-ai';
+let chatHistory = [];
+
 window.toggleAI = function() {
   document.getElementById('aiChat').classList.toggle('open');
 };
 
-const aiResponses = {
+const aiFallback = {
   default: '¡Gracias por tu consulta! Para atención inmediata, llama al +56 9 8419 6310 o al +56 2 2773 1554. El Dr. Sánchez y su equipo están disponibles hasta la 01:00 AM. 🐾',
   horario: '📅 Atendemos de <strong>Lunes a Viernes hasta la 01:00 AM</strong>. Para urgencias nocturnas, llama directamente al +56 9 8419 6310.',
   precio: '💰 Nuestras tarifas varían según el tipo de consulta. Te recomendamos llamar al +56 2 2773 1554 para obtener información actualizada sobre precios.',
@@ -260,12 +263,13 @@ window.aiQuick = function(text) {
   window.aiSend();
 };
 
-window.aiSend = function() {
+window.aiSend = async function() {
   const input = document.getElementById('aiInput');
   const messages = document.getElementById('aiMessages');
   const text = input.value.trim();
   if (!text) return;
 
+  // User message
   const userEl = document.createElement('div');
   userEl.className = 'ai-msg user';
   userEl.textContent = text;
@@ -273,17 +277,48 @@ window.aiSend = function() {
   input.value = '';
   messages.scrollTop = messages.scrollHeight;
 
-  const lower = text.toLowerCase();
-  let response = aiResponses.default;
-  if (lower.includes('horario') || lower.includes('hora')) response = aiResponses.horario;
-  else if (lower.includes('precio') || lower.includes('costo') || lower.includes('cuánto')) response = aiResponses.precio;
-  else if (lower.includes('urgent') || lower.includes('ahora') || lower.includes('emergencia')) response = aiResponses.urgencia;
+  // Typing indicator
+  const typingEl = document.createElement('div');
+  typingEl.className = 'ai-msg bot ai-typing';
+  typingEl.innerHTML = '<span>●</span><span>●</span><span>●</span>';
+  messages.appendChild(typingEl);
+  messages.scrollTop = messages.scrollHeight;
 
-  setTimeout(() => {
+  try {
+    const res = await fetch(CHAT_AI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, history: chatHistory }),
+    });
+
+    typingEl.remove();
+
+    if (res.ok) {
+      const data = await res.json();
+      chatHistory.push({ role: 'user', content: text });
+      chatHistory.push({ role: 'assistant', content: data.reply });
+      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+      const botEl = document.createElement('div');
+      botEl.className = 'ai-msg bot';
+      botEl.innerHTML = data.reply.replace(/\n/g, '<br>');
+      messages.appendChild(botEl);
+    } else {
+      throw new Error('API error');
+    }
+  } catch {
+    typingEl.remove();
+    // Fallback local
+    const lower = text.toLowerCase();
+    let response = aiFallback.default;
+    if (lower.includes('horario') || lower.includes('hora')) response = aiFallback.horario;
+    else if (lower.includes('precio') || lower.includes('costo') || lower.includes('cuánto')) response = aiFallback.precio;
+    else if (lower.includes('urgent') || lower.includes('ahora') || lower.includes('emergencia')) response = aiFallback.urgencia;
+
     const botEl = document.createElement('div');
     botEl.className = 'ai-msg bot';
     botEl.innerHTML = response;
     messages.appendChild(botEl);
-    messages.scrollTop = messages.scrollHeight;
-  }, 700);
+  }
+  messages.scrollTop = messages.scrollHeight;
 };
