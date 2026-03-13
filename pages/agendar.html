@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#0d7377"/>
+  <meta name="theme-color" content="#2563eb"/>
   <meta name="description" content="SEVET – Agenda tu cita veterinaria con sistema inteligente de triage"/>
   <title>Agendar Cita – SEVET Pet-Tech 360</title>
-  <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
@@ -39,64 +38,83 @@
       <p class="section-sub">Selecciona el tipo de atención, elige fecha y hora, y nuestro sistema de triage priorizará tu caso automáticamente.</p>
     </div>
 
-    <div class="bento-grid" style="grid-auto-rows:auto">
-      <!-- Selector de Servicios -->
-      <div class="bento-card span-4 reveal" style="--delay:0.1s" id="serviceConsulta">
-        <div class="card-overlay">
-          <span class="card-icon">🩺</span>
-          <div>
-            <div class="card-tag">Servicio</div>
-            <div class="card-title">Consulta Médica</div>
-            <div class="card-desc">Diagnóstico integral con historial digital.</div>
-          </div>
+    <!-- ── Selector de Servicios ── -->
+    <div class="services-selector reveal">
+      <div class="service-card" data-service="consulta">
+        <div class="service-icon">🩺</div>
+        <div class="service-info">
+          <div class="service-name">Consulta Médica</div>
+          <div class="service-desc">Diagnóstico integral · 30 min</div>
         </div>
+        <div class="service-triage triage-normal">NORMAL</div>
       </div>
-      <div class="bento-card span-4 reveal" style="--delay:0.15s" id="serviceVacuna">
-        <div class="card-overlay">
-          <span class="card-icon">💉</span>
-          <div>
-            <div class="card-tag">Preventivo</div>
-            <div class="card-title">Vacunación</div>
-            <div class="card-desc">Esquema personalizado y recordatorios.</div>
-          </div>
+      <div class="service-card" data-service="vacuna">
+        <div class="service-icon">💉</div>
+        <div class="service-info">
+          <div class="service-name">Vacunación</div>
+          <div class="service-desc">Esquema personalizado · 20 min</div>
         </div>
+        <div class="service-triage triage-normal">NORMAL</div>
       </div>
-      <div class="bento-card span-4 reveal" style="--delay:0.2s" id="serviceUrgencia">
-        <div class="card-overlay">
-          <span class="card-icon">🚨</span>
-          <div>
-            <div class="card-tag">Prioritario</div>
-            <div class="card-title">Urgencia</div>
-            <div class="card-desc">Atención inmediata hasta la 01:00 AM.</div>
-          </div>
+      <div class="service-card" data-service="urgencia">
+        <div class="service-icon">🚨</div>
+        <div class="service-info">
+          <div class="service-name">Urgencia</div>
+          <div class="service-desc">Atención inmediata · 45 min</div>
+        </div>
+        <div class="service-triage triage-urgente">URGENTE</div>
+      </div>
+      <div class="service-card" data-service="cirugia">
+        <div class="service-icon">🔬</div>
+        <div class="service-info">
+          <div class="service-name">Cirugía</div>
+          <div class="service-desc">Intervención programada · 90 min</div>
+        </div>
+        <div class="service-triage triage-prioritario">PRIORITARIO</div>
+      </div>
+      <div class="service-card" data-service="control">
+        <div class="service-icon">📋</div>
+        <div class="service-info">
+          <div class="service-name">Control</div>
+          <div class="service-desc">Seguimiento post-consulta · 20 min</div>
+        </div>
+        <div class="service-triage triage-normal">NORMAL</div>
+      </div>
+    </div>
+
+    <!-- ── Calendario + Horarios + Resumen ── -->
+    <div class="booking-grid reveal" id="calendarSection">
+      <!-- Calendario -->
+      <div class="booking-calendar">
+        <div class="cal-header">
+          <button class="cal-nav" id="prevMonth">←</button>
+          <span class="cal-month" id="calendarMonthLabel">Marzo 2026</span>
+          <button class="cal-nav" id="nextMonth">→</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>Dom</span><span>Lun</span><span>Mar</span>
+          <span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+        </div>
+        <div class="cal-grid" id="calendarGrid"></div>
+
+        <!-- Horarios (aparece al seleccionar fecha) -->
+        <div id="timeSlots" style="display:none;margin-top:1.5rem">
+          <div class="dash-section-label">Horarios Disponibles</div>
         </div>
       </div>
 
-      <!-- Calendario placeholder -->
-      <div class="bento-card span-8 row-2 reveal" style="--delay:0.25s">
-        <div class="card-overlay" style="justify-content:center;align-items:center">
-          <span class="card-icon" style="margin-bottom:0">📅</span>
-          <div style="text-align:center">
-            <div class="card-title">Selecciona Fecha y Hora</div>
-            <div class="card-desc" style="margin-top:0.5rem">El calendario interactivo se conectará con Supabase<br/>para mostrar disponibilidad en tiempo real.</div>
-            <p style="margin-top:1.5rem;color:var(--teal-400);font-size:0.85rem;font-weight:700">🔧 Módulo en construcción</p>
-          </div>
+      <!-- Resumen de reserva -->
+      <div class="booking-summary">
+        <div class="summary-header">
+          <span class="card-icon" style="font-size:1.5rem;margin-bottom:0">📋</span>
+          <div class="card-title" style="font-size:1.1rem">Resumen de tu Cita</div>
         </div>
-      </div>
-
-      <!-- Resumen -->
-      <div class="bento-card span-4 row-2 reveal" style="--delay:0.3s">
-        <div class="card-overlay">
-          <span class="card-icon">📋</span>
-          <div>
-            <div class="card-tag">Resumen</div>
-            <div class="card-title">Tu Reserva</div>
-            <div class="card-desc">Servicio, mascota, fecha y hora seleccionados aparecerán aquí antes de confirmar.</div>
-            <button class="btn-primary" style="margin-top:1.5rem;width:100%;justify-content:center" disabled>
-              Confirmar Cita →
-            </button>
-          </div>
+        <div id="bookingSummary">
+          <p class="summary-empty">Selecciona un servicio, fecha y hora para ver el resumen de tu reserva.</p>
         </div>
+        <button class="btn-primary" id="confirmBtn" onclick="window._confirmBooking()" disabled style="width:100%;justify-content:center;margin-top:1.5rem">
+          Completa la selección
+        </button>
       </div>
     </div>
   </section>

@@ -826,3 +826,206 @@ section { position: relative; z-index: 1; }
   .cursor, .cursor-follower { display: none; }
   body { cursor: auto; }
 }
+
+/* ─────────────────────────────────────────
+   MÓDULO: AGENDAMIENTO
+   ───────────────────────────────────────── */
+.services-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.service-card {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  cursor: pointer; transition: var(--transition);
+  box-shadow: var(--card-shadow);
+}
+.service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--hover-shadow);
+  border-color: var(--blue-300);
+}
+.service-card.selected {
+  border-color: var(--blue-600);
+  background: var(--blue-50);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15), var(--hover-shadow);
+}
+.service-icon {
+  font-size: 2rem;
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue-50);
+  border-radius: 16px; flex-shrink: 0;
+  transition: var(--transition);
+}
+.service-card.selected .service-icon {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-400));
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+}
+.service-info { flex: 1; }
+.service-name { font-weight: 800; font-size: 1rem; color: var(--gray-900); }
+.service-desc { font-size: 0.82rem; color: var(--gray-400); margin-top: 0.2rem; }
+.service-triage {
+  font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.12em; padding: 0.3rem 0.7rem;
+  border-radius: 99px; flex-shrink: 0;
+}
+.triage-normal { background: rgba(16,185,129,0.1); color: var(--success); }
+.triage-urgente { background: rgba(239,68,68,0.1); color: var(--danger); }
+.triage-prioritario { background: rgba(139,92,246,0.1); color: var(--violet); }
+
+/* Booking Grid */
+.booking-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+.booking-calendar {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--card-shadow);
+}
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.cal-month {
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--gray-900);
+}
+.cal-nav {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--blue-50); border: 1px solid var(--blue-200);
+  color: var(--blue-600); font-size: 1rem;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-main);
+}
+.cal-nav:hover { background: var(--blue-100); transform: translateY(-1px); }
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  text-align: center; margin-bottom: 0.75rem;
+}
+.cal-weekdays span {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--gray-400); letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; font-size: 0.9rem; font-weight: 600;
+  color: var(--gray-700); cursor: pointer;
+  transition: var(--transition);
+}
+.cal-day:hover:not(.disabled):not(.empty) {
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+.cal-day.today {
+  background: var(--blue-50);
+  color: var(--blue-600);
+  font-weight: 800;
+  border: 1px solid var(--blue-200);
+}
+.cal-day.selected {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-500)) !important;
+  color: var(--white) !important;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+}
+.cal-day.disabled {
+  color: var(--gray-300);
+  cursor: not-allowed;
+}
+.cal-day.empty { cursor: default; }
+
+/* Time Slots */
+.time-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.5rem;
+}
+.time-slot {
+  padding: 0.55rem 0.5rem;
+  border-radius: 10px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  color: var(--gray-600);
+  font-size: 0.82rem; font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer; transition: var(--transition);
+  text-align: center;
+}
+.time-slot:hover {
+  border-color: var(--blue-300);
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+.time-slot.selected {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
+  color: var(--white);
+  border-color: var(--blue-600);
+  box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+}
+
+/* Booking Summary */
+.booking-summary {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--card-shadow);
+  position: sticky; top: 100px;
+}
+.summary-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.summary-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.summary-label { font-size: 0.82rem; color: var(--gray-400); }
+.summary-value { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
+.summary-triage {
+  font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.12em; padding: 0.25rem 0.6rem;
+  border-radius: 99px;
+}
+.summary-empty {
+  color: var(--gray-400); font-size: 0.85rem;
+  text-align: center; padding: 2rem 0; line-height: 1.6;
+}
+
+/* Nav active */
+.nav-links a.active { color: var(--blue-600) !important; }
+.nav-links a.active::after { width: 100%; }
+
+/* Grad class for section titles */
+.section-title .grad, h1 .grad {
+  background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-500) 50%, var(--violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (max-width: 768px) {
+  .booking-grid { grid-template-columns: 1fr; }
+  .services-selector { grid-template-columns: 1fr; }
+  .time-grid { grid-template-columns: repeat(4, 1fr); }
+}

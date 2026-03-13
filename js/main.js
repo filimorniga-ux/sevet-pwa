@@ -5,6 +5,7 @@
 
 import '../styles.css';
 import { initAuth } from './auth.js';
+import { initAgendamiento } from './modules/agendamiento.js';
 
 // ── Registro Service Worker (Offline-First) ──
 if ('serviceWorker' in navigator) {
@@ -18,7 +19,7 @@ if ('serviceWorker' in navigator) {
   const bar = document.getElementById('loaderBar');
   const dog = document.getElementById('loaderDog');
   const loader = document.getElementById('loader');
-  if (!bar || !dog || !loader) return;
+  if (!bar || !dog || !loader) { initApp(); return; }
   let progress = 0;
   const interval = setInterval(() => {
     progress += Math.random() * 15 + 5;
@@ -37,6 +38,7 @@ if ('serviceWorker' in navigator) {
 // ── INICIALIZAR APP ──
 function initApp() {
   initAuth();
+  initAgendamiento();
   initCursor();
   initParticles();
   initNavScroll();
