@@ -103,25 +103,18 @@
     </div>
   </div>
   <div class="hero-visual">
-    <div class="hero-collage">
-      <div class="collage-item collage-lg">
-        <img src="assets/images/clinic-fb-1.jpg" alt="Atención veterinaria SEVET" loading="eager" />
+    <div class="hero-carousel" id="heroCarousel">
+      <div class="carousel-track">
+        <div class="carousel-slide active"><img src="assets/images/clinic-fb-1.jpg" alt="Atención veterinaria SEVET" /></div>
+        <div class="carousel-slide"><img src="assets/images/clinic-fb-2.jpg" alt="Cuidado de mascotas" /></div>
+        <div class="carousel-slide"><img src="assets/images/clinic-fb-3.jpg" alt="Servicios veterinarios" /></div>
+        <div class="carousel-slide"><img src="assets/images/clinic-fb-4.jpg" alt="Clínica San Alberto" /></div>
+        <div class="carousel-slide"><img src="assets/images/clinic-fb-5.jpg" alt="Productos para mascotas" /></div>
+        <div class="carousel-slide"><img src="assets/images/clinic-fb-6.jpg" alt="Consulta veterinaria" /></div>
       </div>
-      <div class="collage-item">
-        <img src="assets/images/clinic-fb-2.jpg" alt="Cuidado de mascotas" loading="eager" />
-      </div>
-      <div class="collage-item">
-        <img src="assets/images/clinic-fb-3.jpg" alt="Servicios veterinarios" loading="lazy" />
-      </div>
-      <div class="collage-item collage-wide">
-        <img src="assets/images/clinic-fb-4.jpg" alt="Clínica San Alberto" loading="lazy" />
-      </div>
-      <div class="collage-item">
-        <img src="assets/images/clinic-fb-5.jpg" alt="Productos para mascotas" loading="lazy" />
-      </div>
-      <div class="collage-item">
-        <img src="assets/images/clinic-fb-6.jpg" alt="Consulta veterinaria" loading="lazy" />
-      </div>
+      <button class="carousel-btn carousel-prev" aria-label="Anterior">‹</button>
+      <button class="carousel-btn carousel-next" aria-label="Siguiente">›</button>
+      <div class="carousel-dots" id="carouselDots"></div>
     </div>
   </div>
   <div class="hero-scroll">
@@ -463,12 +456,44 @@
 </div>
 <script>
   (function(){
+    /* ── Carousel ── */
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dotsBox = document.getElementById('carouselDots');
+    let cur = 0, timer;
+
+    // Create dots
+    slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => goTo(i));
+      dotsBox.appendChild(d);
+    });
+    const dots = dotsBox.querySelectorAll('.carousel-dot');
+
+    function goTo(n) {
+      slides[cur].classList.remove('active');
+      dots[cur].classList.remove('active');
+      cur = (n + slides.length) % slides.length;
+      slides[cur].classList.add('active');
+      dots[cur].classList.add('active');
+      resetTimer();
+    }
+    function resetTimer() { clearInterval(timer); timer = setInterval(() => goTo(cur + 1), 4000); }
+
+    document.querySelector('.carousel-prev').addEventListener('click', () => goTo(cur - 1));
+    document.querySelector('.carousel-next').addEventListener('click', () => goTo(cur + 1));
+
+    const carousel = document.getElementById('heroCarousel');
+    carousel.addEventListener('mouseenter', () => clearInterval(timer));
+    carousel.addEventListener('mouseleave', resetTimer);
+    resetTimer();
+
+    /* ── Lightbox ── */
     const lb = document.getElementById('collageLightbox');
     const lbImg = document.getElementById('lightboxImg');
-    document.querySelectorAll('.collage-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const src = item.querySelector('img').src;
-        lbImg.src = src;
+    slides.forEach(s => {
+      s.addEventListener('click', () => {
+        lbImg.src = s.querySelector('img').src;
         lb.classList.add('active');
         document.body.style.overflow = 'hidden';
       });
