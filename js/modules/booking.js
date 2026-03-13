@@ -132,37 +132,24 @@ async function loadProfessionals() {
   const subtitle = document.getElementById('step2Subtitle');
   subtitle.textContent = `Profesionales disponibles para: ${state.selectedService.name}`;
 
-  // For peluqueria, show groomers; for medical, show vets
+  // For peluqueria, show groomers; for medical, show vets/owner
   const roles = state.selectedService.requires_vet !== false ? ['vet', 'owner'] : ['groomer'];
   
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .in('role', roles)
-    .eq('is_active', true);
+    .in('role', roles);
 
-  if (error || !data?.length) {
-    // No specific professionals - allow "any available"
-    state.professionals = [];
-    grid.innerHTML = `
-      <div class="prof-card selected" onclick="selectProfessional(null)">
-        <div class="prof-avatar">🏥</div>
-        <div class="prof-name">Cualquier profesional disponible</div>
-        <div class="prof-specialty">Asignaremos al mejor profesional</div>
-      </div>
-    `;
-    state.selectedProfessional = { id: null, full_name: 'Cualquier disponible' };
-    return;
-  }
+  state.professionals = data || [];
 
-  state.professionals = data;
+  // Always show "any available" option + individual professionals
   grid.innerHTML = `
     <div class="prof-card ${!state.selectedProfessional?.id ? 'selected' : ''}" onclick="selectProfessional(null)">
       <div class="prof-avatar">🏥</div>
       <div class="prof-name">Cualquier disponible</div>
       <div class="prof-specialty">Primer profesional libre</div>
     </div>
-    ${data.map(p => `
+    ${(data || []).map(p => `
       <div class="prof-card ${state.selectedProfessional?.id === p.id ? 'selected' : ''}" 
            onclick="selectProfessional('${p.id}')">
         <div class="prof-avatar">${p.avatar_url ? `<img src="${p.avatar_url}" alt="${p.full_name}"/>` : (p.role === 'groomer' ? '✂️' : '👨‍⚕️')}</div>
@@ -230,13 +217,15 @@ function renderCalendar() {
     const date = new Date(state.currentYear, state.currentMonth, d);
     const isPast = date < today;
     const isSunday = date.getDay() === 0;
+    const isToday = date.toDateString() === today.toDateString();
     const isSelected = state.selectedDate && 
       date.toDateString() === state.selectedDate.toDateString();
     
     const cls = [
       'cal-day',
       isPast ? 'past' : '',
-      isSunday ? 'past' : '', // Clinic closed Sundays
+      isSunday ? 'past' : '',
+      isToday ? 'today' : '',
       isSelected ? 'selected' : '',
       !isPast && !isSunday ? 'available' : ''
     ].filter(Boolean).join(' ');
@@ -391,17 +380,17 @@ async function confirmBooking() {
     // Build combined notes with guest info
     const combinedNotes = [
       notes,
-      !session && guestName ? `Contacto: ${guestName}` : '',
-      !session && guestPhone ? `Tel: ${guestPhone}` : '',
-      !session && guestEmail ? `Email: ${guestEmail}` : '',
-      !session && guestPetName ? `Mascota: ${guestPetName}` : '',
+      guestName ? `Contacto: ${guestName}` : '',
+      guestPhone ? `Tel: ${guestPhone}` : '',
+      guestEmail ? `Email: ${guestEmail}` : '',
+      guestPetName ? `Mascota: ${guestPetName}` : '',
     ].filter(Boolean).join(' | ');
 
     // Determine service_type from service
     const serviceType = mapServiceType(state.selectedService.specialty);
 
     const { error } = await supabase.from('appointments').insert({
-      pet_id: petId,
+      pet_id: petId || null,
       vet_id: state.selectedProfessional?.id || null,
       service_type: serviceType,
       service_id: state.selectedService.id,
@@ -409,7 +398,7 @@ async function confirmBooking() {
       status: 'pendiente',
       triage_level: state.selectedService.specialty === 'urgencia' ? 'urgente' : 'normal',
       notes: combinedNotes,
-      booked_by: bookedBy,
+      booked_by: bookedBy || null,
       source: 'web',
       duration_min: state.selectedService.duration_min,
     });
@@ -419,6 +408,11 @@ async function confirmBooking() {
     // Show success
     document.querySelector('.confirmation-card').classList.add('hidden');
     document.getElementById('bookingSuccess').classList.remove('hidden');
+
+    // Show registration invite for guests
+    if (!session) {
+      document.getElementById('registerInvite')?.classList.remove('hidden');
+    }
 
   } catch (err) {
     console.error('Booking error:', err);
