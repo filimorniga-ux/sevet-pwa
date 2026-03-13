@@ -82,15 +82,17 @@ function initParticles() {
 
   document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-  const paws = Array.from({ length: 35 }, () => ({
+  const pawEmojis = ['🐾', '🐾', '🐾', '🐱', '🐶'];
+  const paws = Array.from({ length: 40 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
-    size: Math.random() * 10 + 10,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
-    alpha: Math.random() * 0.12 + 0.04,
+    size: Math.random() * 14 + 14,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    alpha: Math.random() * 0.18 + 0.12,
     rotation: Math.random() * Math.PI * 2,
-    rotSpeed: (Math.random() - 0.5) * 0.005,
+    rotSpeed: (Math.random() - 0.5) * 0.008,
+    emoji: pawEmojis[Math.floor(Math.random() * pawEmojis.length)],
   }));
 
   function draw() {
@@ -116,7 +118,7 @@ function initParticles() {
       ctx.font = `${p.size}px serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('🐾', 0, 0);
+      ctx.fillText(p.emoji, 0, 0);
       ctx.restore();
     });
     requestAnimationFrame(draw);
