@@ -8,7 +8,6 @@ const STATIC_ASSETS = [
   '/index.html',
   '/styles.css',
   '/manifest.json',
-  '/assets/images/logo-sevet-banner.jpg',
   '/assets/images/logo.png',
   '/pages/agendar.html',
   '/pages/auth.html',
@@ -36,9 +35,10 @@ self.addEventListener('activate', (event) => {
 
 // Fetch — network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and cross-origin requests
+  // Skip non-GET, cross-origin, and unsupported schemes (like chrome-extension)
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith(self.location.origin)) return;
+  if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
     fetch(event.request)
