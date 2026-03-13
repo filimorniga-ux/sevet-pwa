@@ -308,10 +308,40 @@ body {
   pointer-events: none;
 }
 .collage-item:hover img {
-  transform: scale(1.12);
+  transform: scale(1.25);
   filter: brightness(1.05) saturate(1.2);
 }
 .collage-item:hover::after { opacity: 1; }
+
+/* ── Lightbox ── */
+.collage-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.88); backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  cursor: zoom-out;
+}
+.collage-lightbox.active { opacity: 1; visibility: visible; }
+.collage-lightbox img {
+  max-width: 90vw; max-height: 88vh;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  transform: scale(0.85);
+  transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  object-fit: contain;
+}
+.collage-lightbox.active img { transform: scale(1); }
+.lightbox-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-size: 1.5rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  backdrop-filter: blur(8px);
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
 
 .hero-badge {
   display: inline-flex; align-items: center; gap: 0.5rem;

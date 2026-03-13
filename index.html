@@ -456,6 +456,31 @@
   <button class="ai-toggle" id="aiToggle" onclick="toggleAI()" title="Asistente SEVET IA">🤖</button>
 </div>
 
+<!-- Lightbox para collage -->
+<div class="collage-lightbox" id="collageLightbox">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="" alt="Foto SEVET" />
+</div>
+<script>
+  (function(){
+    const lb = document.getElementById('collageLightbox');
+    const lbImg = document.getElementById('lightboxImg');
+    document.querySelectorAll('.collage-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const src = item.querySelector('img').src;
+        lbImg.src = src;
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+    function closeLb(){ lb.classList.remove('active'); document.body.style.overflow = ''; }
+    document.getElementById('lightboxClose').addEventListener('click', e => { e.stopPropagation(); closeLb(); });
+    lb.addEventListener('click', closeLb);
+    lbImg.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLb(); });
+  })();
+</script>
+
 <script type="module" src="/js/main.js"></script>
 </body>
 </html>
