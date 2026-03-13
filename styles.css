@@ -152,7 +152,7 @@ body {
    PARTICLES CANVAS
    ───────────────────────────────────────── */
 #particles-canvas {
-  position: fixed; inset: 0; z-index: 0;
+  position: fixed; inset: 0; z-index: 900;
   pointer-events: none;
 }
 
