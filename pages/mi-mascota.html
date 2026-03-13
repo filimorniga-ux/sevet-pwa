@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#0d7377"/>
-  <meta name="description" content="SEVET – Portal de tu mascota: vacunas, citas, historial médico"/>
+  <meta name="theme-color" content="#2563eb"/>
+  <meta name="description" content="SEVET – Portal de tu mascota: perfil, vacunas, historial clínico y signos vitales"/>
   <title>Mi Mascota – SEVET Pet-Tech 360</title>
-  <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
@@ -22,6 +21,7 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="/">Inicio</a></li>
       <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="#especialidades">Servicios</a></li>
       <li><a href="/pages/mi-mascota.html" class="active">Mi Mascota</a></li>
       <li><a href="/pages/tienda.html">Tienda</a></li>
       <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
@@ -31,35 +31,19 @@
     </div>
   </nav>
 
-  <section class="section-pad" style="margin-top:80px" id="portal-mascota">
+  <section class="section-pad" style="margin-top:80px">
     <div class="section-header reveal">
-      <p class="section-tag">Portal del Cliente</p>
-      <h1 class="section-title">Dashboard de<br/><span class="grad">tu Mascota</span></h1>
-      <p class="section-sub">Accede al historial completo de salud, próximas citas y plan de vacunación de tu compañero.</p>
+      <p class="section-tag">Portal del Dueño</p>
+      <h1 class="section-title">Mi <span class="grad">Mascota</span></h1>
+      <p class="section-sub">Accede al perfil de tus mascotas, historial clínico, vacunas y signos vitales en tiempo real.</p>
     </div>
 
-    <!-- Login required message -->
-    <div class="dashboard-wrapper" id="loginRequired">
-      <div class="dashboard-info reveal">
-        <div class="section-header" style="text-align:left">
-          <h2 class="section-title" style="font-size:1.8rem">Inicia Sesión</h2>
-          <p class="section-sub" style="margin-left:0;text-align:left">Para ver el dashboard de tu mascota necesitas iniciar sesión o registrarte.</p>
-        </div>
-        <div style="display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap">
-          <button class="btn-primary" id="btnLogin">🔐 Iniciar Sesión</button>
-          <button class="btn-secondary" id="btnRegister">Registrarse →</button>
-        </div>
-      </div>
-      <div class="dashboard-ui reveal">
-        <div class="dash-header">
-          <span class="dash-title">🐾 SEVET Dashboard Clínico</span>
-          <span class="dash-status"><span class="dot"></span> Requiere login</span>
-        </div>
-        <div style="padding:3rem 1.5rem;text-align:center;color:rgba(255,255,255,0.3)">
-          <div style="font-size:4rem;margin-bottom:1rem">🔒</div>
-          <p>Inicia sesión para ver los datos de tu mascota</p>
-        </div>
-      </div>
+    <!-- Selector de Mascotas -->
+    <div class="pet-selector-container reveal" id="petSelector"></div>
+
+    <!-- Dashboard de la mascota -->
+    <div class="reveal" id="mascotas-container">
+      <p class="summary-empty">Cargando perfil de mascota...</p>
     </div>
   </section>
 
