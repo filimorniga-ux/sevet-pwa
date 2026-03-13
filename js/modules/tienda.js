@@ -120,7 +120,7 @@ window._filterSubcategory = function(sub) {
 function getStockInfo(stock) {
   if (stock <= 0) return { class: 'stock-out', label: 'Agotado', color: '#ef4444' };
   if (stock <= 5) return { class: 'stock-low', label: `¡Solo ${stock}!`, color: '#f59e0b' };
-  if (stock <= 15) return { class: 'stock-med', label: `${stock} disponibles`, color: '#3b82f6' };
+  if (stock <= 15) return { class: 'stock-med', label: `${stock} disponibles`, color: '#a044a0' };
   return { class: 'stock-ok', label: 'En stock', color: '#10b981' };
 }
 

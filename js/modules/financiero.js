@@ -12,7 +12,7 @@ const MONTHLY_DATA = {
 };
 
 const REVENUE_BY_SERVICE = [
-  { name: 'Consultas', value: 4200000, pct: 33.7, color: '#2563eb' },
+  { name: 'Consultas', value: 4200000, pct: 33.7, color: '#8b2d8b' },
   { name: 'Cirugías', value: 2800000, pct: 22.5, color: '#7c3aed' },
   { name: 'Peluquería', value: 1900000, pct: 15.3, color: '#06b6d4' },
   { name: 'Tienda', value: 1600000, pct: 12.8, color: '#10b981' },
