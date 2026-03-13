@@ -57,7 +57,6 @@ function initApp() {
   initHistorial();
   initImagenes();
   initFinanciero();
-  initCursor();
   initParticles();
   initNavScroll();
   initHeroSlider();
@@ -67,35 +66,7 @@ function initApp() {
   initCarousel();
 }
 
-// ── CURSOR PERSONALIZADO ──
-function initCursor() {
-  const cursor = document.getElementById('cursor');
-  const follower = document.getElementById('cursorFollower');
-  if (!cursor || !follower) return;
-  let fx = 0, fy = 0, cx = 0, cy = 0;
-
-  document.addEventListener('mousemove', e => {
-    cx = e.clientX; cy = e.clientY;
-    cursor.style.left = cx + 'px';
-    cursor.style.top = cy + 'px';
-  });
-
-  function animateFollower() {
-    fx += (cx - fx) * 0.12;
-    fy += (cy - fy) * 0.12;
-    follower.style.left = fx + 'px';
-    follower.style.top = fy + 'px';
-    requestAnimationFrame(animateFollower);
-  }
-  animateFollower();
-
-  document.querySelectorAll('a, button, .bento-card, .product-card').forEach(el => {
-    el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2.5)'; follower.style.transform = 'translate(-50%,-50%) scale(1.5)'; });
-    el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; follower.style.transform = 'translate(-50%,-50%) scale(1)'; });
-  });
-}
-
-// ── PARTÍCULAS ──
+// ── HUELLITAS FLOTANTES 🐾 ──
 function initParticles() {
   const canvas = document.getElementById('particles-canvas');
   if (!canvas) return;
@@ -111,50 +82,43 @@ function initParticles() {
 
   document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-  const BLUE = '37, 99, 235';
-  const particles = Array.from({ length: 70 }, () => ({
+  const paws = Array.from({ length: 35 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
-    r: Math.random() * 2.5 + 0.5,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: (Math.random() - 0.5) * 0.4,
-    alpha: Math.random() * 0.5 + 0.1,
+    size: Math.random() * 10 + 10,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    alpha: Math.random() * 0.12 + 0.04,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.005,
   }));
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    particles.forEach(p => {
+    paws.forEach(p => {
       const dx = p.x - mouseX, dy = p.y - mouseY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 140) {
-        p.x += dx / dist * 0.8;
-        p.y += dy / dist * 0.8;
+      if (dist < 120) {
+        p.x += dx / dist * 0.6;
+        p.y += dy / dist * 0.6;
       }
       p.x += p.vx; p.y += p.vy;
-      if (p.x < 0 || p.x > W) p.vx *= -1;
-      if (p.y < 0 || p.y > H) p.vy *= -1;
+      p.rotation += p.rotSpeed;
+      if (p.x < -20) p.x = W + 20;
+      if (p.x > W + 20) p.x = -20;
+      if (p.y < -20) p.y = H + 20;
+      if (p.y > H + 20) p.y = -20;
 
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${BLUE}, ${p.alpha})`;
-      ctx.fill();
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha = p.alpha;
+      ctx.font = `${p.size}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🐾', 0, 0);
+      ctx.restore();
     });
-
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 110) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(${BLUE}, ${0.12 * (1 - d / 110)})`;
-          ctx.lineWidth = 0.6;
-          ctx.stroke();
-        }
-      }
-    }
     requestAnimationFrame(draw);
   }
   draw();

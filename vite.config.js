@@ -19,6 +19,7 @@ export default defineConfig({
         historial: resolve(__dirname, 'pages/historial.html'),
         imagenes: resolve(__dirname, 'pages/imagenes.html'),
         financiero: resolve(__dirname, 'pages/financiero.html'),
+        auth: resolve(__dirname, 'pages/auth.html'),
       },
     },
   },

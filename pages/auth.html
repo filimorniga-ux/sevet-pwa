@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#2563eb"/>
+  <meta name="description" content="SEVET – Iniciar sesión o registrarse. Accede a tu cuenta de cliente o profesional."/>
+  <title>Iniciar Sesión – SEVET Pet-Tech 360</title>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🐾</div>
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="/pages/tienda.html">Tienda</a></li>
+      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <section class="auth-section">
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="window._switchAuthTab('login')">Iniciar Sesión</button>
+        <button class="auth-tab" id="tabRegister" onclick="window._switchAuthTab('register')">Registrarse</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form class="auth-form" id="loginForm">
+        <div class="auth-header">
+          <span class="auth-icon">🔐</span>
+          <h2>Bienvenido de vuelta</h2>
+          <p>Ingresa a tu cuenta SEVET</p>
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="tu@email.com" required />
+        </div>
+        <div class="auth-field">
+          <label>Contraseña</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="auth-submit">Iniciar Sesión</button>
+        <div class="auth-divider"><span>o continúa con</span></div>
+        <button type="button" class="auth-oauth" id="btnGoogleLogin">
+          <span>🔵</span> Continuar con Google
+        </button>
+        <p class="auth-footer-text">
+          ¿No tienes cuenta? <a href="#" onclick="window._switchAuthTab('register')">Regístrate aquí</a>
+        </p>
+      </form>
+
+      <!-- REGISTER -->
+      <form class="auth-form hidden" id="registerForm">
+        <div class="auth-header">
+          <span class="auth-icon">🐾</span>
+          <h2>Crea tu cuenta</h2>
+          <p>Únete al ecosistema SEVET</p>
+        </div>
+        <div class="auth-role-selector">
+          <button type="button" class="role-btn active" onclick="window._selectRole('client', this)">
+            <span>🐕</span> Soy Dueño de Mascota
+          </button>
+          <button type="button" class="role-btn" onclick="window._selectRole('staff', this)">
+            <span>🩺</span> Soy Profesional
+          </button>
+        </div>
+        <div class="auth-field">
+          <label>Nombre completo</label>
+          <input type="text" id="regName" placeholder="Tu nombre" required />
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="tu@email.com" required />
+        </div>
+        <div class="auth-field">
+          <label>Teléfono</label>
+          <input type="tel" id="regPhone" placeholder="+56 9 1234 5678" />
+        </div>
+        <div class="auth-field">
+          <label>Contraseña</label>
+          <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" required minlength="8" />
+        </div>
+        <div class="auth-field" id="staffCodeField" style="display:none">
+          <label>Código de Staff</label>
+          <input type="text" id="staffCode" placeholder="Código proporcionado por la clínica" />
+        </div>
+        <button type="submit" class="auth-submit">Crear Cuenta</button>
+        <p class="auth-footer-text">
+          ¿Ya tienes cuenta? <a href="#" onclick="window._switchAuthTab('login')">Inicia sesión</a>
+        </p>
+      </form>
+
+      <div class="auth-message" id="authMessage"></div>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+  <script>
+    window._switchAuthTab = function(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        tabLogin.classList.remove('active');
+        tabRegister.classList.add('active');
+      }
+    };
+    window._selectRole = function(role, btn) {
+      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('staffCodeField').style.display = role === 'staff' ? 'block' : 'none';
+    };
+  </script>
+</body>
+</html>
