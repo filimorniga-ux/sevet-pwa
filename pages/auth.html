@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#2563eb"/>
+  <meta name="theme-color" content="#8b2d8b"/>
   <meta name="description" content="SEVET – Iniciar sesión o registrarse. Accede a tu cuenta de cliente o profesional."/>
-  <title>Iniciar Sesión – SEVET Pet-Tech 360</title>
+  <title>Iniciar Sesión – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
@@ -18,9 +19,9 @@
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/quienes-somos.html">Quiénes Somos</a></li>
       <li><a href="/pages/agendar.html">Agendar</a></li>
-      <li><a href="/pages/tienda.html">Tienda</a></li>
-      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+      <li><a href="tel:+5622775421" class="nav-cta">📞 Llamar Ahora</a></li>
     </ul>
     <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
   </nav>
@@ -35,10 +36,19 @@
       <!-- LOGIN -->
       <form class="auth-form" id="loginForm">
         <div class="auth-header">
-          <span class="auth-icon">🔐</span>
-          <h2>Bienvenido de vuelta</h2>
-          <p>Ingresa a tu cuenta SEVET</p>
+          <span class="auth-icon">🏥</span>
+          <h2>Bienvenido a SEVET</h2>
+          <p>Clínica Pediátrica Veterinaria San Alberto</p>
         </div>
+
+        <!-- Google SSO - Primary -->
+        <button type="button" class="auth-oauth auth-google-primary" id="btnGoogleLogin">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continuar con Google
+        </button>
+
+        <div class="auth-divider"><span>o con email y contraseña</span></div>
+
         <div class="auth-field">
           <label>Email</label>
           <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="email" />
@@ -48,10 +58,6 @@
           <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
         </div>
         <button type="submit" class="auth-submit">Iniciar Sesión</button>
-        <div class="auth-divider"><span>o continúa con</span></div>
-        <button type="button" class="auth-oauth" id="btnGoogleLogin">
-          <span>🔵</span> Continuar con Google
-        </button>
         <p class="auth-footer-text">
           ¿No tienes cuenta? <a href="#" onclick="window._switchAuthTab('register')">Regístrate aquí</a>
         </p>
@@ -62,11 +68,20 @@
         <div class="auth-header">
           <span class="auth-icon">🐾</span>
           <h2>Crea tu cuenta</h2>
-          <p>Únete al ecosistema SEVET</p>
+          <p>Únete a Veterinaria San Alberto</p>
         </div>
+
+        <!-- Google SSO for register too -->
+        <button type="button" class="auth-oauth auth-google-primary" id="btnGoogleRegister">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Registrarse con Google
+        </button>
+
+        <div class="auth-divider"><span>o con formulario</span></div>
+
         <div class="auth-role-selector">
           <button type="button" class="role-btn active" onclick="window._selectRole('client', this)">
-            <span>🐕</span> Soy Dueño de Mascota
+            <span>🐕</span> Soy Dueño
           </button>
           <button type="button" class="role-btn" onclick="window._selectRole('staff', this)">
             <span>🩺</span> Soy Profesional
@@ -82,7 +97,7 @@
         </div>
         <div class="auth-field">
           <label>Teléfono</label>
-          <input type="tel" id="regPhone" placeholder="+56 9 1234 5678" autocomplete="tel" pattern="\+?56\s?9?\s?\d{4}\s?\d{4}" />
+          <input type="tel" id="regPhone" placeholder="+56 9 1234 5678" autocomplete="tel" />
         </div>
         <div class="auth-field">
           <label>Contraseña</label>
@@ -103,7 +118,10 @@
   </section>
 
   <script type="module" src="/js/main.js"></script>
-  <script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    // Tab switching
     window._switchAuthTab = function(tab) {
       const loginForm = document.getElementById('loginForm');
       const registerForm = document.getElementById('registerForm');
@@ -121,11 +139,167 @@
         tabRegister.classList.add('active');
       }
     };
+
+    // Role selection
+    let selectedRole = 'client';
     window._selectRole = function(role, btn) {
+      selectedRole = role;
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('staffCodeField').style.display = role === 'staff' ? 'block' : 'none';
     };
+
+    // Show message helper
+    function showMessage(msg, type) {
+      const el = document.getElementById('authMessage');
+      el.textContent = msg;
+      el.className = 'auth-message ' + type;
+    }
+
+    // Redirect based on role
+    function redirectByRole(role) {
+      switch(role) {
+        case 'admin':
+        case 'owner':
+          window.location.href = '/pages/admin.html';
+          break;
+        case 'vet':
+        case 'groomer':
+          window.location.href = '/pages/mi-agenda.html';
+          break;
+        case 'receptionist':
+          window.location.href = '/pages/gestion-citas.html';
+          break;
+        case 'client':
+        default:
+          window.location.href = '/';
+          break;
+      }
+    }
+
+    // Check if user already logged in
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        if (profile) redirectByRole(profile.role);
+      }
+    }
+    checkAuth();
+
+    // Google SSO (both login and register use same flow)
+    async function handleGoogleSSO() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/pages/auth.html'
+        }
+      });
+      if (error) showMessage('Error al conectar con Google: ' + error.message, 'error');
+    }
+
+    document.getElementById('btnGoogleLogin').addEventListener('click', handleGoogleSSO);
+    document.getElementById('btnGoogleRegister').addEventListener('click', handleGoogleSSO);
+
+    // Email/Password Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        showMessage('Error: ' + error.message, 'error');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single();
+
+      showMessage('¡Bienvenido de vuelta!', 'success');
+      setTimeout(() => redirectByRole(profile?.role || 'client'), 800);
+    });
+
+    // Email/Password Register
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const phone = document.getElementById('regPhone').value;
+      const password = document.getElementById('regPassword').value;
+      const staffCode = document.getElementById('staffCode').value;
+
+      // Determine role
+      let role = 'client';
+      if (selectedRole === 'staff') {
+        if (staffCode === 'SEVET-STAFF-2026') {
+          role = 'vet'; // Default staff role, admin upgrades later
+        } else {
+          showMessage('Código de staff inválido', 'error');
+          return;
+        }
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name, phone, role }
+        }
+      });
+
+      if (error) {
+        showMessage('Error: ' + error.message, 'error');
+        return;
+      }
+
+      // Create profile
+      if (data.user) {
+        await supabase.from('profiles').upsert({
+          user_id: data.user.id,
+          full_name: name,
+          phone,
+          email,
+          role
+        }, { onConflict: 'user_id' });
+      }
+
+      showMessage('¡Cuenta creada! Revisa tu email para confirmar.', 'success');
+    });
+
+    // Handle OAuth redirect callback
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Check if profile exists, create if not
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (!profile) {
+          // First-time Google login → create client profile
+          await supabase.from('profiles').insert({
+            user_id: session.user.id,
+            full_name: session.user.user_metadata?.full_name || session.user.email,
+            email: session.user.email,
+            avatar_url: session.user.user_metadata?.avatar_url,
+            role: 'client'
+          });
+          redirectByRole('client');
+        } else {
+          redirectByRole(profile.role);
+        }
+      }
+    });
   </script>
+
 </body>
 </html>

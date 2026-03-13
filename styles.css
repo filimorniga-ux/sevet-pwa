@@ -2451,6 +2451,20 @@ section { position: relative; z-index: 1; }
 .social-pill.tk { background: #010101; }
 .social-pill span { font-size: 1.2rem; }
 
+/* Google SSO Primary Button */
+.auth-google-primary {
+  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+  width: 100%; padding: 0.85rem; background: var(--white); color: var(--gray-700);
+  border: 2px solid var(--gray-200); border-radius: var(--radius-lg);
+  font-weight: 700; font-size: 1rem; cursor: pointer; transition: var(--transition);
+  margin-bottom: 0.5rem;
+}
+.auth-google-primary:hover {
+  border-color: var(--blue-400); background: var(--blue-50);
+  box-shadow: 0 4px 12px rgba(139,45,139,0.15);
+}
+.auth-google-primary svg { flex-shrink: 0; }
+
 /* =========================================
    MOBILE RESPONSIVE FIXES
    ========================================= */
