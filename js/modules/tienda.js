@@ -4,11 +4,7 @@
    subcategorías, stock real y validación receta
    ========================================= */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const SUPABASE_URL = 'https://zyvwcxsqdbegzjlmgtou.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5dndjeHNxZGJlZ3pqbG1ndG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTgwODMsImV4cCI6MjA4ODkzNDA4M30.aSdgRgNZI35jQ3MawGjDNzsDqdzCrRbZikX4MElnJKI';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+import { supabase } from '/js/supabase.js';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos', icon: '🏪' },
