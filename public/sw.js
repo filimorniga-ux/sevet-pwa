@@ -1,48 +1,91 @@
-const CACHE_NAME = 'sevet-v2.0.0';
-const ASSETS = [
+/**
+ * SEVET Service Worker
+ * Offline caching + push notification support
+ */
+const CACHE_NAME = 'sevet-v2';
+const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/assets/images/hero-dog.png',
-  '/assets/images/hero-cat.png',
+  '/styles.css',
+  '/manifest.json',
+  '/assets/images/logo-sevet-banner.jpg',
   '/assets/images/logo.png',
-  '/assets/images/product-dog-food.png',
-  '/assets/images/product-cat-food.png',
-  '/assets/images/product-supplements.png',
-  '/assets/images/product-treats.png',
-  '/assets/images/before-after.png'
+  '/pages/agendar.html',
+  '/pages/auth.html',
+  '/pages/quienes-somos.html',
+  '/pages/mi-mascota.html',
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).catch(() => {})
+// Install — cache essential assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-  ));
+// Activate — clean old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+// Fetch — network first, fallback to cache
+self.addEventListener('fetch', (event) => {
+  // Skip non-GET and cross-origin requests
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith(self.location.origin)) return;
 
-  const url = new URL(e.request.url);
-  if (url.hostname.includes('supabase') || url.hostname.includes('openai')) return;
-
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-
-      return fetch(e.request).then(response => {
-        if (response.ok && url.pathname.match(/\.(js|css|png|jpg|webp|woff2?)$/)) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return response;
-      }).catch(() => caches.match('/index.html'));
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+
+// Push notifications
+self.addEventListener('push', (event) => {
+  let data = { title: 'SEVET', body: 'Tienes una nueva notificación' };
+  
+  if (event.data) {
+    try { data = event.data.json(); } catch (e) { data.body = event.data.text(); }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'SEVET', {
+      body: data.body,
+      icon: '/assets/images/logo.png',
+      badge: '/assets/images/logo.png',
+      tag: data.tag || 'sevet-notification',
+      data: { url: data.url || '/' },
+      actions: data.actions || [
+        { action: 'open', title: 'Ver' },
+        { action: 'dismiss', title: 'Cerrar' }
+      ]
+    })
+  );
+});
+
+// Notification click
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(url) && 'focus' in client) return client.focus();
+      }
+      return self.clients.openWindow(url);
     })
   );
 });
