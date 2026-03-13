@@ -87,6 +87,9 @@
           <button type="button" class="role-btn" onclick="window._selectRole('staff', this)">
             <span>🩺</span> Soy Profesional
           </button>
+          <button type="button" class="role-btn" onclick="window._selectRole('admin', this)">
+            <span>🏥</span> Administrativo
+          </button>
         </div>
         <div class="auth-field">
           <label>Nombre completo</label>
@@ -107,6 +110,10 @@
         <div class="auth-field" id="staffCodeField" style="display:none">
           <label>Código de Staff</label>
           <input type="text" id="staffCode" placeholder="Código proporcionado por la clínica" />
+        </div>
+        <div class="auth-field" id="adminCodeField" style="display:none">
+          <label>Código Administrativo</label>
+          <input type="text" id="adminCode" placeholder="Código proporcionado por la dirección" />
         </div>
         <button type="submit" class="auth-submit">Crear Cuenta</button>
         <p class="auth-footer-text">
@@ -148,6 +155,7 @@
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('staffCodeField').style.display = role === 'staff' ? 'block' : 'none';
+      document.getElementById('adminCodeField').style.display = role === 'admin' ? 'block' : 'none';
     };
 
     // Show message helper
@@ -158,24 +166,16 @@
     }
 
     // Redirect based on role
+    const ROLE_HOMES = {
+      client: '/',
+      vet: '/pages/mi-agenda.html',
+      groomer: '/pages/mi-agenda.html',
+      receptionist: '/pages/gestion-citas.html',
+      admin: '/pages/admin.html',
+      owner: '/pages/admin.html',
+    };
     function redirectByRole(role) {
-      switch(role) {
-        case 'admin':
-        case 'owner':
-          window.location.href = '/pages/admin.html';
-          break;
-        case 'vet':
-        case 'groomer':
-          window.location.href = '/pages/mi-agenda.html';
-          break;
-        case 'receptionist':
-          window.location.href = '/pages/gestion-citas.html';
-          break;
-        case 'client':
-        default:
-          window.location.href = '/';
-          break;
-      }
+      window.location.href = ROLE_HOMES[role] || '/';
     }
 
     // Check if user already logged in
@@ -236,14 +236,22 @@
       const phone = document.getElementById('regPhone').value;
       const password = document.getElementById('regPassword').value;
       const staffCode = document.getElementById('staffCode').value;
+      const adminCode = document.getElementById('adminCode').value;
 
       // Determine role
       let role = 'client';
       if (selectedRole === 'staff') {
         if (staffCode === 'SEVET-STAFF-2026') {
-          role = 'vet'; // Default staff role, admin upgrades later
+          role = 'vet';
         } else {
-          showMessage('Código de staff inválido', 'error');
+          showMessage('Código de staff inválido. Solicítalo a la clínica.', 'error');
+          return;
+        }
+      } else if (selectedRole === 'admin') {
+        if (adminCode === 'SEVET-ADMIN-2026') {
+          role = 'admin';
+        } else {
+          showMessage('Código administrativo inválido. Solicítalo a la dirección.', 'error');
           return;
         }
       }

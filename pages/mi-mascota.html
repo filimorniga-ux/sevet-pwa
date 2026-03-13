@@ -48,5 +48,9 @@
   </section>
 
   <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { guardPage } from '/js/auth.js';
+    guardPage(['client']);
+  </script>
 </body>
 </html>
