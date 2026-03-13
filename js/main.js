@@ -86,7 +86,7 @@ function initParticles() {
   const paws = Array.from({ length: 40 }, () => ({
     x: Math.random() * W,
     y: Math.random() * H,
-    size: Math.random() * 14 + 14,
+    size: Math.random() * 12 + 30,
     vx: (Math.random() - 0.5) * 0.4,
     vy: (Math.random() - 0.5) * 0.4,
     alpha: Math.random() * 0.18 + 0.12,
