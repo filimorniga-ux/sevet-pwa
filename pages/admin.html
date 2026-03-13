@@ -164,28 +164,24 @@
 
     let adminProfile = null;
 
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '/pages/auth.html'; return; }
-
-      const { data: profile } = await supabase.from('profiles')
-        .select('*').eq('user_id', session.user.id).single();
-      
+    document.addEventListener('auth:login', (e) => {
+      const profile = e.detail.profile;
       if (!profile || !['admin','owner'].includes(profile.role)) {
         window.location.href = '/'; return;
       }
-
       adminProfile = profile;
       document.getElementById('adminGreeting').textContent = 
         `Bienvenido, ${profile.full_name} — Panel de Control`;
-
       loadOverview();
+    });
 
-      document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-        e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/';
-      });
-    }
-    init();
+    document.addEventListener('auth:logout', () => {
+      window.location.href = '/pages/auth.html';
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+      e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/';
+    });
 
     // Panel switching
     window.showPanel = function(panel, btn) {
