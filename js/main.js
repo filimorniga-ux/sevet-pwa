@@ -5,7 +5,8 @@
 
 import '../styles.css';
 import { initAuth } from './auth.js';
-import { initAgendamiento } from './modules/agendamiento.js';
+// Legacy agendamiento disabled — booking.js handles this now
+// import { initAgendamiento } from './modules/agendamiento.js';
 import { initMiMascota } from './modules/mi-mascota.js';
 import { initTienda } from './modules/tienda.js';
 import { initPeluqueria } from './modules/peluqueria.js';
@@ -47,7 +48,7 @@ if ('serviceWorker' in navigator) {
 // ── INICIALIZAR APP ──
 function initApp() {
   initAuth();
-  initAgendamiento();
+  // initAgendamiento(); // disabled — booking.js is the active engine
   initMiMascota();
   initTienda();
   initPeluqueria();
