@@ -10,6 +10,11 @@ import { initMiMascota } from './modules/mi-mascota.js';
 import { initTienda } from './modules/tienda.js';
 import { initPeluqueria } from './modules/peluqueria.js';
 import { initChatbot } from './modules/chatbot.js';
+import { initAnatomia } from './modules/anatomia.js';
+import { initTelemedicina } from './modules/telemedicina.js';
+import { initHistorial } from './modules/historial.js';
+import { initImagenes } from './modules/imagenes.js';
+import { initFinanciero } from './modules/financiero.js';
 
 // ── Registro Service Worker (Offline-First) ──
 if ('serviceWorker' in navigator) {
@@ -47,6 +52,11 @@ function initApp() {
   initTienda();
   initPeluqueria();
   initChatbot();
+  initAnatomia();
+  initTelemedicina();
+  initHistorial();
+  initImagenes();
+  initFinanciero();
   initCursor();
   initParticles();
   initNavScroll();

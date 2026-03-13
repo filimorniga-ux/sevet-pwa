@@ -1275,7 +1275,7 @@ section { position: relative; z-index: 1; }
 .product-desc {
   font-size: 0.78rem; color: var(--gray-400); margin: 0 0 0.6rem;
   line-height: 1.4; display: -webkit-box;
-  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .product-rating {
   color: #f59e0b; font-size: 0.8rem; margin-bottom: 0.5rem;
@@ -1493,4 +1493,480 @@ section { position: relative; z-index: 1; }
 .chat-send-btn:hover {
   background: linear-gradient(135deg, var(--blue-700), var(--blue-600));
   transform: scale(1.05);
+}
+
+/* ─────────────────────────────────────────
+   MÓDULO: ANATOMÍA INTERACTIVA
+   ───────────────────────────────────────── */
+.anatomy-layout {
+  display: grid; grid-template-columns: 280px 1fr; gap: 2rem;
+}
+.anatomy-sidebar {
+  display: flex; flex-direction: column; gap: 1.5rem;
+}
+.anatomy-sidebar-title {
+  font-size: 1rem; font-weight: 800; color: var(--gray-900); margin: 0;
+}
+.anatomy-systems {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.anat-sys-btn {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); background: var(--white);
+  cursor: pointer; transition: var(--transition); text-align: left;
+  font-size: 0.85rem; font-weight: 600; color: var(--gray-700);
+}
+.anat-sys-btn:hover { border-color: var(--blue-200); background: var(--blue-50); }
+.anat-sys-btn.active {
+  border-color: var(--sys-color, var(--blue-400));
+  background: var(--blue-50); color: var(--blue-700); font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(37,99,235,.15);
+}
+.anat-sys-icon { font-size: 1.2rem; }
+.anatomy-info-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.25rem;
+  box-shadow: var(--card-shadow);
+}
+.anatomy-info-hint { color: var(--gray-400); font-size: 0.82rem; margin: 0; }
+.anatomy-info-title {
+  font-size: 1rem; font-weight: 800; color: var(--gray-900); margin: 0 0 0.5rem;
+}
+.anatomy-info-desc { font-size: 0.85rem; color: var(--gray-600); margin: 0 0 0.75rem; line-height: 1.5; }
+.anatomy-info-detail {
+  font-size: 0.78rem; color: var(--blue-600); background: var(--blue-50);
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+}
+.anatomy-detail-label { font-weight: 700; display: block; margin-bottom: 0.25rem; }
+.anatomy-viewer {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.anatomy-canvas {
+  position: relative; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-xl);
+  min-height: 450px; box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.anatomy-silhouette {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12rem; opacity: 0.08; pointer-events: none;
+}
+.anatomy-points { position: absolute; inset: 0; }
+.anat-point {
+  position: absolute; border: none; background: transparent;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; transform: translate(-50%, -50%);
+  z-index: 2;
+}
+.anat-point-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--point-color, var(--blue-500));
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 2px var(--point-color, var(--blue-500)), 0 2px 8px rgba(0,0,0,0.15);
+  transition: var(--transition);
+}
+.anat-point:hover .anat-point-dot,
+.anat-point.active .anat-point-dot {
+  transform: scale(1.4);
+  box-shadow: 0 0 0 3px var(--point-color, var(--blue-500)), 0 0 16px rgba(37,99,235,.3);
+}
+.anat-point-label {
+  font-size: 0.65rem; font-weight: 700; color: var(--gray-700);
+  background: rgba(255,255,255,0.9); padding: 1px 6px; border-radius: 4px;
+  white-space: nowrap; opacity: 0; transition: var(--transition);
+}
+.anat-point:hover .anat-point-label, .anat-point.active .anat-point-label { opacity: 1; }
+.anatomy-legend {
+  text-align: center; font-size: 0.82rem; color: var(--gray-500);
+}
+.legend-active { font-weight: 700; color: var(--blue-600); }
+@media (max-width: 768px) {
+  .anatomy-layout { grid-template-columns: 1fr; }
+  .anatomy-systems { flex-direction: row; flex-wrap: wrap; gap: 0.4rem; }
+  .anat-sys-btn { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+  .anatomy-canvas { min-height: 350px; }
+}
+
+/* ─────────────────────────────────────────
+   MÓDULO: TELEMEDICINA
+   ───────────────────────────────────────── */
+.panel-title {
+  font-size: 1.05rem; font-weight: 800; color: var(--gray-900);
+  margin: 0 0 1rem; padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--blue-100);
+}
+.telemed-grid {
+  display: grid; grid-template-columns: 360px 1fr; gap: 2rem; margin-bottom: 2rem;
+}
+.telemed-doctors {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+.doctor-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.doctor-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.85rem; border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); cursor: pointer;
+  transition: var(--transition); position: relative;
+}
+.doctor-card:hover { border-color: var(--blue-200); background: var(--blue-50); }
+.doctor-card.selected { border-color: var(--blue-400); background: var(--blue-50); box-shadow: 0 0 0 2px rgba(37,99,235,.15); }
+.doctor-card.unavailable { opacity: 0.6; }
+.doctor-avatar { font-size: 1.8rem; }
+.doctor-info { flex: 1; }
+.doctor-name { font-size: 0.85rem; font-weight: 700; color: var(--gray-900); }
+.doctor-spec { font-size: 0.75rem; color: var(--gray-500); }
+.doctor-meta { display: flex; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.7rem; }
+.doctor-rating { color: #f59e0b; font-weight: 700; }
+.doctor-slot { font-weight: 600; }
+.doctor-slot.available { color: #10b981; }
+.doctor-slot.busy { color: var(--gray-400); }
+.doctor-status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  position: absolute; top: 0.6rem; right: 0.6rem;
+}
+.doctor-status-dot.online { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.5); }
+.doctor-status-dot.offline { background: var(--gray-300); }
+.telemed-right { display: flex; flex-direction: column; gap: 1.5rem; }
+.telemed-preview {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 2rem;
+  box-shadow: var(--card-shadow); min-height: 200px;
+  display: flex; align-items: center; justify-content: center;
+}
+.telemed-preview-placeholder { text-align: center; color: var(--gray-400); }
+.telemed-preview-icon { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+.telemed-preview-placeholder h4 { color: var(--gray-700); margin: 0 0 0.5rem; }
+.telemed-preview-placeholder p { font-size: 0.85rem; margin: 0; }
+.telemed-call-ready { text-align: center; }
+.call-avatar { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+.call-spec { font-size: 0.85rem; color: var(--gray-500); margin: 0.25rem 0; }
+.call-time { font-size: 0.88rem; color: var(--gray-700); margin: 0.5rem 0 1rem; }
+.call-start-btn { padding: 0.75rem 2rem; font-size: 0.95rem; }
+.call-start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.call-note { font-size: 0.78rem; color: var(--gray-400); margin-top: 0.5rem; }
+.telemed-features-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+}
+.telemed-feature {
+  display: flex; gap: 0.5rem; padding: 0.85rem;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); box-shadow: var(--card-shadow);
+}
+.telemed-feat-icon { font-size: 1.5rem; }
+.telemed-feature strong { font-size: 0.78rem; color: var(--gray-900); display: block; }
+.telemed-feature p { font-size: 0.7rem; color: var(--gray-500); margin: 0.15rem 0 0; }
+.telemed-monitor {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+.monitor-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.monitor-card {
+  text-align: center; padding: 1.25rem;
+  background: linear-gradient(135deg, var(--gray-50), var(--white));
+  border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+}
+.monitor-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.monitor-value {
+  font-size: 2rem; font-weight: 900;
+  background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.monitor-label { font-size: 0.72rem; color: var(--gray-500); font-weight: 600; margin-top: 0.1rem; }
+.monitor-status {
+  display: inline-block; font-size: 0.68rem; font-weight: 700;
+  padding: 0.15rem 0.5rem; border-radius: 99px; margin-top: 0.4rem;
+}
+.monitor-status.ok { background: #d1fae5; color: #065f46; }
+@media (max-width: 768px) {
+  .telemed-grid { grid-template-columns: 1fr; }
+  .telemed-features-grid { grid-template-columns: repeat(2, 1fr); }
+  .monitor-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─────────────────────────────────────────
+   MÓDULO: HISTORIAL MÉDICO (SOAP)
+   ───────────────────────────────────────── */
+.historial-layout {
+  display: grid; grid-template-columns: 300px 1fr; gap: 2rem;
+}
+.historial-sidebar {
+  display: flex; flex-direction: column; gap: 1.5rem;
+}
+.historial-patient-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 1.25rem; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-xl);
+  box-shadow: var(--card-shadow);
+}
+.historial-patient-avatar { font-size: 2.5rem; }
+.historial-patient-name { font-size: 1rem; font-weight: 800; color: var(--gray-900); }
+.historial-patient-breed { font-size: 0.78rem; color: var(--gray-500); }
+.historial-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+}
+.historial-stat {
+  text-align: center; padding: 0.75rem; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+}
+.historial-stat-num {
+  font-size: 1.3rem; font-weight: 900; color: var(--blue-600);
+}
+.historial-stat-label { font-size: 0.68rem; color: var(--gray-500); font-weight: 600; }
+.historial-filters {
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.historial-filter {
+  padding: 0.55rem 0.85rem; border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm); background: var(--white);
+  cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  color: var(--gray-600); text-align: left; transition: var(--transition);
+}
+.historial-filter:hover { background: var(--blue-50); border-color: var(--blue-200); }
+.historial-filter.active {
+  background: var(--blue-600); color: var(--white); border-color: var(--blue-600);
+}
+.historial-records { display: flex; flex-direction: column; gap: 1rem; }
+.record-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.25rem;
+  box-shadow: var(--card-shadow); cursor: pointer; transition: var(--transition);
+}
+.record-card:hover { border-color: var(--blue-200); box-shadow: var(--hover-shadow); }
+.record-card.expanded { cursor: default; border-color: var(--blue-300); }
+.record-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.record-type-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.25rem 0.65rem; border-radius: 99px;
+  color: var(--white); font-size: 0.72rem; font-weight: 700;
+}
+.record-date { font-size: 0.78rem; color: var(--gray-500); font-weight: 600; }
+.record-vet { font-size: 0.82rem; color: var(--gray-600); margin-bottom: 0.5rem; }
+.record-preview { font-size: 0.82rem; color: var(--gray-500); margin: 0; line-height: 1.5; }
+.soap-section { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.soap-block { display: flex; gap: 0.75rem; }
+.soap-letter {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--blue-600); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 0.85rem; flex-shrink: 0;
+}
+.soap-content { flex: 1; }
+.soap-title { font-size: 0.78rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.25rem; }
+.soap-content p { font-size: 0.82rem; color: var(--gray-600); margin: 0; line-height: 1.5; }
+.soap-attachments {
+  font-size: 0.78rem; color: var(--gray-600); margin-top: 0.5rem;
+  padding-top: 0.75rem; border-top: 1px solid var(--gray-100);
+}
+.attachment-chip {
+  display: inline-block; padding: 0.2rem 0.5rem;
+  background: var(--blue-50); border: 1px solid var(--blue-100);
+  border-radius: 99px; font-size: 0.7rem; font-weight: 600;
+  color: var(--blue-600); margin-left: 0.3rem;
+}
+@media (max-width: 768px) {
+  .historial-layout { grid-template-columns: 1fr; }
+  .historial-filters { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* ─────────────────────────────────────────
+   MÓDULO: IMÁGENES DIAGNÓSTICAS
+   ───────────────────────────────────────── */
+.diag-filters {
+  display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.diag-filter-btn {
+  padding: 0.5rem 1rem; border: 1px solid var(--gray-200);
+  border-radius: 99px; background: var(--white);
+  cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  color: var(--gray-600); transition: var(--transition);
+}
+.diag-filter-btn:hover { background: var(--blue-50); border-color: var(--blue-200); }
+.diag-filter-btn.active {
+  background: var(--blue-600); color: var(--white); border-color: var(--blue-600);
+}
+.diag-layout {
+  display: grid; grid-template-columns: 320px 1fr; gap: 2rem;
+}
+.diag-gallery { display: flex; flex-direction: column; gap: 0.75rem; }
+.diag-thumb {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.85rem; border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); cursor: pointer;
+  background: var(--white); transition: var(--transition);
+}
+.diag-thumb:hover { border-color: var(--blue-200); background: var(--blue-50); }
+.diag-thumb.selected { border-color: var(--blue-400); background: var(--blue-50); box-shadow: 0 0 0 2px rgba(37,99,235,.15); }
+.diag-thumb-icon { font-size: 1.8rem; }
+.diag-thumb-title { font-size: 0.82rem; font-weight: 700; color: var(--gray-900); }
+.diag-thumb-meta { font-size: 0.72rem; color: var(--gray-500); }
+.diag-detail-panel {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+.diag-detail-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 300px; color: var(--gray-400);
+  text-align: center;
+}
+.diag-detail-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.diag-detail-content { display: flex; flex-direction: column; gap: 1rem; }
+.diag-detail-header { display: flex; gap: 0.75rem; align-items: center; }
+.diag-detail-type-icon { font-size: 2rem; }
+.diag-detail-title { font-size: 1rem; font-weight: 800; color: var(--gray-900); margin: 0; }
+.diag-detail-meta { font-size: 0.78rem; color: var(--gray-500); margin: 0; }
+.diag-viewer {
+  background: var(--gray-900); border-radius: var(--radius-md);
+  min-height: 180px; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.diag-viewer-placeholder {
+  font-size: 4rem; opacity: 0.3;
+}
+.diag-viewer-tools {
+  position: absolute; bottom: 0.5rem; left: 50%;
+  transform: translateX(-50%); display: flex; gap: 0.3rem;
+  background: rgba(0,0,0,0.6); padding: 0.3rem; border-radius: var(--radius-sm);
+}
+.diag-tool {
+  width: 32px; height: 32px; border: none; background: transparent;
+  color: var(--white); cursor: pointer; border-radius: 4px;
+  font-size: 0.82rem; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.diag-tool:hover { background: rgba(255,255,255,0.15); }
+.diag-report h5 { font-size: 0.85rem; font-weight: 800; color: var(--gray-900); margin: 0 0 0.4rem; }
+.diag-findings, .diag-conclusion { font-size: 0.82rem; color: var(--gray-600); margin: 0 0 1rem; line-height: 1.5; }
+.diag-vet-info {
+  font-size: 0.78rem; color: var(--gray-500); padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-100);
+}
+@media (max-width: 768px) {
+  .diag-layout { grid-template-columns: 1fr; }
+}
+
+/* ─────────────────────────────────────────
+   MÓDULO: PANEL FINANCIERO Y ANALÍTICAS
+   ───────────────────────────────────────── */
+.fin-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+  margin-bottom: 2rem;
+}
+.fin-kpi {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 1.25rem; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-xl);
+  box-shadow: var(--card-shadow); position: relative;
+}
+.fin-kpi-icon { font-size: 1.8rem; }
+.fin-kpi-data { flex: 1; }
+.fin-kpi-value {
+  font-size: 1.5rem; font-weight: 900;
+  background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.fin-kpi-label { font-size: 0.72rem; color: var(--gray-500); font-weight: 600; }
+.fin-kpi-trend {
+  font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+}
+.fin-kpi-trend.up { background: #d1fae5; color: #065f46; }
+.fin-kpi-trend.down { background: #fee2e2; color: #991b1b; }
+.fin-charts-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.fin-chart-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+.fin-chart-title {
+  font-size: 0.92rem; font-weight: 800; color: var(--gray-900);
+  margin: 0 0 1.25rem;
+}
+.fin-bar-chart {
+  display: flex; align-items: flex-end; gap: 0.75rem;
+  height: 200px; padding-bottom: 1.5rem;
+}
+.fin-bar-col {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; height: 100%; justify-content: flex-end;
+  position: relative;
+}
+.fin-bar {
+  width: 100%; max-width: 48px;
+  background: linear-gradient(180deg, var(--blue-500), var(--blue-600));
+  border-radius: 6px 6px 0 0; transition: height 0.6s ease;
+  min-height: 4px;
+}
+.fin-bar-col:hover .fin-bar { background: linear-gradient(180deg, var(--blue-400), var(--blue-500)); }
+.fin-bar-label {
+  font-size: 0.68rem; font-weight: 700; color: var(--gray-500);
+  margin-top: 0.4rem;
+}
+.fin-bar-value {
+  position: absolute; top: -1.2rem; font-size: 0.6rem;
+  font-weight: 700; color: var(--blue-600); white-space: nowrap;
+  opacity: 0; transition: opacity 0.2s;
+}
+.fin-bar-col:hover .fin-bar-value { opacity: 1; }
+.fin-donut-list { display: flex; flex-direction: column; gap: 0.65rem; }
+.fin-donut-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem;
+}
+.fin-donut-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.fin-donut-name { width: 90px; font-weight: 600; color: var(--gray-700); }
+.fin-donut-bar-wrap {
+  flex: 1; height: 8px; background: var(--gray-100);
+  border-radius: 99px; overflow: hidden;
+}
+.fin-donut-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+.fin-donut-pct { width: 40px; text-align: right; font-weight: 700; color: var(--gray-600); font-size: 0.78rem; }
+.fin-donut-val { width: 60px; text-align: right; font-weight: 600; color: var(--gray-500); font-size: 0.72rem; }
+.fin-bottom-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+}
+.fin-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.fin-table th {
+  text-align: left; font-size: 0.72rem; font-weight: 700;
+  color: var(--gray-500); padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--gray-200); text-transform: uppercase;
+}
+.fin-table td {
+  padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-700);
+}
+.fin-table tr:hover td { background: var(--blue-50); }
+.fin-rank {
+  display: inline-block; width: 20px; height: 20px;
+  background: var(--blue-50); color: var(--blue-600);
+  border-radius: 6px; text-align: center; line-height: 20px;
+  font-size: 0.68rem; font-weight: 800; margin-right: 0.3rem;
+}
+.fin-amount { font-weight: 800; color: var(--blue-600); }
+.fin-transactions { display: flex; flex-direction: column; gap: 0.5rem; }
+.fin-tx {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem; border: 1px solid var(--gray-100);
+  border-radius: var(--radius-sm);
+}
+.fin-tx-date { font-size: 0.72rem; color: var(--gray-500); font-weight: 600; width: 50px; }
+.fin-tx-desc { flex: 1; font-size: 0.82rem; color: var(--gray-700); }
+.fin-tx-amount {
+  font-size: 0.85rem; font-weight: 800; white-space: nowrap;
+}
+.fin-tx-amount.ingreso { color: #10b981; }
+.fin-tx-amount.egreso { color: #ef4444; }
+@media (max-width: 768px) {
+  .fin-kpis { grid-template-columns: repeat(2, 1fr); }
+  .fin-charts-grid, .fin-bottom-grid { grid-template-columns: 1fr; }
 }

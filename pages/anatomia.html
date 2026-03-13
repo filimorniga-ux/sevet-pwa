@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#2563eb"/>
+  <meta name="description" content="SEVET – Anatomía interactiva canina y felina. Explora sistemas corporales con detalle clínico."/>
+  <title>Anatomía Interactiva – SEVET Pet-Tech 360</title>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🐾</div>
+      <span class="nav-logo-text">SE<span>VET</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="#especialidades">Servicios</a></li>
+      <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
+      <li><a href="/pages/tienda.html">Tienda</a></li>
+      <li><a href="tel:+56227731554" class="nav-cta">📞 Llamar Ahora</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header reveal">
+      <p class="section-tag">Educación Veterinaria</p>
+      <h1 class="section-title">Anatomía <span class="grad">Interactiva</span></h1>
+      <p class="section-sub">Explora los sistemas corporales de tu mascota. Información detallada con relevancia clínica.</p>
+    </div>
+
+    <div class="reveal" id="anatomia-container">
+      <p class="summary-empty">Cargando explorador anatómico...</p>
+    </div>
+  </section>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
