@@ -581,7 +581,7 @@
     };
 
     function renderServices(list) {
-      const formatPrice = (p) => p != null ? '$' + Number(p).toLocaleString('es-CL') : '';
+      const formatPrice = (p) => (p !== null && p !== undefined && p !== '') ? '$' + Number(p).toLocaleString('es-CL') : '';
       grid.innerHTML = list.map((s, i) => `
         <div class="bento-card span-4 reveal" style="--delay:${0.05 * i}s">
           <div class="card-overlay">
@@ -591,7 +591,7 @@
               <div class="card-title">${esc(s.name)}</div>
               <div class="card-desc">${esc(s.description) || ''}</div>
               <div style="margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:var(--purple-600)">
-                ${s.duration_min ? '⏱ ' + s.duration_min + ' min' : ''} ${formatPrice(s.price) ? '&nbsp;·&nbsp;💰 ' + formatPrice(s.price) : ''}
+                ${s.duration_min ? '⏱ ' + esc(s.duration_min) + ' min' : ''} ${formatPrice(s.price) ? '&nbsp;·&nbsp;💰 ' + formatPrice(s.price) : ''}
               </div>
             </div>
           </div>
@@ -622,7 +622,7 @@
       <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 2px 12px rgba(0,0,0,0.06)">
         <div style="font-size:2.5rem;margin-bottom:0.5rem">${roleEmojis[m.role] || '👤'}</div>
         <strong style="display:block">${esc(m.full_name)}</strong>
-        <span style="font-size:0.82rem;color:var(--purple-600);font-weight:600">${esc(m.position) || roleLabels[m.role] || m.role}</span>
+        <span style="font-size:0.82rem;color:var(--purple-600);font-weight:600">${esc(m.position) || roleLabels[m.role] || esc(m.role)}</span>
         ${m.specialty ? `<p style="font-size:0.78rem;color:var(--gray-500);margin-top:0.3rem">${esc(m.specialty)}</p>` : ''}
       </div>
     `).join('');

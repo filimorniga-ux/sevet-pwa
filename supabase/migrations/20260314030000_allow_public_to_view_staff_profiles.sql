@@ -1,0 +1,1 @@
+CREATE POLICY "Public can read staff profiles for team display" ON profiles FOR SELECT USING (role IN ('vet', 'admin', 'owner', 'groomer', 'receptionist'));
