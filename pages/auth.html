@@ -263,7 +263,9 @@
     checkAuth();
 
     // ── GOOGLE SSO ──
-    async function handleGoogleSSO() {
+    async function handleGoogleSSO(e) {
+      const btnId = e.currentTarget.id;
+      setLoading(btnId, true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -271,10 +273,13 @@
           queryParams: { prompt: 'select_account' }
         }
       });
-      if (error) showMessage('Error al conectar con Google: ' + error.message, 'error');
+      if (error) {
+        showMessage('Error al conectar con Google: ' + error.message, 'error');
+        setLoading(btnId, false);
+      }
     }
-    document.getElementById('btnGoogleLogin').addEventListener('click', handleGoogleSSO);
-    document.getElementById('btnGoogleRegister').addEventListener('click', handleGoogleSSO);
+    document.getElementById('btnGoogleLogin').addEventListener('click', (e) => handleGoogleSSO(e));
+    document.getElementById('btnGoogleRegister').addEventListener('click', (e) => handleGoogleSSO(e));
 
     // ── EMAIL/PASSWORD LOGIN ──
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -398,11 +403,13 @@
         showMessage('Ingresa tu email en el formulario de registro primero.', 'error');
         return;
       }
+      setLoading('btnResend', true);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: lastRegisteredEmail,
         options: { emailRedirectTo: window.location.origin + '/pages/auth.html' }
       });
+      setLoading('btnResend', false);
       if (error) {
         showMessage('Error al reenviar: ' + error.message, 'error');
       } else {
@@ -468,7 +475,9 @@
         const pw2 = document.getElementById('newPasswordConfirm').value;
         if (pw.length < 6) { showMessage('Mínimo 6 caracteres.', 'error'); return; }
         if (pw !== pw2) { showMessage('Las contraseñas no coinciden.', 'error'); return; }
+        setLoading('btnResetPwd', true);
         const { error } = await supabase.auth.updateUser({ password: pw });
+        setLoading('btnResetPwd', false);
         if (error) { showMessage('Error: ' + error.message, 'error'); }
         else { showMessage('✅ Contraseña actualizada. Redirigiendo...', 'success'); setTimeout(() => window.location.href = '/pages/auth.html', 1500); }
       });
