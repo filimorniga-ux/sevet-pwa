@@ -1900,6 +1900,9 @@ section { position: relative; z-index: 1; }
 .historial-layout {
   display: grid; grid-template-columns: 300px 1fr; gap: 2rem;
 }
+.historial-main {
+  display: flex; flex-direction: column; gap: 1rem;
+}
 .historial-sidebar {
   display: flex; flex-direction: column; gap: 1.5rem;
 }
@@ -1937,6 +1940,39 @@ section { position: relative; z-index: 1; }
   background: var(--blue-600); color: var(--white); border-color: var(--blue-600);
 }
 .historial-records { display: flex; flex-direction: column; gap: 1rem; }
+.soap-compose-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+}
+.soap-compose-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 0.75rem; margin-bottom: 0.75rem;
+}
+.soap-compose-header h3 {
+  margin: 0; font-size: 0.95rem; color: var(--blue-800);
+}
+.soap-compose-header span {
+  font-size: 0.75rem; font-weight: 600; color: var(--gray-500);
+}
+.soap-compose-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
+}
+.soap-input {
+  width: 100%; resize: vertical; font-family: inherit; line-height: 1.45;
+  padding: 0.6rem; border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+}
+.soap-compose-actions {
+  display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem;
+}
+.soap-compose-msg {
+  font-size: 0.75rem; color: var(--gray-500); font-weight: 600;
+}
+.soap-compose-note {
+  font-size: 0.82rem; color: var(--gray-600); line-height: 1.5;
+}
 .record-card {
   background: var(--white); border: 1px solid var(--gray-200);
   border-radius: var(--radius-xl); padding: 1.25rem;
@@ -1990,6 +2026,8 @@ section { position: relative; z-index: 1; }
 @media (max-width: 768px) {
   .historial-layout { grid-template-columns: 1fr; }
   .historial-filters { flex-direction: row; flex-wrap: wrap; }
+  .soap-compose-grid { grid-template-columns: 1fr; }
+  .soap-compose-actions { flex-direction: column; align-items: stretch; }
 }
 
 /* ─────────────────────────────────────────

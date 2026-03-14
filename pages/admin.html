@@ -40,6 +40,7 @@
     <div class="specialty-tabs" style="margin-bottom:2rem">
       <button class="spec-tab active" onclick="showPanel('overview', this)">📊 Resumen</button>
       <button class="spec-tab" onclick="showPanel('services', this)">🩺 Servicios</button>
+      <button class="spec-tab" onclick="showPanel('inventory', this)">📦 Inventario</button>
       <button class="spec-tab" onclick="showPanel('users', this)">👥 Usuarios</button>
       <button class="spec-tab" onclick="showPanel('timeoff', this)">🏖️ Permisos</button>
     </div>
@@ -141,6 +142,49 @@
       </div>
     </div>
 
+    <!-- INVENTORY PANEL -->
+    <div class="admin-panel" id="panelInventory">
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <h3>📦 Estado de Inventario</h3>
+          <button class="btn-primary" onclick="loadInventoryPanel()" style="padding:0.5rem 1rem">↻ Recargar</button>
+        </div>
+        <div id="inventorySummary" class="kpi-grid" style="margin-bottom:1rem"></div>
+        <div id="inventoryTable" class="appointments-list"><div class="loading-spinner">Cargando inventario...</div></div>
+      </div>
+
+      <div class="chart-card" style="margin-top:1rem">
+        <h3>🧾 Registrar Movimiento</h3>
+        <div class="soap-compose-grid">
+          <div class="auth-field">
+            <label>Producto</label>
+            <select id="invProduct" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+          </div>
+          <div class="auth-field">
+            <label>Tipo</label>
+            <select id="invType" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>Cantidad</label>
+            <input type="number" id="invQty" min="1" value="1" />
+          </div>
+          <div class="auth-field">
+            <label>Notas</label>
+            <input type="text" id="invNotes" placeholder="Motivo del movimiento" />
+          </div>
+        </div>
+        <button class="btn-primary" onclick="saveInventoryMovement()" style="justify-content:center">💾 Guardar Movimiento</button>
+      </div>
+
+      <div class="chart-card" style="margin-top:1rem">
+        <h3>🕐 Últimos Movimientos</h3>
+        <div id="inventoryMovements" class="appointments-list"><div class="loading-spinner">Cargando movimientos...</div></div>
+      </div>
+    </div>
+
     <!-- USERS PANEL -->
     <div class="admin-panel" id="panelUsers">
       <div class="chart-card">
@@ -161,6 +205,7 @@
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
+    import { buildServicePriceIndex, calculateStockAfterMovement, estimateAppointmentRevenue } from '/js/modules/admin-utils.js';
 
     let adminProfile = null;
 
@@ -206,6 +251,7 @@
 
       if (panel === 'overview') loadOverview();
       if (panel === 'services') loadServicesAdmin();
+      if (panel === 'inventory') loadInventoryPanel();
       if (panel === 'users') loadUsers();
       if (panel === 'timeoff') loadTimeOffRequests();
     };
@@ -217,14 +263,15 @@
       const monthStart = today.slice(0, 7) + '-01';
 
       // KPIs
-      const [todayRes, weekRes, monthRes, petsRes] = await Promise.all([
+      const [todayRes, weekRes, monthRes, petsRes, servicesRes] = await Promise.all([
         supabase.from('appointments').select('id, status, service_type', { count: 'exact' })
           .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`),
         supabase.from('appointments').select('id', { count: 'exact' })
           .gte('date_time', `${today}T00:00:00`).lte('date_time', new Date(Date.now() + 7*86400000).toISOString()),
-        supabase.from('appointments').select('id, service_type, status')
+        supabase.from('appointments').select('id, service_type, service_id, status')
           .gte('date_time', `${monthStart}T00:00:00`).eq('status', 'completada'),
         supabase.from('pets').select('id', { count: 'exact' }),
+        supabase.from('services').select('id, category, specialty, price'),
       ]);
 
       const todayAppts = todayRes.data || [];
@@ -235,7 +282,9 @@
       document.getElementById('kpiPending').textContent = todayAppts.filter(a => a.status === 'pendiente').length;
 
       const monthData = monthRes.data || [];
-      document.getElementById('kpiRevenue').textContent = 'N/D';
+      const serviceIndex = buildServicePriceIndex(servicesRes.data || []);
+      const revenue = estimateAppointmentRevenue(monthData, serviceIndex);
+      document.getElementById('kpiRevenue').textContent = `$${Math.round(revenue).toLocaleString('es-CL')}`;
 
       // Charts
       await renderWeeklyChart(weekAgo);
@@ -430,6 +479,167 @@
     window.toggleServiceActive = async function(id, active) {
       await supabase.from('services').update({ active }).eq('id', id);
       loadServicesAdmin();
+    };
+
+    // ── INVENTORY ──
+    let inventoryProducts = [];
+
+    async function loadInventoryPanel() {
+      await Promise.all([loadInventoryProducts(), loadInventoryMovements()]);
+    }
+    window.loadInventoryPanel = loadInventoryPanel;
+
+    async function loadInventoryProducts() {
+      const summaryEl = document.getElementById('inventorySummary');
+      const tableEl = document.getElementById('inventoryTable');
+      const productSelectEl = document.getElementById('invProduct');
+      if (!summaryEl || !tableEl || !productSelectEl) return;
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, category, stock, is_active')
+        .order('stock', { ascending: true })
+        .limit(200);
+
+      if (error) {
+        tableEl.innerHTML = `<p class="summary-empty">No se pudo cargar inventario: ${error.message}</p>`;
+        return;
+      }
+
+      inventoryProducts = data || [];
+      const active = inventoryProducts.filter((p) => p.is_active !== false);
+      const lowStock = active.filter((p) => (p.stock || 0) <= 5);
+      const noStock = active.filter((p) => (p.stock || 0) <= 0);
+      const totalUnits = active.reduce((acc, p) => acc + Math.max(0, p.stock || 0), 0);
+
+      summaryEl.innerHTML = `
+        <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">${active.length}</div><div class="kpi-label">Productos Activos</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value" style="color:#f59e0b">${lowStock.length}</div><div class="kpi-label">Stock Bajo</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🛑</div><div class="kpi-value" style="color:#ef4444">${noStock.length}</div><div class="kpi-label">Sin Stock</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🔢</div><div class="kpi-value">${totalUnits}</div><div class="kpi-label">Unidades Totales</div></div>
+      `;
+
+      if (!active.length) {
+        tableEl.innerHTML = '<p class="summary-empty">No hay productos activos en inventario.</p>';
+      } else {
+        tableEl.innerHTML = active.map((product) => {
+          const stock = Math.max(0, product.stock || 0);
+          const stockColor = stock <= 0 ? '#ef4444' : stock <= 5 ? '#f59e0b' : '#16a34a';
+          return `
+            <div class="appointment-row">
+              <span class="apt-service" style="flex:2">${product.name}</span>
+              <span style="font-size:0.78rem;color:var(--gray-500)">${product.category || 'general'}</span>
+              <span style="font-weight:800;color:${stockColor}">${stock}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      productSelectEl.innerHTML = active.map((product) => `
+        <option value="${product.id}">${product.name} (stock: ${Math.max(0, product.stock || 0)})</option>
+      `).join('');
+    }
+
+    async function loadInventoryMovements() {
+      const movementsEl = document.getElementById('inventoryMovements');
+      if (!movementsEl) return;
+
+      const { data, error } = await supabase
+        .from('inventory_movements')
+        .select('id, type, quantity, notes, created_at, products(name)')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        movementsEl.innerHTML = `<p class="summary-empty">No se pudieron cargar movimientos: ${error.message}</p>`;
+        return;
+      }
+      if (!data?.length) {
+        movementsEl.innerHTML = '<p class="summary-empty">Aún no hay movimientos registrados.</p>';
+        return;
+      }
+
+      const typeMeta = {
+        entrada: { icon: '➕', color: '#16a34a' },
+        salida: { icon: '➖', color: '#ef4444' },
+        ajuste: { icon: '⚙️', color: '#3b82f6' },
+      };
+
+      movementsEl.innerHTML = data.map((movement) => {
+        const meta = typeMeta[movement.type] || typeMeta.ajuste;
+        const date = new Date(movement.created_at).toLocaleString('es-CL', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        return `
+          <div class="appointment-row">
+            <span class="apt-service">${movement.products?.name || 'Producto eliminado'}</span>
+            <span style="color:${meta.color};font-weight:700">${meta.icon} ${movement.type}</span>
+            <span style="font-weight:700">${movement.quantity}</span>
+            <span style="font-size:0.78rem;color:var(--gray-500)">${movement.notes || '-'}</span>
+            <span style="font-size:0.78rem;color:var(--gray-400)">${date}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.saveInventoryMovement = async function() {
+      const productId = document.getElementById('invProduct')?.value;
+      const movementType = document.getElementById('invType')?.value;
+      const quantity = parseInt(document.getElementById('invQty')?.value, 10);
+      const notes = document.getElementById('invNotes')?.value?.trim() || null;
+
+      if (!productId || !['entrada', 'salida'].includes(movementType) || !quantity || quantity <= 0) {
+        alert('Completa producto, tipo y cantidad válida.');
+        return;
+      }
+
+      const product = inventoryProducts.find((item) => item.id === productId);
+      if (!product) {
+        alert('Producto no encontrado en inventario.');
+        return;
+      }
+
+      const newStock = calculateStockAfterMovement(product.stock || 0, movementType, quantity);
+      if (movementType === 'salida' && newStock === (product.stock || 0)) {
+        alert('No hay stock suficiente para registrar la salida.');
+        return;
+      }
+
+      const { data: authData } = await supabase.auth.getSession();
+      const userId = authData?.session?.user?.id || null;
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', productId);
+
+      if (updateError) {
+        alert(`No se pudo actualizar stock: ${updateError.message}`);
+        return;
+      }
+
+      const { error: movementError } = await supabase
+        .from('inventory_movements')
+        .insert({
+          product_id: productId,
+          type: movementType,
+          quantity: Math.abs(quantity),
+          notes,
+          created_by: userId,
+        });
+
+      if (movementError) {
+        alert(`Se actualizó stock, pero falló el movimiento: ${movementError.message}`);
+      } else {
+        alert('Movimiento registrado correctamente.');
+      }
+
+      document.getElementById('invQty').value = '1';
+      document.getElementById('invNotes').value = '';
+      await loadInventoryPanel();
     };
 
     // ── USERS ──
