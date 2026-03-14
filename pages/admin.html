@@ -142,11 +142,58 @@
       </div>
     </div>
 
-    <!-- USERS PANEL -->
+    <!-- STAFF PANEL -->
     <div class="admin-panel" id="panelUsers">
       <div class="chart-card">
-        <h3>👥 Gestión de Usuarios</h3>
-        <div id="usersTable" class="appointments-list"><div class="loading-spinner">Cargando usuarios...</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <h3>👥 Gestión de Personal</h3>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <select id="staffRoleFilter" onchange="loadStaff()" style="padding:0.5rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.85rem">
+              <option value="">Todos los roles</option>
+              <option value="vet">Veterinarios</option>
+              <option value="groomer">Peluqueros</option>
+              <option value="receptionist">Recepcionistas</option>
+              <option value="admin">Administradores</option>
+              <option value="client">Clientes</option>
+            </select>
+            <button class="btn-primary" onclick="showStaffForm()" style="padding:0.5rem 1rem">➕ Nuevo</button>
+          </div>
+        </div>
+
+        <!-- Staff Form (hidden by default) -->
+        <div id="staffFormContainer" class="hidden" style="margin-bottom:1.5rem">
+          <div class="confirmation-card">
+            <h4 id="staffFormTitle" style="margin-bottom:1rem;color:var(--purple-700)">➕ Nuevo Miembro del Equipo</h4>
+            <input type="hidden" id="staffEditId" />
+            <div class="soap-compose-grid">
+              <div class="auth-field"><label>Nombre completo *</label><input type="text" id="staffName" placeholder="Nombre y apellidos" /></div>
+              <div class="auth-field"><label>RUT</label><input type="text" id="staffRut" placeholder="12.345.678-9" /></div>
+              <div class="auth-field"><label>Email *</label><input type="email" id="staffEmail" placeholder="correo@ejemplo.cl" /></div>
+              <div class="auth-field"><label>Teléfono</label><input type="tel" id="staffPhone" placeholder="+56 9 1234 5678" /></div>
+              <div class="auth-field"><label>WhatsApp</label><input type="tel" id="staffWhatsapp" placeholder="+56 9 1234 5678" /></div>
+              <div class="auth-field"><label>Dirección</label><input type="text" id="staffAddress" placeholder="Calle 123, Lo Prado" /></div>
+              <div class="auth-field"><label>Fecha Nacimiento</label><input type="date" id="staffBirthDate" /></div>
+              <div class="auth-field">
+                <label>Rol *</label>
+                <select id="staffRole" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+                  <option value="vet">🩺 Veterinario</option>
+                  <option value="groomer">✂️ Peluquero/a</option>
+                  <option value="receptionist">📋 Recepcionista</option>
+                  <option value="admin">⚙️ Administrador</option>
+                </select>
+              </div>
+              <div class="auth-field"><label>Cargo / Posición</label><input type="text" id="staffPosition" placeholder="Ej: Veterinario Jefe" /></div>
+              <div class="auth-field"><label>Especialidad</label><input type="text" id="staffSpecialty" placeholder="Ej: Cardiología, Cirugía" /></div>
+              <div class="auth-field"><label>N° Licencia / Matrícula</label><input type="text" id="staffLicense" placeholder="Número profesional" /></div>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem">
+              <button class="btn-primary" onclick="saveStaffMember()" style="flex:1;justify-content:center">💾 Guardar</button>
+              <button class="btn-back" onclick="hideStaffForm()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="usersTable" class="appointments-list"><div class="loading-spinner">Cargando personal...</div></div>
       </div>
     </div>
 
@@ -464,33 +511,133 @@
     };
 
 
-    // ── USERS ──
-    async function loadUsers() {
-      const { data } = await supabase.from('profiles').select('*').order('role').order('full_name');
+    // ── STAFF MANAGEMENT ──
+    window.showStaffForm = function(editData) {
+      const container = document.getElementById('staffFormContainer');
+      const title = document.getElementById('staffFormTitle');
+      container.classList.remove('hidden');
+
+      if (editData) {
+        title.textContent = '✏️ Editar Miembro del Equipo';
+        document.getElementById('staffEditId').value = editData.id;
+        document.getElementById('staffName').value = editData.full_name || '';
+        document.getElementById('staffRut').value = editData.rut || '';
+        document.getElementById('staffEmail').value = editData.email || '';
+        document.getElementById('staffPhone').value = editData.phone || '';
+        document.getElementById('staffWhatsapp').value = editData.whatsapp || '';
+        document.getElementById('staffAddress').value = editData.address || '';
+        document.getElementById('staffBirthDate').value = editData.birth_date || '';
+        document.getElementById('staffRole').value = editData.role || 'vet';
+        document.getElementById('staffPosition').value = editData.position || '';
+        document.getElementById('staffSpecialty').value = editData.specialty || '';
+        document.getElementById('staffLicense').value = editData.license_number || '';
+      } else {
+        title.textContent = '➕ Nuevo Miembro del Equipo';
+        document.getElementById('staffEditId').value = '';
+        ['staffName','staffRut','staffEmail','staffPhone','staffWhatsapp','staffAddress','staffBirthDate','staffPosition','staffSpecialty','staffLicense'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('staffRole').value = 'vet';
+      }
+    };
+
+    window.hideStaffForm = function() {
+      document.getElementById('staffFormContainer').classList.add('hidden');
+    };
+
+    window.saveStaffMember = async function() {
+      const editId = document.getElementById('staffEditId').value;
+      const fullName = document.getElementById('staffName').value.trim();
+      const email = document.getElementById('staffEmail').value.trim();
+      const role = document.getElementById('staffRole').value;
+
+      if (!fullName || !email) {
+        alert('Nombre y email son obligatorios.');
+        return;
+      }
+
+      const profileData = {
+        full_name: fullName,
+        rut: document.getElementById('staffRut').value.trim() || null,
+        email: email,
+        phone: document.getElementById('staffPhone').value.trim() || null,
+        whatsapp: document.getElementById('staffWhatsapp').value.trim() || null,
+        address: document.getElementById('staffAddress').value.trim() || null,
+        birth_date: document.getElementById('staffBirthDate').value || null,
+        role: role,
+        position: document.getElementById('staffPosition').value.trim() || null,
+        specialty: document.getElementById('staffSpecialty').value.trim() || null,
+        license_number: document.getElementById('staffLicense').value.trim() || null,
+        is_active: true,
+      };
+
+      if (editId) {
+        // Update existing
+        const { error } = await supabase.from('profiles').update(profileData).eq('id', editId);
+        if (error) { alert('Error al actualizar: ' + error.message); return; }
+        alert('Miembro actualizado correctamente.');
+      } else {
+        // Create new — insert profile directly (user_id will be linked when they register)
+        profileData.user_id = crypto.randomUUID(); // temp placeholder
+        const { error } = await supabase.from('profiles').insert(profileData);
+        if (error) { alert('Error al crear: ' + error.message); return; }
+        alert('Miembro creado correctamente. Podrá iniciar sesión cuando se registre con el email: ' + email);
+      }
+
+      hideStaffForm();
+      loadStaff();
+    };
+
+    window.editStaff = function(id) {
+      const row = staffData.find(s => s.id === id);
+      if (row) showStaffForm(row);
+    };
+
+    window.toggleStaffActive = async function(id, currentActive) {
+      const newState = !currentActive;
+      const { error } = await supabase.from('profiles').update({ is_active: newState }).eq('id', id);
+      if (error) { alert('Error: ' + error.message); return; }
+      loadStaff();
+    };
+
+    let staffData = [];
+
+    async function loadStaff() {
+      const roleFilter = document.getElementById('staffRoleFilter')?.value;
+      let query = supabase.from('profiles').select('*').order('role').order('full_name');
+      if (roleFilter) query = query.eq('role', roleFilter);
+
+      const { data } = await query;
+      staffData = data || [];
       const container = document.getElementById('usersTable');
-      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay usuarios</p>'; return; }
+      if (!staffData.length) { container.innerHTML = '<p class="summary-empty">No hay personal registrado.</p>'; return; }
 
       const roleColors = { admin: '#8b2d8b', owner: '#8b2d8b', vet: '#3b82f6', groomer: '#f59e0b', receptionist: '#16a34a', client: '#6b7280' };
       const roleLabels = { admin: 'Admin', owner: 'Director', vet: 'Veterinario', groomer: 'Peluquero', receptionist: 'Recepcionista', client: 'Cliente' };
 
-      container.innerHTML = data.map(u => `
-        <div class="appointment-row">
-          <span style="font-size:1.3rem">${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover">` : '👤'}</span>
-          <span class="apt-service">${escapeHtml(u.full_name || 'Sin nombre')}</span>
-          <span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(u.email || '')}</span>
-          <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
-          <span style="color:${u.is_active !== false ? '#16a34a':'#ef4444'};font-size:0.78rem">${u.is_active !== false ? '● Activo':'● Inactivo'}</span>
-          <select onchange="changeUserRole('${u.id}', this.value)" class="auth-input user-role-select">
-            ${Object.entries(roleLabels).map(([k,v]) => `<option value="${k}" ${u.role===k?'selected':''}>${v}</option>`).join('')}
-          </select>
-        </div>
-      `).join('');
+      container.innerHTML = staffData.map(u => {
+        const isActive = u.is_active !== false;
+        const age = u.birth_date ? Math.floor((Date.now() - new Date(u.birth_date)) / 31557600000) + ' años' : '';
+        return `
+          <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
+            <span style="font-size:1.3rem">${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">` : '👤'}</span>
+            <div style="flex:2;min-width:140px">
+              <strong>${escapeHtml(u.full_name || 'Sin nombre')}</strong>
+              <div style="font-size:0.75rem;color:var(--gray-500)">${escapeHtml(u.email || '')} ${u.phone ? '· ' + escapeHtml(u.phone) : ''}</div>
+              ${u.position ? `<div style="font-size:0.75rem;color:var(--gray-400)">${escapeHtml(u.position)}${u.specialty ? ' · ' + escapeHtml(u.specialty) : ''}</div>` : ''}
+              ${age ? `<div style="font-size:0.72rem;color:var(--gray-400)">${age}</div>` : ''}
+            </div>
+            <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
+            <span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;cursor:pointer" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">${isActive ? '● Activo':'● Inactivo'}</span>
+            <button onclick="editStaff('${u.id}')" class="btn-back" style="padding:0.3rem 0.6rem;font-size:0.78rem">✏️ Editar</button>
+          </div>
+        `;
+      }).join('');
     }
 
-    window.changeUserRole = async function(id, role) {
-      await supabase.from('profiles').update({ role }).eq('id', id);
-      loadUsers();
-    };
+    // Alias for panel switch compatibility
+    const loadUsers = loadStaff;
+    window.loadStaff = loadStaff;
 
     // ── TIME OFF MANAGEMENT ──
     async function loadTimeOffRequests() {
