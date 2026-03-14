@@ -207,6 +207,16 @@
     import { supabase } from '/js/supabase.js';
     import { buildServicePriceIndex, calculateStockAfterMovement, estimateAppointmentRevenue } from '/js/modules/admin-utils.js';
 
+    const escapeHTML = (str) => {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     let adminProfile = null;
 
     // Direct init — no race condition with auth events
@@ -397,13 +407,19 @@
       const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
       container.innerHTML = data.map(a => {
         const dt = new Date(a.date_time);
+        const safeServiceType = escapeHTML(a.service_type || 'consulta');
+        const safeSource = escapeHTML(a.source || 'web');
+        const safeGuestPetName = escapeHTML(a.guest_pet_name || '');
+        const safeGuestName = escapeHTML(a.guest_name || '');
+        const guestInfo = safeGuestPetName ? `${safeGuestPetName}${safeGuestName ? ` · ${safeGuestName}` : ''}` : '';
+
         return `<div class="appointment-row">
           <span class="apt-date">${dt.toLocaleDateString('es-CL')}</span>
           <span class="apt-time">${dt.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span>
-          <span class="apt-service">🩺 ${a.service_type || 'consulta'}</span>
+          <span class="apt-service">🩺 ${safeServiceType}</span>
           <span class="apt-status" style="color:${statusColors[a.status]}">${a.status}</span>
-          <span style="font-size:0.78rem;color:var(--gray-500)">${a.source || 'web'}</span>
-          <span style="font-size:0.78rem;color:var(--gray-500)">${a.guest_pet_name ? `${a.guest_pet_name}${a.guest_name ? ` · ${a.guest_name}` : ''}` : ''}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${safeSource}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${guestInfo}</span>
         </div>`;
       }).join('');
     }
