@@ -12,7 +12,7 @@ let initialized = false;
 
 // ── Role config ──
 const ROLE_CONFIG = {
-  client:       { label: 'Dueño', home: '/', icon: '🐕' },
+  client:       { label: 'Dueño', home: '/pages/mi-mascota.html', icon: '🐕' },
   vet:          { label: 'Veterinario', home: '/pages/mi-agenda.html', icon: '🩺' },
   groomer:      { label: 'Peluquero/a', home: '/pages/mi-agenda.html', icon: '✂️' },
   receptionist: { label: 'Recepcionista', home: '/pages/gestion-citas.html', icon: '📋' },
@@ -182,11 +182,16 @@ function updateNavbarForRole(profile) {
     // Global logout function
     window._doLogout = async function(e) {
       e.preventDefault();
-      try { await supabase.auth.signOut(); } catch(err) {}
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      });
-      window.location.href = '/';
+      try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut error:', err); }
+      try {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('sb-')) sessionStorage.removeItem(key);
+        });
+      } catch(err) {}
+      window.location.replace('/');
     };
   }
 }

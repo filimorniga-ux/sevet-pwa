@@ -22,34 +22,414 @@
     <li><a href="/">Inicio</a></li>
     <li><a href="/pages/agendar.html">Agendar</a></li>
     <li><a href="/pages/mi-mascota.html" class="active">Mi Mascota</a></li>
+    <li><a href="/pages/historial.html">Historial</a></li>
     <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
     <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
   </ul>
-    <div class="nav-burger" id="navBurger" onclick="toggleNav()">
-      <span></span><span></span><span></span>
-    </div>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
   </nav>
 
   <section class="section-pad" style="margin-top:80px">
-    <div class="section-header reveal">
-      <p class="section-tag">Portal del Dueño</p>
+    <!-- Header -->
+    <div class="section-header">
+      <p class="section-tag" id="ownerTag">Portal del Dueño</p>
       <h1 class="section-title">Mi <span class="grad">Mascota</span></h1>
-      <p class="section-sub">Accede al perfil de tus mascotas, historial clínico, vacunas y signos vitales en tiempo real.</p>
+      <p class="section-sub" id="ownerGreeting">Cargando tu portal...</p>
     </div>
 
-    <!-- Selector de Mascotas -->
-    <div class="pet-selector-container reveal" id="petSelector"></div>
+    <!-- Selector de mascotas -->
+    <div id="petTabs" class="pet-tabs-bar hidden"></div>
 
-    <!-- Dashboard de la mascota -->
-    <div class="reveal" id="mascotas-container">
-      <p class="summary-empty">Cargando perfil de mascota...</p>
+    <!-- Botón agregar mascota -->
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <button class="btn-primary" onclick="showPetForm()" id="btnAddPet" style="display:none">🐾 Agregar Mascota</button>
+    </div>
+
+    <!-- Form registrar/editar mascota (hidden) -->
+    <div id="petFormContainer" class="hidden" style="max-width:600px;margin:0 auto 2rem">
+      <div class="confirmation-card" style="padding:1.5rem">
+        <h3 id="petFormTitle">🐾 Registrar Nueva Mascota</h3>
+        <input type="hidden" id="editPetId" value=""/>
+        <div class="pet-form-grid">
+          <div class="auth-field"><label>Nombre *</label><input type="text" id="petName" placeholder="Nombre de tu mascota" required/></div>
+          <div class="auth-field">
+            <label>Especie *</label>
+            <select id="petSpecies" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="perro">🐕 Perro</option>
+              <option value="gato">🐈 Gato</option>
+              <option value="otro">🐾 Otro</option>
+            </select>
+          </div>
+          <div class="auth-field"><label>Raza</label><input type="text" id="petBreed" placeholder="Ej: Labrador, Siamés..."/></div>
+          <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="petBirth"/></div>
+          <div class="auth-field"><label>Peso (kg)</label><input type="number" id="petWeight" step="0.1" placeholder="5.2"/></div>
+          <div class="auth-field"><label>Número de chip</label><input type="text" id="petChip" placeholder="Microchip ID"/></div>
+        </div>
+        <div class="auth-field" style="margin-top:0.5rem"><label>Notas / Observaciones</label><textarea id="petNotes" rows="2" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit" placeholder="Alergias, condiciones, etc."></textarea></div>
+        <div style="display:flex;gap:0.5rem;margin-top:1rem">
+          <button class="btn-primary" onclick="savePet()" style="flex:1;justify-content:center">💾 Guardar</button>
+          <button class="btn-back" onclick="hidePetForm()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard de mascota seleccionada -->
+    <div id="petDashboard" class="hidden" style="max-width:900px;margin:0 auto">
+      <!-- Pet profile card -->
+      <div class="confirmation-card pet-profile-card" id="petProfileCard" style="margin-bottom:1.5rem"></div>
+
+      <!-- Quick stats -->
+      <div class="pet-stats-grid" id="petStatsGrid" style="margin-bottom:1.5rem"></div>
+
+      <!-- Tabs: Próximas citas, Vacunas, Historial -->
+      <div class="pet-tabs-bar" style="margin-bottom:1rem">
+        <button class="spec-tab active" onclick="showPetTab('appointments', this)">📅 Próximas Citas</button>
+        <button class="spec-tab" onclick="showPetTab('vaccines', this)">💉 Vacunas</button>
+        <button class="spec-tab" onclick="showPetTab('history', this)">📋 Historial</button>
+      </div>
+
+      <div id="petTabContent" class="appointments-list"></div>
+    </div>
+
+    <!-- Empty state (no pets) -->
+    <div id="emptyState" class="hidden" style="text-align:center;padding:3rem 1rem">
+      <div style="font-size:4rem;margin-bottom:1rem">🐾</div>
+      <h2 style="margin-bottom:0.5rem">¡Bienvenido a SEVET!</h2>
+      <p style="color:var(--gray-500);margin-bottom:1.5rem">Aún no tienes mascotas registradas. Agrega tu primera mascota para acceder a su historial médico, vacunas y citas.</p>
+      <button class="btn-primary" onclick="showPetForm()" style="font-size:1.1rem;padding:0.8rem 2rem">🐾 Registrar mi primera mascota</button>
     </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
   <script type="module">
-    import { guardPage } from '/js/auth.js';
-    guardPage(['client']);
+    import { supabase } from '/js/supabase.js';
+
+    let ownerProfile = null;
+    let pets = [];
+    let selectedPetId = null;
+    let currentTab = 'appointments';
+
+    const escapeHtml = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
+
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+
+      if (!profile) { window.location.href = '/pages/auth.html'; return; }
+      ownerProfile = profile;
+
+      document.getElementById('ownerTag').textContent = `🐾 Portal de ${escapeHtml(profile.full_name)}`;
+      document.getElementById('ownerGreeting').textContent = 'Gestiona las mascotas, citas y salud de tu familia peluda.';
+      document.getElementById('btnAddPet').style.display = 'inline-flex';
+
+      await loadPets();
+
+      // Logout
+      document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut:', err); }
+        try {
+          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+          Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-')) sessionStorage.removeItem(k); });
+        } catch(err) {}
+        window.location.replace('/');
+      });
+    }
+    init();
+
+    // ── LOAD PETS ──
+    async function loadPets() {
+      const { data, error } = await supabase.from('pets')
+        .select('*').eq('owner_id', ownerProfile.id).order('name');
+
+      pets = data || [];
+
+      if (!pets.length) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        document.getElementById('petDashboard').classList.add('hidden');
+        document.getElementById('petTabs').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('petDashboard').classList.remove('hidden');
+
+      // Pet tabs
+      if (pets.length > 1) {
+        const tabsBar = document.getElementById('petTabs');
+        tabsBar.classList.remove('hidden');
+        const speciesIcons = { perro: '🐕', gato: '🐈', otro: '🐾' };
+        tabsBar.innerHTML = pets.map(p =>
+          `<button class="spec-tab ${p.id === (selectedPetId || pets[0].id) ? 'active' : ''}" onclick="selectPet('${p.id}', this)">${speciesIcons[p.species] || '🐾'} ${escapeHtml(p.name)}</button>`
+        ).join('');
+      }
+
+      selectedPetId = selectedPetId || pets[0].id;
+      await renderPetDashboard();
+    }
+
+    // ── SELECT PET ──
+    window.selectPet = async function(id, btn) {
+      selectedPetId = id;
+      document.getElementById('petTabs').querySelectorAll('.spec-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      await renderPetDashboard();
+    };
+
+    // ── RENDER PET DASHBOARD ──
+    async function renderPetDashboard() {
+      const pet = pets.find(p => p.id === selectedPetId);
+      if (!pet) return;
+
+      const speciesIcons = { perro: '🐕', gato: '🐈', otro: '🐾' };
+      const age = pet.birth_date ? calculateAge(pet.birth_date) : null;
+
+      // Profile card
+      document.getElementById('petProfileCard').innerHTML = `
+        <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue-100),var(--purple-100));display:flex;align-items:center;justify-content:center;font-size:2.5rem;flex-shrink:0">
+            ${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"/>` : speciesIcons[pet.species] || '🐾'}
+          </div>
+          <div style="flex:1;min-width:200px">
+            <h2 style="margin:0 0 0.25rem">${escapeHtml(pet.name)}</h2>
+            <p style="margin:0;color:var(--gray-500);font-size:0.9rem">
+              ${escapeHtml(pet.breed || pet.species)} ${age ? `· ${age}` : ''}
+              ${pet.weight_kg ? ` · ${pet.weight_kg} kg` : ''}
+              ${pet.chip_number ? ` · Chip: ${escapeHtml(pet.chip_number)}` : ''}
+            </p>
+            ${pet.notes ? `<p style="margin:0.5rem 0 0;font-size:0.82rem;color:var(--gray-400);font-style:italic">${escapeHtml(pet.notes)}</p>` : ''}
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button onclick="editPet('${pet.id}')" class="btn-back" style="min-height:40px;padding:0.4rem 0.8rem" title="Editar">✏️ Editar</button>
+          </div>
+        </div>
+      `;
+
+      // Load stats in parallel
+      const [appointmentsRes, vaccinesRes, recordsRes] = await Promise.all([
+        supabase.from('appointments').select('id, date_time, status, service_type, services(name,icon)', { count: 'exact' })
+          .eq('pet_id', selectedPetId).gte('date_time', new Date().toISOString()).order('date_time').limit(5),
+        supabase.from('vaccinations').select('*', { count: 'exact' }).eq('pet_id', selectedPetId).order('applied_date', { ascending: false }),
+        supabase.from('medical_records').select('*', { count: 'exact' }).eq('pet_id', selectedPetId).order('created_at', { ascending: false }).limit(10),
+      ]);
+
+      const upcomingAppts = appointmentsRes.data || [];
+      const vaccines = vaccinesRes.data || [];
+      const records = recordsRes.data || [];
+
+      // Stats grid
+      document.getElementById('petStatsGrid').innerHTML = `
+        <div class="pet-stat-card"><span class="pet-stat-num">${upcomingAppts.length}</span><span class="pet-stat-label">Próximas Citas</span></div>
+        <div class="pet-stat-card"><span class="pet-stat-num">${vaccines.length}</span><span class="pet-stat-label">Vacunas</span></div>
+        <div class="pet-stat-card"><span class="pet-stat-num">${records.length}</span><span class="pet-stat-label">Registros Clínicos</span></div>
+        <div class="pet-stat-card"><span class="pet-stat-num">${pet.weight_kg || '-'}</span><span class="pet-stat-label">Peso (kg)</span></div>
+      `;
+
+      // Store data for tabs
+      window._petData = { appointments: upcomingAppts, vaccines, records };
+      showPetTab(currentTab);
+    }
+
+    // ── PET TABS ──
+    window.showPetTab = function(tab, btn) {
+      currentTab = tab;
+      if (btn) {
+        document.querySelectorAll('#petDashboard .spec-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      const container = document.getElementById('petTabContent');
+      const d = window._petData || {};
+
+      if (tab === 'appointments') {
+        const appts = d.appointments || [];
+        if (!appts.length) {
+          container.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:var(--gray-400)">
+              <p style="font-size:1.5rem">📅</p>
+              <p>No hay citas próximas</p>
+              <a href="/pages/agendar.html" class="btn-primary" style="display:inline-flex;margin-top:0.5rem;padding:0.5rem 1.5rem">📋 Agendar Cita</a>
+            </div>`;
+          return;
+        }
+        container.innerHTML = appts.map(a => {
+          const dt = new Date(a.date_time);
+          const dateStr = dt.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
+          const timeStr = dt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+          const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
+          return `
+            <div class="appointment-row" style="gap:1rem">
+              <span style="font-size:1.5rem">${a.services?.icon || '🩺'}</span>
+              <div style="flex:2;min-width:120px">
+                <strong>${escapeHtml(a.services?.name || a.service_type)}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">${dateStr} · ${timeStr}</div>
+              </div>
+              <span style="color:${statusColors[a.status]};font-weight:700;font-size:0.85rem">${a.status}</span>
+            </div>`;
+        }).join('') + `<div style="text-align:center;margin-top:1rem"><a href="/pages/agendar.html" class="btn-primary" style="display:inline-flex;padding:0.5rem 1.5rem">➕ Agendar otra cita</a></div>`;
+      } else if (tab === 'vaccines') {
+        const vacc = d.vaccines || [];
+        if (!vacc.length) {
+          container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400)"><p style="font-size:1.5rem">💉</p><p>No hay vacunas registradas aún</p></div>';
+          return;
+        }
+        container.innerHTML = vacc.map(v => {
+          const applied = new Date(v.applied_date).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+          const next = v.next_due_date ? new Date(v.next_due_date).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+          const overdue = v.next_due_date && new Date(v.next_due_date) < new Date();
+          return `
+            <div class="appointment-row" style="gap:1rem">
+              <span style="font-size:1.5rem">💉</span>
+              <div style="flex:2;min-width:120px">
+                <strong>${escapeHtml(v.vaccine_name)}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">Aplicada: ${applied}${v.batch_number ? ` · Lote: ${escapeHtml(v.batch_number)}` : ''}</div>
+              </div>
+              ${next ? `<span style="font-size:0.82rem;font-weight:600;color:${overdue ? '#ef4444' : '#16a34a'}">${overdue ? '⚠️ Vencida' : '✅ Próx:'} ${next}</span>` : ''}
+            </div>`;
+        }).join('');
+      } else if (tab === 'history') {
+        const recs = d.records || [];
+        if (!recs.length) {
+          container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400)"><p style="font-size:1.5rem">📋</p><p>No hay registros clínicos aún</p></div>';
+          return;
+        }
+        const typeIcons = { consulta: '🩺', cirugia: '🔪', vacuna: '💉', peluqueria: '✂️', emergencia: '🚨', control: '📋', laboratorio: '🔬' };
+        container.innerHTML = recs.map(r => {
+          const date = new Date(r.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+          return `
+            <div class="appointment-row" style="gap:1rem;cursor:pointer;flex-wrap:wrap" onclick="this.querySelector('.rec-detail')?.classList.toggle('hidden')">
+              <span style="font-size:1.5rem">${typeIcons[r.record_type] || '📋'}</span>
+              <div style="flex:2;min-width:120px">
+                <strong>${escapeHtml(r.record_type || 'Consulta')}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">${date}</div>
+              </div>
+              <div class="rec-detail hidden" style="width:100%;padding:0.75rem;background:var(--blue-50,#eff6ff);border-radius:var(--radius-md);margin-top:0.5rem;font-size:0.85rem" onclick="event.stopPropagation()">
+                ${r.subjective ? `<p><strong style="color:var(--blue-700)">S:</strong> ${escapeHtml(r.subjective)}</p>` : ''}
+                ${r.objective ? `<p><strong style="color:var(--blue-700)">O:</strong> ${escapeHtml(r.objective)}</p>` : ''}
+                ${r.assessment ? `<p><strong style="color:var(--blue-700)">A:</strong> ${escapeHtml(r.assessment)}</p>` : ''}
+                ${r.plan ? `<p><strong style="color:var(--blue-700)">P:</strong> ${escapeHtml(r.plan)}</p>` : ''}
+              </div>
+            </div>`;
+        }).join('') + `<div style="text-align:center;margin-top:1rem"><a href="/pages/historial.html" style="color:var(--blue-600);font-weight:600">Ver historial completo →</a></div>`;
+      }
+    };
+
+    // ── PET FORM ──
+    window.showPetForm = function(editData) {
+      document.getElementById('petFormContainer').classList.remove('hidden');
+      if (editData) {
+        document.getElementById('petFormTitle').textContent = '✏️ Editar Mascota';
+        document.getElementById('editPetId').value = editData.id;
+        document.getElementById('petName').value = editData.name || '';
+        document.getElementById('petSpecies').value = editData.species || 'perro';
+        document.getElementById('petBreed').value = editData.breed || '';
+        document.getElementById('petBirth').value = editData.birth_date || '';
+        document.getElementById('petWeight').value = editData.weight_kg || '';
+        document.getElementById('petChip').value = editData.chip_number || '';
+        document.getElementById('petNotes').value = editData.notes || '';
+      } else {
+        document.getElementById('petFormTitle').textContent = '🐾 Registrar Nueva Mascota';
+        document.getElementById('editPetId').value = '';
+        ['petName','petBreed','petBirth','petWeight','petChip','petNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('petSpecies').value = 'perro';
+      }
+      document.getElementById('petFormContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    window.hidePetForm = function() {
+      document.getElementById('petFormContainer').classList.add('hidden');
+    };
+
+    window.editPet = function(id) {
+      const pet = pets.find(p => p.id === id);
+      if (pet) showPetForm(pet);
+    };
+
+    window.savePet = async function() {
+      const name = document.getElementById('petName').value.trim();
+      if (!name) { alert('El nombre es obligatorio.'); return; }
+
+      const petData = {
+        owner_id: ownerProfile.id,
+        name,
+        species: document.getElementById('petSpecies').value,
+        breed: document.getElementById('petBreed').value.trim() || null,
+        birth_date: document.getElementById('petBirth').value || null,
+        weight_kg: parseFloat(document.getElementById('petWeight').value) || null,
+        chip_number: document.getElementById('petChip').value.trim() || null,
+        notes: document.getElementById('petNotes').value.trim() || null,
+      };
+
+      const editId = document.getElementById('editPetId').value;
+
+      if (editId) {
+        const { error } = await supabase.from('pets').update(petData).eq('id', editId);
+        if (error) { alert('Error al actualizar: ' + error.message); return; }
+        alert('✅ Mascota actualizada.');
+      } else {
+        const { error } = await supabase.from('pets').insert(petData);
+        if (error) { alert('Error al registrar: ' + error.message); return; }
+        alert('✅ ¡Mascota registrada exitosamente!');
+      }
+
+      hidePetForm();
+      await loadPets();
+    };
+
+    // ── HELPERS ──
+    function calculateAge(birthDate) {
+      const birth = new Date(birthDate);
+      const now = new Date();
+      let years = now.getFullYear() - birth.getFullYear();
+      let months = now.getMonth() - birth.getMonth();
+      if (months < 0) { years--; months += 12; }
+      if (years > 0) return `${years} año${years > 1 ? 's' : ''}${months > 0 ? ` ${months}m` : ''}`;
+      return `${months} mes${months !== 1 ? 'es' : ''}`;
+    }
   </script>
+
+  <style>
+    .pet-tabs-bar {
+      display: flex; gap: 0.5rem; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 1.5rem;
+    }
+    .pet-form-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem; margin-top: 0.75rem;
+    }
+    .pet-profile-card { padding: 1.5rem; }
+    .pet-stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .pet-stat-card {
+      background: var(--white); border: 1px solid var(--gray-100);
+      border-radius: var(--radius-lg); padding: 1rem;
+      text-align: center; box-shadow: var(--card-shadow);
+    }
+    .pet-stat-num {
+      display: block; font-size: 1.8rem; font-weight: 800;
+      color: var(--blue-700); line-height: 1;
+    }
+    .pet-stat-label {
+      display: block; font-size: 0.78rem; color: var(--gray-500);
+      margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .appointment-row {
+      display: flex; align-items: center; padding: 0.85rem 1rem;
+      background: var(--white); border-radius: var(--radius-lg);
+      margin-bottom: 0.5rem; border: 1px solid var(--gray-100);
+      box-shadow: var(--card-shadow); transition: var(--transition);
+    }
+    .appointment-row:hover { border-color: var(--blue-200); }
+    @media (max-width: 768px) {
+      .pet-form-grid { grid-template-columns: 1fr; }
+      .pet-stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .appointment-row { flex-wrap: wrap; gap: 0.5rem; }
+    }
+  </style>
 </body>
 </html>
