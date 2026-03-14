@@ -232,9 +232,9 @@
               </div>
               <span class="apt-status" style="color:${statusColors[a.status] || '#888'}">${escapeHtml(a.status)}</span>
               <div class="apt-actions">
-                <button onclick="updateStatus('${a.id}', 'en_curso')" title="Iniciar">▶️</button>
-                <button onclick="updateStatus('${a.id}', 'completada')" title="Completar">✅</button>
-                ${a.pet_id ? `<button onclick="window.location.href='/pages/ficha-clinica.html?pet=${a.pet_id}&apt=${a.id}'" title="Ficha clínica">📋</button>` : ''}
+                <button onclick="updateStatus('${escapeHtml(a.id)}', 'en_curso')" title="Iniciar">▶️</button>
+                <button onclick="updateStatus('${escapeHtml(a.id)}', 'completada')" title="Completar">✅</button>
+                ${a.pet_id ? `<button onclick="window.location.href='/pages/ficha-clinica.html?pet=${escapeHtml(a.pet_id)}&apt=${escapeHtml(a.id)}'" title="Ficha clínica">📋</button>` : ''}
               </div>
             </div>`;
         }).join('');
@@ -307,8 +307,8 @@
               <div style="font-size:0.75rem;color:var(--gray-400)">👤 ${escapeHtml(owner)}</div>
             </div>
             <div class="apt-actions">
-              <button onclick="event.stopPropagation();window.location.href='/pages/ficha-clinica.html?pet=${p.id}'" title="Nueva ficha">📋</button>
-              <button onclick="event.stopPropagation();window.location.href='/pages/historial.html?pet=${p.id}'" title="Historial">📜</button>
+              <button onclick="event.stopPropagation();window.location.href='/pages/ficha-clinica.html?pet=${escapeHtml(p.id)}'" title="Nueva ficha">📋</button>
+              <button onclick="event.stopPropagation();window.location.href='/pages/historial.html?pet=${escapeHtml(p.id)}'" title="Historial">📜</button>
             </div>
             <div class="patient-detail hidden" style="width:100%;padding:0.75rem;background:var(--blue-50,#eff6ff);border-radius:var(--radius-md);margin-top:0.5rem;font-size:0.85rem" onclick="event.stopPropagation()">
               ${p.chip_number ? `<p>🔖 Chip: ${escapeHtml(p.chip_number)}</p>` : ''}
@@ -333,10 +333,21 @@
       const container = document.getElementById('rxList');
       try {
         // Load pets for the form selector
-        const { data: petsData } = await supabase.from('pets').select('id, name, species').order('name');
+        let petsQuery = supabase.from('pets').select('id, name, species').order('name');
+        if (!['admin','owner'].includes(staffProfile.role)) {
+          const { data: myAppts } = await supabase.from('appointments').select('pet_id').eq('vet_id', staffProfile.id).not('pet_id', 'is', null);
+          const petIds = [...new Set((myAppts || []).map(a => a.pet_id))];
+          if (petIds.length > 0) {
+            petsQuery = petsQuery.in('id', petIds);
+          } else {
+            petsQuery = petsQuery.in('id', ['00000000-0000-0000-0000-000000000000']); // Force empty if no patients
+          }
+        }
+        const { data: petsData } = await petsQuery;
+
         const petSelect = document.getElementById('rxPet');
         petSelect.innerHTML = '<option value="">Seleccionar paciente...</option>' +
-          (petsData || []).map(p => `<option value="${p.id}">${p.species === 'perro' ? '🐕' : p.species === 'gato' ? '🐈' : '🐾'} ${escapeHtml(p.name)}</option>`).join('');
+          (petsData || []).map(p => `<option value="${escapeHtml(p.id)}">${p.species === 'perro' ? '🐕' : p.species === 'gato' ? '🐈' : '🐾'} ${escapeHtml(p.name)}</option>`).join('');
 
         // Load prescriptions
         let query = supabase.from('prescriptions')
@@ -362,8 +373,8 @@
               </div>
               <span style="color:${statusColors[rx.status]};font-weight:700;font-size:0.82rem">${escapeHtml(statusLabels[rx.status] || rx.status)}</span>
               <div class="apt-actions">
-                <button onclick="changeRxStatus('${rx.id}','completed')" title="Completar">✅</button>
-                <button onclick="changeRxStatus('${rx.id}','cancelled')" title="Cancelar">❌</button>
+                <button onclick="changeRxStatus('${escapeHtml(rx.id)}','completed')" title="Completar">✅</button>
+                <button onclick="changeRxStatus('${escapeHtml(rx.id)}','cancelled')" title="Cancelar">❌</button>
               </div>
             </div>`;
         }).join('');
@@ -413,9 +424,9 @@
         return `
           <div class="schedule-row">
             <span class="sched-day">${name}</span>
-            <input type="time" class="sched-input" data-day="${i}" data-field="start" value="${s?.start_time?.slice(0,5) || '09:00'}" />
+            <input type="time" class="sched-input" data-day="${i}" data-field="start" value="${escapeHtml(s?.start_time?.slice(0,5) || '09:00')}" />
             <span>a</span>
-            <input type="time" class="sched-input" data-day="${i}" data-field="end" value="${s?.end_time?.slice(0,5) || '18:00'}" />
+            <input type="time" class="sched-input" data-day="${i}" data-field="end" value="${escapeHtml(s?.end_time?.slice(0,5) || '18:00')}" />
             <label class="sched-toggle"><input type="checkbox" data-day="${i}" data-field="active" ${s?.is_active !== false ? 'checked' : ''} /> Activo</label>
           </div>`;
       }).join('');
