@@ -387,7 +387,7 @@
 
     async function loadRecentAppointments() {
       const { data } = await supabase.from('appointments')
-        .select('id, date_time, service_type, status, source, created_at')
+        .select('id, date_time, service_type, status, source, created_at, guest_name, guest_pet_name')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -403,6 +403,7 @@
           <span class="apt-service">🩺 ${a.service_type || 'consulta'}</span>
           <span class="apt-status" style="color:${statusColors[a.status]}">${a.status}</span>
           <span style="font-size:0.78rem;color:var(--gray-500)">${a.source || 'web'}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${a.guest_pet_name ? `${a.guest_pet_name}${a.guest_name ? ` · ${a.guest_name}` : ''}` : ''}</span>
         </div>`;
       }).join('');
     }

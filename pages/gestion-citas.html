@@ -164,11 +164,14 @@
 
       body.innerHTML = data.map(a => {
         const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const petLabel = a.pets?.name
+          ? `${a.pets.name}${a.pets?.species ? ` (${a.pets.species})` : ''}`
+          : `${a.guest_pet_name || 'N/A'}${a.guest_name ? ` · Tutor: ${a.guest_name}` : ''}`;
         return `
           <tr>
             <td>${time}</td>
             <td>${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</td>
-            <td>${a.pets?.name || 'N/A'} ${a.pets?.species ? `(${a.pets.species})` : ''}</td>
+            <td>${petLabel}</td>
             <td>${a.profiles?.full_name || 'Sin asignar'}</td>
             <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.notes || ''}">${a.notes || '-'}</td>

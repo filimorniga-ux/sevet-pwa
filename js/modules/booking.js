@@ -3,6 +3,7 @@
  * Multi-step appointment booking connected to Supabase
  */
 import { supabase } from '/js/supabase.js';
+import { buildCombinedBookingNotes, validateGuestBookingInput } from '/js/modules/booking-utils.js';
 
 // ── State ──
 const state = {
@@ -370,55 +371,60 @@ async function confirmBooking() {
 
     // Check if user is logged in
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     let petId = null;
+    let profileId = null;
     const notes = document.getElementById('guestNotes')?.value || '';
-    const guestName = document.getElementById('guestName')?.value || '';
-    const guestPhone = document.getElementById('guestPhone')?.value || '';
-    const guestEmail = document.getElementById('guestEmail')?.value || '';
-    const guestPetName = document.getElementById('guestPetName')?.value || '';
+    const guestName = (document.getElementById('guestName')?.value || '').trim();
+    const guestPhone = (document.getElementById('guestPhone')?.value || '').trim();
+    const guestEmail = (document.getElementById('guestEmail')?.value || '').trim();
+    const guestPetName = (document.getElementById('guestPetName')?.value || '').trim();
 
-    if (!session) {
-      throw new Error('Debes iniciar sesión para confirmar la cita.');
+    if (session) {
+      // Get user's profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      profileId = profile?.id || null;
+
+      // Get first pet (mínimo requerido para usuarios autenticados)
+      const { data: pets } = await supabase
+        .from('pets')
+        .select('id')
+        .eq('owner_id', profileId)
+        .limit(1);
+      petId = pets?.[0]?.id || null;
+
+      if (!petId) {
+        throw new Error('Debes registrar al menos una mascota antes de agendar.');
+      }
+    } else {
+      const guestValidationError = validateGuestBookingInput({ guestName, guestPhone, guestPetName });
+      if (guestValidationError) throw new Error(guestValidationError);
     }
 
-    // Get user's profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .single();
-
-    // Get first pet (mínimo requerido por schema base)
-    const { data: pets } = await supabase
-      .from('pets')
-      .select('id')
-      .eq('owner_id', profile?.id)
-      .limit(1);
-    petId = pets?.[0]?.id;
-
-    if (!petId) {
-      throw new Error('Debes registrar al menos una mascota antes de agendar.');
-    }
-
-    // Build combined notes with guest info
-    const combinedNotes = [
+    // Build combined notes with guest info only for guest bookings
+    const combinedNotes = buildCombinedBookingNotes({
       notes,
-      guestName ? `Contacto: ${guestName}` : '',
-      guestPhone ? `Tel: ${guestPhone}` : '',
-      guestEmail ? `Email: ${guestEmail}` : '',
-      guestPetName ? `Mascota: ${guestPetName}` : '',
-    ].filter(Boolean).join(' | ');
+      guestName,
+      guestPhone,
+      guestEmail,
+      guestPetName,
+      includeGuestMetadata: !session,
+    });
 
     // Determine service_type from service
     const classifier = getServiceClassifier(state.selectedService);
     const serviceType = mapServiceType(classifier);
 
     const { error } = await supabase.from('appointments').insert({
-      pet_id: petId,
+      pet_id: petId || null,
       service_id: state.selectedService?.id || null,
       vet_id: state.selectedProfessional?.id || null,
-      booked_by: profile?.id || null,
+      booked_by: profileId || null,
       service_type: serviceType,
       date_time: dateTime.toISOString(),
       source: 'web',
@@ -426,6 +432,10 @@ async function confirmBooking() {
       status: 'pendiente',
       triage_level: classifier === 'urgencia' ? 'urgente' : 'normal',
       notes: combinedNotes,
+      guest_name: session ? null : guestName,
+      guest_phone: session ? null : guestPhone,
+      guest_email: session ? null : (guestEmail || null),
+      guest_pet_name: session ? null : guestPetName,
     });
 
     if (error) throw error;
@@ -442,7 +452,7 @@ async function confirmBooking() {
   } catch (err) {
     console.error('Booking error:', err);
     btn.disabled = false;
-    btn.textContent = '❌ Error — Intentar de nuevo';
+    btn.textContent = `❌ ${err?.message || 'Error — Intentar de nuevo'}`;
     setTimeout(() => { btn.textContent = '✅ Confirmar Cita'; }, 3000);
   }
 }
