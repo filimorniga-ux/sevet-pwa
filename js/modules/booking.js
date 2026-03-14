@@ -500,6 +500,31 @@ async function confirmBooking() {
 
     if (error) throw error;
 
+    // Fire webhook to Make.com for notifications (non-blocking)
+    const webhookUrl = 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment';
+    const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const friendlyDate = `${days[dateTime.getDay()]} ${dateTime.getDate()} de ${months[dateTime.getMonth()]} ${dateTime.getFullYear()}`;
+    
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'new_appointment',
+        service: state.selectedService?.name || serviceType,
+        professional: state.selectedProfessional?.full_name || 'Cualquier disponible',
+        date: friendlyDate,
+        time: state.selectedTime,
+        duration: state.selectedService?.duration_min || 30,
+        price: state.selectedService?.price || 0,
+        guest_name: guestName || session?.user?.user_metadata?.full_name || '',
+        guest_email: guestEmail || session?.user?.email || '',
+        guest_phone: guestPhone || '',
+        guest_pet_name: guestPetName || '',
+        source: 'web',
+      }),
+    }).catch(e => console.warn('[booking] Webhook notification failed:', e));
+
     // Show success
     document.querySelector('.confirmation-card').classList.add('hidden');
     document.getElementById('bookingSuccess').classList.remove('hidden');
