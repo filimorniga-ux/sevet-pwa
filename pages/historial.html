@@ -61,6 +61,16 @@
   <script type="module">
     import { supabase } from '/js/supabase.js';
 
+    const escapeHtml = (s) => {
+      if (s === null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     let currentProfile = null;
     let currentPets = [];
     let allRecords = [];
@@ -91,7 +101,7 @@
 
         if (currentPets.length > 1) {
           const selector = document.getElementById('petSelector');
-          selector.innerHTML = currentPets.map(p => `<option value="${p.id}">${p.name} (${p.species})</option>`).join('');
+          selector.innerHTML = currentPets.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.species)})</option>`).join('');
           document.getElementById('petSelectorContainer').classList.remove('hidden');
         }
 
@@ -145,7 +155,6 @@
         return;
       }
 
-      const escapeHtml = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
       const typeIcons = { consulta: '🩺', cirugia: '🔪', vacuna: '💉', peluqueria: '✂️', emergencia: '🚨', control: '📋', laboratorio: '🔬' };
 
       container.innerHTML = records.map(r => {
@@ -155,7 +164,7 @@
         const petName = r.pets?.name || '';
         return `
           <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem;cursor:pointer" onclick="this.querySelector('.record-detail').classList.toggle('hidden')">
-            <span style="font-size:1.5rem">${icon}</span>
+            <span style="font-size:1.5rem">${escapeHtml(icon)}</span>
             <div style="flex:2;min-width:140px">
               <strong>${escapeHtml(r.record_type || 'Consulta')}${petName ? ' — ' + escapeHtml(petName) : ''}</strong>
               <div style="font-size:0.75rem;color:var(--gray-500)">${date} · Dr. ${escapeHtml(vetName)}</div>

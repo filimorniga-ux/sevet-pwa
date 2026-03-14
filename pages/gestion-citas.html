@@ -227,7 +227,13 @@
     window.saveManualAppointment = async function() {
       const dateTime = document.getElementById('apptDateTime').value;
       const serviceId = document.getElementById('apptService').value;
+      const petName = document.getElementById('apptPetName').value.trim();
+
       if (!dateTime || !serviceId) { alert('Fecha/hora y servicio son obligatorios.'); return; }
+      if (!petName) { alert('El nombre de la mascota es obligatorio.'); return; }
+
+      const selectedDate = new Date(dateTime);
+      if (isNaN(selectedDate.getTime())) { alert('La fecha y hora no son válidas.'); return; }
 
       const service = servicesData.find(s => s.id === serviceId);
       const editId = document.getElementById('editApptId').value;
@@ -300,41 +306,41 @@
         completada: '#16a34a', cancelada: '#ef4444'
       };
 
-      const escapeHTML = (str) => {
+      const escapeHtml = (str) => {
         if (!str) return '';
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
       };
 
       body.innerHTML = data.map(a => {
         const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-        const safePetName = escapeHTML(a.pets?.name || a.guest_pet_name || 'N/A');
-        const safePetSpecies = escapeHTML(a.pets?.species || '');
-        const safeGuestName = escapeHTML(a.guest_name || '');
+        const safePetName = escapeHtml(a.pets?.name || a.guest_pet_name || 'N/A');
+        const safePetSpecies = escapeHtml(a.pets?.species || '');
+        const safeGuestName = escapeHtml(a.guest_name || '');
         const petLabel = a.pets?.name
           ? `${safePetName}${safePetSpecies ? ` (${safePetSpecies})` : ''}`
           : `${safePetName}${safeGuestName ? ` · ${safeGuestName}` : ''}`;
-        const safeIcon = escapeHTML(a.services?.icon || '🩺');
-        const safeServiceName = escapeHTML(a.services?.name || a.service_type);
-        const safeVetName = escapeHTML(a.profiles?.full_name || 'Sin asignar');
-        const safeNotes = escapeHTML(a.notes || '');
+        const safeIcon = escapeHtml(a.services?.icon || '🩺');
+        const safeServiceName = escapeHtml(a.services?.name || a.service_type);
+        const safeVetName = escapeHtml(a.profiles?.full_name || 'Sin asignar');
+        const safeNotes = escapeHtml(a.notes || '');
         return `
           <tr>
             <td>${time}</td>
             <td>${safeIcon} ${safeServiceName}</td>
             <td>${petLabel}</td>
             <td>${safeVetName}</td>
-            <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
+            <td><span style="color:${statusColors[a.status]};font-weight:700">${escapeHtml(a.status)}</span></td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
               <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
-                <select onchange="changeStatus('${a.id}', this.value)" class="auth-input appointment-status-select">
+                <select onchange="changeStatus('${escapeHtml(a.id)}', this.value)" class="auth-input appointment-status-select">
                   <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
                   <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
                   <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
                   <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
                   <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                 </select>
-                <button onclick="editAppointment('${a.id}')" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0.3rem 0.5rem;cursor:pointer;background:none;min-height:40px" title="Editar">✏️</button>
+                <button onclick="editAppointment('${escapeHtml(a.id)}')" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0.3rem 0.5rem;cursor:pointer;background:none;min-height:40px" title="Editar">✏️</button>
               </div>
             </td>
           </tr>

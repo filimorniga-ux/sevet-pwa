@@ -176,7 +176,9 @@
 
     window.saveSoapRecord = async function() {
       const petId = document.getElementById('soapPet').value;
+      const recordType = document.getElementById('soapType').value;
       if (!petId) { alert('Selecciona un paciente.'); return; }
+      if (!recordType) { alert('El tipo de registro es obligatorio.'); return; }
 
       const record = {
         pet_id: petId,

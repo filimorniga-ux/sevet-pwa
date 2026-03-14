@@ -227,8 +227,8 @@
     import { supabase } from '/js/supabase.js';
     import { buildServicePriceIndex, estimateAppointmentRevenue } from '/js/modules/admin-utils.js';
 
-    const escapeHTML = (str) => {
-      if (!str) return '';
+    const escapeHtml = (str) => {
+      if (str === null || str === undefined) return '';
       return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -238,16 +238,6 @@
     };
 
     let adminProfile = null;
-
-    // Direct init — no race condition with auth events
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\"", "&quot;")
-        .replaceAll("'", "&#39;");
-    }
 
     async function initAdmin() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -435,17 +425,17 @@
       const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
       container.innerHTML = data.map(a => {
         const dt = new Date(a.date_time);
-        const safeServiceType = escapeHTML(a.service_type || 'consulta');
-        const safeSource = escapeHTML(a.source || 'web');
-        const safeGuestPetName = escapeHTML(a.guest_pet_name || '');
-        const safeGuestName = escapeHTML(a.guest_name || '');
+        const safeServiceType = escapeHtml(a.service_type || 'consulta');
+        const safeSource = escapeHtml(a.source || 'web');
+        const safeGuestPetName = escapeHtml(a.guest_pet_name || '');
+        const safeGuestName = escapeHtml(a.guest_name || '');
         const guestInfo = safeGuestPetName ? `${safeGuestPetName}${safeGuestName ? ` · ${safeGuestName}` : ''}` : '';
 
         return `<div class="appointment-row">
           <span class="apt-date">${dt.toLocaleDateString('es-CL')}</span>
           <span class="apt-time">${dt.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</span>
           <span class="apt-service">🩺 ${safeServiceType}</span>
-          <span class="apt-status" style="color:${statusColors[a.status]}">${a.status}</span>
+          <span class="apt-status" style="color:${statusColors[a.status]}">${escapeHtml(a.status)}</span>
           <span style="font-size:0.78rem;color:var(--gray-500)">${safeSource}</span>
           <span style="font-size:0.78rem;color:var(--gray-500)">${guestInfo}</span>
         </div>`;
@@ -465,8 +455,8 @@
       if (listEl) {
         listEl.innerHTML = categoriesData.map(c => `
           <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.7rem;background:var(--gray-100);border-radius:var(--radius-md);font-size:0.85rem">
-            ${c.icon || '📁'} ${escapeHtml(c.name)}
-            <button onclick="deleteCategory('${c.id}','${escapeHtml(c.name)}')" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:0.75rem" title="Eliminar">✕</button>
+            ${escapeHtml(c.icon || '📁')} ${escapeHtml(c.name)}
+            <button onclick="deleteCategory('${escapeHtml(c.id)}','${escapeHtml(c.name)}')" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:0.75rem" title="Eliminar">✕</button>
           </span>
         `).join('');
       }
@@ -475,7 +465,7 @@
       const selectEl = document.getElementById('svcCategory');
       if (selectEl) {
         selectEl.innerHTML = categoriesData.map(c =>
-          `<option value="${escapeHtml(c.name)}">${c.icon || '📁'} ${escapeHtml(c.name)}</option>`
+          `<option value="${escapeHtml(c.name)}">${escapeHtml(c.icon || '📁')} ${escapeHtml(c.name)}</option>`
         ).join('');
       }
     }
@@ -511,14 +501,14 @@
 
       container.innerHTML = data.map(s => `
         <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
-          <span style="font-size:1.5rem">${s.icon||'🩺'}</span>
+          <span style="font-size:1.5rem">${escapeHtml(s.icon||'🩺')}</span>
           <div style="flex:2;min-width:120px">
             <strong>${escapeHtml(s.name)}</strong>
             <div style="font-size:0.75rem;color:var(--gray-500)">${escapeHtml(s.description || '')}</div>
           </div>
           <span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(s.category || 'general')}</span>
           <span style="font-weight:700;color:var(--blue-600)">$${(s.price||0).toLocaleString('es-CL')}</span>
-          <span style="font-size:0.78rem">${s.duration_min} min</span>
+          <span style="font-size:0.78rem">${escapeHtml(s.duration_min)} min</span>
           <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700;font-size:0.82rem">${s.active?'Activo':'Inactivo'}</span>
           <div class="apt-actions">
             <button onclick="editService('${s.id}')" title="Editar">✏️</button>
@@ -555,11 +545,16 @@
 
     window.saveService = async function() {
       const name = document.getElementById('svcName').value.trim();
+      const category = document.getElementById('svcCategory').value;
+      const price = document.getElementById('svcPrice').value;
+
       if (!name) { alert('Nombre es obligatorio.'); return; }
+      if (!category) { alert('Categoría es obligatoria.'); return; }
+      if (price === '' || isNaN(price) || Number(price) < 0) { alert('El precio debe ser un número válido.'); return; }
 
       const svc = {
         name,
-        category: document.getElementById('svcCategory').value,
+        category: category,
         description: document.getElementById('svcDesc').value.trim() || null,
         price: parseInt(document.getElementById('svcPrice').value) || 0,
         duration_min: parseInt(document.getElementById('svcDuration').value) || 30,
@@ -624,8 +619,14 @@
       const email = document.getElementById('staffEmail').value.trim();
       const role = document.getElementById('staffRole').value;
 
-      if (!fullName || !email) {
-        alert('Nombre y email son obligatorios.');
+      if (!fullName || !email || !role) {
+        alert('Nombre, email y rol son obligatorios.');
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('El formato del email no es válido.');
         return;
       }
 
@@ -731,9 +732,9 @@
       container.innerHTML = data.map(t => `
         <div class="appointment-row">
           <span class="apt-service">${escapeHtml(t.profiles?.full_name || 'Desconocido')}</span>
-          <span>${typeLabels[t.type] || t.type}</span>
-          <span style="font-size:0.82rem">${t.start_date} → ${t.end_date}</span>
-          <span style="color:${statusColors[t.status]};font-weight:700">${t.status}</span>
+          <span>${escapeHtml(typeLabels[t.type] || t.type)}</span>
+          <span style="font-size:0.82rem">${escapeHtml(t.start_date)} → ${escapeHtml(t.end_date)}</span>
+          <span style="color:${statusColors[t.status]};font-weight:700">${escapeHtml(t.status)}</span>
           ${t.status === 'pending' ? `
             <div class="apt-actions">
               <button onclick="approveTimeOff('${t.id}')" title="Aprobar">✅</button>
