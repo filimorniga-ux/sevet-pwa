@@ -113,6 +113,20 @@
 
     <!-- SERVICES PANEL -->
     <div class="admin-panel" id="panelServices">
+      <!-- Category Manager -->
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+          <h3>📁 Categorías de Servicios</h3>
+          <div style="display:flex;gap:0.5rem">
+            <input type="text" id="newCategoryName" placeholder="Nueva categoría" style="padding:0.4rem 0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.85rem;width:160px" />
+            <input type="text" id="newCategoryIcon" placeholder="📁" maxlength="4" style="padding:0.4rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);width:50px;text-align:center" />
+            <button class="btn-primary" onclick="addCategory()" style="padding:0.4rem 0.8rem;font-size:0.85rem">➕</button>
+          </div>
+        </div>
+        <div id="categoriesList" style="display:flex;flex-wrap:wrap;gap:0.5rem"></div>
+      </div>
+
+      <!-- Services CRUD -->
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <h3>🩺 Gestión de Servicios</h3>
@@ -120,19 +134,21 @@
         </div>
         <div id="serviceFormContainer" class="hidden" style="margin-bottom:1.5rem">
           <div class="confirmation-card">
-            <div class="auth-field"><label>Nombre</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
-            <div class="auth-field"><label>Categoría</label>
-              <select id="svcCategory" class="auth-input">
-                <option value="consulta">Consulta</option><option value="cirugia">Cirugía</option>
-                <option value="laboratorio">Laboratorio</option><option value="peluqueria">Peluquería</option>
-                <option value="urgencia">Urgencia</option>
-              </select>
+            <input type="hidden" id="svcEditId" />
+            <div class="soap-compose-grid">
+              <div class="auth-field"><label>Nombre *</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
+              <div class="auth-field"><label>Categoría *</label><select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select></div>
+              <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
+              <div class="auth-field"><label>Precio ($CLP) *</label><input type="number" id="svcPrice" placeholder="25000"/></div>
+              <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
+              <div class="auth-field"><label>Especialidad requerida</label><input type="text" id="svcSpecialty" placeholder="general"/></div>
+              <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
+              <div class="auth-field" style="display:flex;align-items:center;gap:0.5rem">
+                <input type="checkbox" id="svcRequiresVet" checked />
+                <label for="svcRequiresVet" style="margin:0">Requiere Veterinario</label>
+              </div>
             </div>
-            <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
-            <div class="auth-field"><label>Precio ($CLP)</label><input type="number" id="svcPrice" placeholder="25000"/></div>
-            <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
-            <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
-            <div style="display:flex;gap:0.5rem">
+            <div style="display:flex;gap:0.5rem;margin-top:1rem">
               <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar</button>
               <button class="btn-back" onclick="hideServiceForm()">Cancelar</button>
             </div>
@@ -436,26 +452,74 @@
       }).join('');
     }
 
-    // ── SERVICES CRUD ──
+
+    // ── CATEGORIES ──
+    let categoriesData = [];
+
+    async function loadCategories() {
+      const { data } = await supabase.from('service_categories').select('*').order('sort_order');
+      categoriesData = data || [];
+
+      // Update categories list UI
+      const listEl = document.getElementById('categoriesList');
+      if (listEl) {
+        listEl.innerHTML = categoriesData.map(c => `
+          <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.7rem;background:var(--gray-100);border-radius:var(--radius-md);font-size:0.85rem">
+            ${c.icon || '📁'} ${escapeHtml(c.name)}
+            <button onclick="deleteCategory('${c.id}','${escapeHtml(c.name)}')" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:0.75rem" title="Eliminar">✕</button>
+          </span>
+        `).join('');
+      }
+
+      // Update category select in service form
+      const selectEl = document.getElementById('svcCategory');
+      if (selectEl) {
+        selectEl.innerHTML = categoriesData.map(c =>
+          `<option value="${escapeHtml(c.name)}">${c.icon || '📁'} ${escapeHtml(c.name)}</option>`
+        ).join('');
+      }
+    }
+
+    window.addCategory = async function() {
+      const name = document.getElementById('newCategoryName')?.value.trim();
+      const icon = document.getElementById('newCategoryIcon')?.value.trim() || '📁';
+      if (!name) { alert('Ingresa un nombre para la categoría.'); return; }
+
+      const { error } = await supabase.from('service_categories').insert({ name, icon, sort_order: categoriesData.length + 1 });
+      if (error) { alert('Error: ' + error.message); return; }
+      document.getElementById('newCategoryName').value = '';
+      document.getElementById('newCategoryIcon').value = '';
+      await loadCategories();
+    };
+
+    window.deleteCategory = async function(id, name) {
+      if (!confirm(`¿Eliminar categoría "${name}"?`)) return;
+      const { error } = await supabase.from('service_categories').delete().eq('id', id);
+      if (error) { alert('Error: ' + error.message); return; }
+      await loadCategories();
+    };
+
+    // ── SERVICES ──
     let editingServiceId = null;
 
     async function loadServicesAdmin() {
+      await loadCategories();
       const { data, error } = await supabase.from('services').select('*').order('category').order('name');
       const container = document.getElementById('servicesTable');
-      if (error) {
-        container.innerHTML = `<p class="summary-empty">No se pudo cargar servicios: ${error.message}</p>`;
-        return;
-      }
+      if (error) { container.innerHTML = `<p class="summary-empty">Error: ${error.message}</p>`; return; }
       if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay servicios</p>'; return; }
 
       container.innerHTML = data.map(s => `
-        <div class="appointment-row">
+        <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
           <span style="font-size:1.5rem">${s.icon||'🩺'}</span>
-          <span class="apt-service" style="flex:2">${escapeHtml(s.name)}</span>
+          <div style="flex:2;min-width:120px">
+            <strong>${escapeHtml(s.name)}</strong>
+            <div style="font-size:0.75rem;color:var(--gray-500)">${escapeHtml(s.description || '')}</div>
+          </div>
           <span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(s.category || 'general')}</span>
           <span style="font-weight:700;color:var(--blue-600)">$${(s.price||0).toLocaleString('es-CL')}</span>
           <span style="font-size:0.78rem">${s.duration_min} min</span>
-          <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700">${s.active?'Activo':'Inactivo'}</span>
+          <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700;font-size:0.82rem">${s.active?'Activo':'Inactivo'}</span>
           <div class="apt-actions">
             <button onclick="editService('${s.id}')" title="Editar">✏️</button>
             <button onclick="toggleServiceActive('${s.id}', ${!s.active})" title="${s.active?'Desactivar':'Activar'}">${s.active?'⏸️':'▶️'}</button>
@@ -464,35 +528,44 @@
       `).join('');
     }
 
-    window.showServiceForm = () => { editingServiceId = null; clearServiceForm(); document.getElementById('serviceFormContainer').classList.remove('hidden'); };
+    window.showServiceForm = () => {
+      editingServiceId = null;
+      document.getElementById('svcEditId').value = '';
+      ['svcName','svcDesc','svcPrice','svcDuration','svcIcon','svcSpecialty'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('svcRequiresVet').checked = true;
+      document.getElementById('serviceFormContainer').classList.remove('hidden');
+    };
     window.hideServiceForm = () => document.getElementById('serviceFormContainer').classList.add('hidden');
-
-    function clearServiceForm() {
-      ['svcName','svcCategory','svcDesc','svcPrice','svcDuration','svcIcon']
-        .forEach(id => document.getElementById(id).value = '');
-    }
 
     window.editService = async function(id) {
       const { data } = await supabase.from('services').select('*').eq('id', id).single();
       if (!data) return;
       editingServiceId = id;
+      document.getElementById('svcEditId').value = id;
       document.getElementById('svcName').value = data.name || '';
-      document.getElementById('svcCategory').value = data.category || 'consulta';
+      document.getElementById('svcCategory').value = data.category || '';
       document.getElementById('svcDesc').value = data.description || '';
       document.getElementById('svcPrice').value = data.price || '';
       document.getElementById('svcDuration').value = data.duration_min || '';
       document.getElementById('svcIcon').value = data.icon || '';
+      document.getElementById('svcSpecialty').value = data.specialty || '';
+      document.getElementById('svcRequiresVet').checked = data.requires_vet !== false;
       document.getElementById('serviceFormContainer').classList.remove('hidden');
     };
 
     window.saveService = async function() {
+      const name = document.getElementById('svcName').value.trim();
+      if (!name) { alert('Nombre es obligatorio.'); return; }
+
       const svc = {
-        name: document.getElementById('svcName').value,
+        name,
         category: document.getElementById('svcCategory').value,
-        description: document.getElementById('svcDesc').value,
+        description: document.getElementById('svcDesc').value.trim() || null,
         price: parseInt(document.getElementById('svcPrice').value) || 0,
         duration_min: parseInt(document.getElementById('svcDuration').value) || 30,
         icon: document.getElementById('svcIcon').value || '🩺',
+        specialty: document.getElementById('svcSpecialty').value.trim() || 'general',
+        requires_vet: document.getElementById('svcRequiresVet').checked,
         active: true,
       };
 
