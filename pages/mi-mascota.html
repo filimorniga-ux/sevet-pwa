@@ -197,7 +197,7 @@
             <h2 style="margin:0 0 0.25rem">${escapeHtml(pet.name)}</h2>
             <p style="margin:0;color:var(--gray-500);font-size:0.9rem">
               ${escapeHtml(pet.breed || pet.species)} ${age ? `· ${age}` : ''}
-              ${pet.weight_kg ? ` · ${pet.weight_kg} kg` : ''}
+              ${pet.weight_kg ? ` · ${escapeHtml(pet.weight_kg)} kg` : ''}
               ${pet.chip_number ? ` · Chip: ${escapeHtml(pet.chip_number)}` : ''}
             </p>
             ${pet.notes ? `<p style="margin:0.5rem 0 0;font-size:0.82rem;color:var(--gray-400);font-style:italic">${escapeHtml(pet.notes)}</p>` : ''}
@@ -225,7 +225,7 @@
         <div class="pet-stat-card"><span class="pet-stat-num">${upcomingAppts.length}</span><span class="pet-stat-label">Próximas Citas</span></div>
         <div class="pet-stat-card"><span class="pet-stat-num">${vaccines.length}</span><span class="pet-stat-label">Vacunas</span></div>
         <div class="pet-stat-card"><span class="pet-stat-num">${records.length}</span><span class="pet-stat-label">Registros Clínicos</span></div>
-        <div class="pet-stat-card"><span class="pet-stat-num">${pet.weight_kg || '-'}</span><span class="pet-stat-label">Peso (kg)</span></div>
+        <div class="pet-stat-card"><span class="pet-stat-num">${pet.weight_kg != null ? escapeHtml(pet.weight_kg) : '-'}</span><span class="pet-stat-label">Peso (kg)</span></div>
       `;
 
       // Store data for tabs
@@ -262,7 +262,7 @@
           const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
           return `
             <div class="appointment-row" style="gap:1rem">
-              <span style="font-size:1.5rem">${a.services?.icon || '🩺'}</span>
+              <span style="font-size:1.5rem">${a.services?.icon ? escapeHtml(a.services.icon) : '🩺'}</span>
               <div style="flex:2;min-width:120px">
                 <strong>${escapeHtml(a.services?.name || a.service_type)}</strong>
                 <div style="font-size:0.78rem;color:var(--gray-500)">${dateStr} · ${timeStr}</div>
