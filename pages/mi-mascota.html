@@ -339,10 +339,10 @@
               <span style="font-size:1.5rem">💊</span>
               <div style="flex:2;min-width:120px">
                 <strong>${escapeHtml(rx.dosage || 'Sin detalle')}</strong>
-                <div style="font-size:0.78rem;color:var(--gray-500)">${date}${rx.frequency ? ' · ' + escapeHtml(rx.frequency) : ''}${rx.duration_days ? ' · ' + rx.duration_days + ' días' : ''}</div>
+                <div style="font-size:0.78rem;color:var(--gray-500)">${date}${rx.frequency ? ' · ' + escapeHtml(rx.frequency) : ''}${rx.duration_days ? ' · ' + escapeHtml(rx.duration_days) + ' días' : ''}</div>
                 ${rx.is_chronic ? '<span style="font-size:0.72rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px">🔄 Crónico</span>' : ''}
               </div>
-              <span style="font-size:0.82rem;font-weight:600">${statusLabels[rx.status] || rx.status}</span>
+              <span style="font-size:0.82rem;font-weight:600">${escapeHtml(statusLabels[rx.status] || rx.status)}</span>
             </div>`;
         }).join('');
       }
@@ -381,10 +381,10 @@
         doc.setFont(undefined, 'normal'); doc.setFontSize(10);
         vacc.forEach(v => {
           y += 8; if (y > 270) { doc.addPage(); y = 20; }
-          doc.text(v.vaccine_name || '', 20, y);
-          doc.text(v.applied_date || '', 90, y);
-          doc.text(v.batch_number || '-', 130, y);
-          doc.text(v.next_due_date || '-', 165, y);
+          doc.text(String(v.vaccine_name || ''), 20, y);
+          doc.text(String(v.applied_date || ''), 90, y);
+          doc.text(String(v.batch_number || '-'), 130, y);
+          doc.text(String(v.next_due_date || '-'), 165, y);
         });
       } else { doc.text('Sin vacunas registradas.', 20, 74); }
       doc.save(`carnet_vacunas_${pet.name}.pdf`);
@@ -410,10 +410,10 @@
           doc.setFont(undefined, 'bold'); doc.setFontSize(11);
           doc.text(`${r.record_type || 'Consulta'} — ${date}`, 20, y); y += 7;
           doc.setFont(undefined, 'normal'); doc.setFontSize(9);
-          if (r.subjective) { doc.text(`S: ${r.subjective.substring(0, 80)}`, 20, y); y += 5; }
-          if (r.objective) { doc.text(`O: ${r.objective.substring(0, 80)}`, 20, y); y += 5; }
-          if (r.assessment) { doc.text(`A: ${r.assessment.substring(0, 80)}`, 20, y); y += 5; }
-          if (r.plan) { doc.text(`P: ${r.plan.substring(0, 80)}`, 20, y); y += 5; }
+          if (r.subjective) { doc.text(`S: ${String(r.subjective).substring(0, 80)}`, 20, y); y += 5; }
+          if (r.objective) { doc.text(`O: ${String(r.objective).substring(0, 80)}`, 20, y); y += 5; }
+          if (r.assessment) { doc.text(`A: ${String(r.assessment).substring(0, 80)}`, 20, y); y += 5; }
+          if (r.plan) { doc.text(`P: ${String(r.plan).substring(0, 80)}`, 20, y); y += 5; }
           y += 4;
         });
       } else { doc.text('Sin registros clínicos.', 20, y); }
@@ -440,9 +440,9 @@
           doc.setFont(undefined, 'bold'); doc.setFontSize(11);
           doc.text(`${rx.dosage || 'Receta'} — ${date}`, 20, y); y += 6;
           doc.setFont(undefined, 'normal'); doc.setFontSize(9);
-          if (rx.frequency) { doc.text(`Frecuencia: ${rx.frequency}`, 20, y); y += 5; }
-          if (rx.duration_days) { doc.text(`Duración: ${rx.duration_days} días`, 20, y); y += 5; }
-          doc.text(`Estado: ${rx.status} ${rx.is_chronic ? '| Crónico' : ''}`, 20, y); y += 8;
+          if (rx.frequency) { doc.text(`Frecuencia: ${String(rx.frequency)}`, 20, y); y += 5; }
+          if (rx.duration_days) { doc.text(`Duración: ${String(rx.duration_days)} días`, 20, y); y += 5; }
+          doc.text(`Estado: ${String(rx.status)} ${rx.is_chronic ? '| Crónico' : ''}`, 20, y); y += 8;
         });
       } else { doc.text('Sin recetas registradas.', 20, y); }
       doc.save(`recetas_${pet.name}.pdf`);
