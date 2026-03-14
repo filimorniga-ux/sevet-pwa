@@ -513,6 +513,7 @@ async function confirmBooking() {
         type: 'new_appointment',
         service: state.selectedService?.name || serviceType,
         professional: state.selectedProfessional?.full_name || 'Cualquier disponible',
+        vet_id: state.selectedProfessional?.id || null,
         date: friendlyDate,
         time: state.selectedTime,
         duration: state.selectedService?.duration_min || 30,
