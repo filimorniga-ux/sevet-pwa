@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#8b2d8b"/>
-  <meta name="description" content="SEVET – Mi agenda profesional. Gestiona tus citas, horarios y disponibilidad."/>
+  <meta name="description" content="SEVET – Mi agenda profesional. Gestiona citas, pacientes, recetas y tu perfil."/>
   <title>Mi Agenda – SEVET Veterinaria San Alberto</title>
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
@@ -22,7 +22,7 @@
     <li><a href="/">Inicio</a></li>
     <li><a href="/pages/mi-agenda.html" class="active">Mi Agenda</a></li>
     <li><a href="/pages/gestion-citas.html">Gestión Citas</a></li>
-    <li><a href="/pages/admin.html">Dashboard</a></li>
+    <li><a href="/pages/historial.html">Historial</a></li>
     <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
     <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
   </ul>
@@ -36,77 +36,107 @@
       <p class="section-sub" id="staffGreeting">Cargando...</p>
     </div>
 
-    <!-- Tabs -->
+    <!-- Main Tabs -->
     <div class="specialty-tabs" style="margin-bottom:2rem">
       <button class="spec-tab active" onclick="showAgendaTab('today', this)">📅 Hoy</button>
       <button class="spec-tab" onclick="showAgendaTab('week', this)">📆 Semana</button>
-      <button class="spec-tab" onclick="showAgendaTab('schedule', this)">⏰ Mi Horario</button>
+      <button class="spec-tab" onclick="showAgendaTab('patients', this)">🐾 Pacientes</button>
+      <button class="spec-tab" onclick="showAgendaTab('prescriptions', this)">💊 Recetas</button>
+      <button class="spec-tab" onclick="showAgendaTab('schedule', this)">⏰ Horario</button>
       <button class="spec-tab" onclick="showAgendaTab('timeoff', this)">🏖️ Días Libres</button>
+      <button class="spec-tab" onclick="showAgendaTab('profile', this)">👤 Mi Perfil</button>
     </div>
 
-    <!-- Today's Appointments -->
+    <!-- TODAY -->
     <div class="agenda-panel active" id="panelToday">
       <div class="dash-section-label">Citas de Hoy</div>
-      <div id="todayAppointments" class="appointments-list">
-        <div class="loading-spinner">Cargando citas...</div>
-      </div>
+      <div id="todayAppointments" class="appointments-list"><div class="loading-spinner">Cargando citas...</div></div>
     </div>
 
-    <!-- Week View -->
+    <!-- WEEK -->
     <div class="agenda-panel" id="panelWeek">
       <div class="dash-section-label">Citas de la Semana</div>
-      <div id="weekAppointments" class="appointments-list">
-        <div class="loading-spinner">Cargando citas...</div>
-      </div>
+      <div id="weekAppointments" class="appointments-list"><div class="loading-spinner">Cargando citas...</div></div>
     </div>
 
-    <!-- My Schedule -->
+    <!-- PATIENTS -->
+    <div class="agenda-panel" id="panelPatients">
+      <div class="dash-section-label">Mis Pacientes</div>
+      <div style="max-width:600px;margin:0 auto 1rem">
+        <input type="text" id="patientSearch" placeholder="🔍 Buscar por nombre de mascota o dueño..." oninput="filterPatients()" style="width:100%;padding:0.7rem 1rem;border:1px solid var(--gray-200);border-radius:var(--radius-lg);font-size:0.9rem"/>
+      </div>
+      <div id="patientsList" class="appointments-list"><div class="loading-spinner">Cargando pacientes...</div></div>
+    </div>
+
+    <!-- PRESCRIPTIONS -->
+    <div class="agenda-panel" id="panelPrescriptions">
+      <div class="dash-section-label">Recetas Médicas</div>
+      <button class="btn-primary" onclick="showRxForm()" style="margin-bottom:1rem">➕ Nueva Receta</button>
+      <!-- Rx form -->
+      <div id="rxFormContainer" class="hidden" style="max-width:650px;margin:0 auto 1.5rem">
+        <div class="confirmation-card" style="padding:1.5rem">
+          <h3>💊 Nueva Receta Médica</h3>
+          <input type="hidden" id="rxEditId" value=""/>
+          <div class="pet-form-grid" style="margin-top:0.75rem">
+            <div class="auth-field"><label>Mascota *</label><select id="rxPet" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"><option value="">Seleccionar...</option></select></div>
+            <div class="auth-field"><label>Medicamento *</label><input type="text" id="rxDrug" placeholder="Amoxicilina 500mg"/></div>
+            <div class="auth-field"><label>Dosis *</label><input type="text" id="rxDosage" placeholder="1 comprimido c/12h"/></div>
+            <div class="auth-field"><label>Frecuencia</label><input type="text" id="rxFreq" placeholder="Cada 12 horas"/></div>
+            <div class="auth-field"><label>Duración (días)</label><input type="number" id="rxDays" placeholder="7"/></div>
+            <div class="auth-field"><label>Crónico</label><select id="rxChronic" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"><option value="false">No</option><option value="true">Sí — tratamiento continuo</option></select></div>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn-primary" onclick="saveRx()" style="flex:1;justify-content:center">💾 Guardar Receta</button>
+            <button class="btn-back" onclick="hideRxForm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div id="rxList" class="appointments-list"><div class="loading-spinner">Cargando recetas...</div></div>
+    </div>
+
+    <!-- SCHEDULE -->
     <div class="agenda-panel" id="panelSchedule">
       <div class="dash-section-label">Mi Horario Semanal</div>
-      <div id="mySchedule" class="schedule-grid">
-        <div class="loading-spinner">Cargando horario...</div>
-      </div>
-      <button class="btn-primary" id="saveScheduleBtn" style="margin-top:1rem">
-        💾 Guardar Horario
-      </button>
+      <div id="mySchedule" class="schedule-grid"><div class="loading-spinner">Cargando horario...</div></div>
+      <button class="btn-primary" id="saveScheduleBtn" style="margin-top:1rem">💾 Guardar Horario</button>
     </div>
 
-    <!-- Time Off Requests -->
+    <!-- TIME OFF -->
     <div class="agenda-panel" id="panelTimeoff">
       <div class="dash-section-label">Solicitudes de Días Libres</div>
-      <div id="timeOffList" class="appointments-list">
-        <div class="loading-spinner">Cargando solicitudes...</div>
-      </div>
-      <button class="btn-primary" onclick="showTimeOffForm()" style="margin-top:1rem">
-        ➕ Solicitar Día Libre
-      </button>
+      <div id="timeOffList" class="appointments-list"><div class="loading-spinner">Cargando solicitudes...</div></div>
+      <button class="btn-primary" onclick="showTimeOffForm()" style="margin-top:1rem">➕ Solicitar Día Libre</button>
       <div id="timeOffForm" class="hidden" style="margin-top:1rem">
         <div class="confirmation-card">
           <h3 style="margin-bottom:1rem;color:var(--blue-800)">Nueva Solicitud</h3>
-          <div class="auth-field">
-            <label>Tipo</label>
-            <select id="toType" class="auth-input">
-              <option value="vacation">Vacaciones</option>
-              <option value="sick_leave">Licencia Médica</option>
-              <option value="personal">Personal</option>
-              <option value="other">Otro</option>
-            </select>
+          <div class="auth-field"><label>Tipo</label><select id="toType" class="auth-input"><option value="vacation">Vacaciones</option><option value="sick_leave">Licencia Médica</option><option value="personal">Personal</option><option value="other">Otro</option></select></div>
+          <div class="auth-field"><label>Fecha Inicio</label><input type="date" id="toStart" class="auth-input"/></div>
+          <div class="auth-field"><label>Fecha Fin</label><input type="date" id="toEnd" class="auth-input"/></div>
+          <div class="auth-field"><label>Notas</label><textarea id="toNotes" class="auth-input" rows="2" style="resize:vertical" placeholder="Motivo..."></textarea></div>
+          <button class="btn-primary" onclick="submitTimeOff()" style="width:100%;justify-content:center">Enviar Solicitud</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="agenda-panel" id="panelProfile">
+      <div class="dash-section-label">Mi Perfil Profesional</div>
+      <div style="max-width:600px;margin:0 auto">
+        <div class="confirmation-card" style="padding:1.5rem">
+          <div id="profileAvatar" style="text-align:center;margin-bottom:1rem"></div>
+          <div class="pet-form-grid">
+            <div class="auth-field"><label>Nombre completo *</label><input type="text" id="profName"/></div>
+            <div class="auth-field"><label>Email</label><input type="email" id="profEmail" disabled style="opacity:0.6"/></div>
+            <div class="auth-field"><label>Teléfono</label><input type="tel" id="profPhone" placeholder="+56 9 1234 5678"/></div>
+            <div class="auth-field"><label>WhatsApp</label><input type="tel" id="profWhatsapp" placeholder="+56 9 1234 5678"/></div>
+            <div class="auth-field"><label>Dirección</label><input type="text" id="profAddress" placeholder="Calle 123, Ciudad"/></div>
+            <div class="auth-field"><label>Especialidad</label><input type="text" id="profSpecialty" placeholder="Cirugía, Dermatología..."/></div>
+            <div class="auth-field"><label>Nº Licencia / SAG</label><input type="text" id="profLicense" placeholder="Registro profesional"/></div>
+            <div class="auth-field"><label>Cargo</label><input type="text" id="profPosition" placeholder="Médico Veterinario"/></div>
+            <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="profBirth"/></div>
+            <div class="auth-field"><label>RUT</label><input type="text" id="profRut" placeholder="12.345.678-9"/></div>
           </div>
-          <div class="auth-field">
-            <label>Fecha Inicio</label>
-            <input type="date" id="toStart" class="auth-input"/>
-          </div>
-          <div class="auth-field">
-            <label>Fecha Fin</label>
-            <input type="date" id="toEnd" class="auth-input"/>
-          </div>
-          <div class="auth-field">
-            <label>Notas</label>
-            <textarea id="toNotes" class="auth-input" rows="2" style="resize:vertical" placeholder="Motivo..."></textarea>
-          </div>
-          <button class="btn-primary" onclick="submitTimeOff()" style="width:100%;justify-content:center">
-            Enviar Solicitud
-          </button>
+          <button class="btn-primary" onclick="saveProfile()" style="width:100%;margin-top:1rem;justify-content:center">💾 Guardar Cambios</button>
         </div>
       </div>
     </div>
@@ -117,8 +147,10 @@
     import { supabase } from '/js/supabase.js';
 
     let staffProfile = null;
+    let allPatients = [];
 
-    // Auth check
+    const escapeHtml = (s) => (s == null) ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
     async function init() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -127,12 +159,12 @@
         const { data: profile } = await supabase.from('profiles')
           .select('*').eq('user_id', session.user.id).single();
         
-        if (!profile || !['vet','groomer','admin','owner'].includes(profile.role)) {
+        if (!profile || !['vet','groomer','admin','owner','receptionist'].includes(profile.role)) {
           window.location.href = '/'; return;
         }
 
         staffProfile = profile;
-        const roleLabels = { vet: 'Veterinario', groomer: 'Peluquero/a', admin: 'Administrador', owner: 'Director' };
+        const roleLabels = { vet: 'Veterinario', groomer: 'Peluquero/a', admin: 'Administrador', owner: 'Director', receptionist: 'Recepcionista' };
         document.getElementById('staffGreeting').textContent = 
           `Bienvenido/a, ${profile.full_name} — ${roleLabels[profile.role] || profile.role}`;
 
@@ -145,7 +177,7 @@
       // Logout
       document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
         e.preventDefault();
-        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut error:', err); }
+        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut:', err); }
         try {
           Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
           Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-')) sessionStorage.removeItem(k); });
@@ -155,110 +187,226 @@
     }
     init();
 
-    // Tab switching
+    // ── TAB SWITCHING ──
     window.showAgendaTab = function(tab, btn) {
       document.querySelectorAll('.agenda-panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.spec-tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`panel${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+      if (btn) btn.classList.add('active');
+      const panelId = 'panel' + tab.charAt(0).toUpperCase() + tab.slice(1);
+      document.getElementById(panelId)?.classList.add('active');
 
       if (tab === 'today') loadTodayAppointments();
       if (tab === 'week') loadWeekAppointments();
       if (tab === 'schedule') loadMySchedule();
       if (tab === 'timeoff') loadTimeOff();
+      if (tab === 'patients') loadPatients();
+      if (tab === 'prescriptions') loadPrescriptions();
+      if (tab === 'profile') loadProfile();
     };
 
+    // ── TODAY ──
     async function loadTodayAppointments() {
       const container = document.getElementById('todayAppointments');
       try {
         const today = new Date().toISOString().split('T')[0];
-
         let query = supabase.from('appointments')
-          .select('*, services(name, icon)')
-          .gte('date_time', `${today}T00:00:00`)
-          .lte('date_time', `${today}T23:59:59`)
+          .select('*, services(name, icon), pets(name, species)')
+          .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`)
           .order('date_time');
-
-        if (staffProfile.role !== 'admin' && staffProfile.role !== 'owner') {
-          query = query.eq('vet_id', staffProfile.id);
-        }
+        if (!['admin','owner'].includes(staffProfile.role)) query = query.eq('vet_id', staffProfile.id);
 
         const { data, error } = await query;
         if (error) { container.innerHTML = '<p class="summary-empty">Error al cargar citas</p>'; return; }
-        if (!data?.length) {
-          container.innerHTML = '<p class="summary-empty">🎉 No tienes citas programadas para hoy</p>';
-          return;
-        }
+        if (!data?.length) { container.innerHTML = '<p class="summary-empty">🎉 No tienes citas hoy. ¡Día tranquilo!</p>'; return; }
 
+        const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
         container.innerHTML = data.map(a => {
           const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-          const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
+          const petName = a.pets?.name || a.guest_pet_name || 'Sin nombre';
           return `
             <div class="appointment-row">
-              <span class="apt-time">${time}</span>
-              <span class="apt-service">${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</span>
-              <span class="apt-status" style="color:${statusColors[a.status] || '#888'}">${a.status}</span>
+              <span class="apt-time">${escapeHtml(time)}</span>
+              <div style="flex:1;min-width:120px">
+                <strong>${escapeHtml(a.services?.name || a.service_type)}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">🐾 ${escapeHtml(petName)}</div>
+              </div>
+              <span class="apt-status" style="color:${statusColors[a.status] || '#888'}">${escapeHtml(a.status)}</span>
               <div class="apt-actions">
                 <button onclick="updateStatus('${a.id}', 'en_curso')" title="Iniciar">▶️</button>
                 <button onclick="updateStatus('${a.id}', 'completada')" title="Completar">✅</button>
-                <button onclick="updateStatus('${a.id}', 'cancelada')" title="Cancelar">❌</button>
+                ${a.pet_id ? `<button onclick="window.location.href='/pages/ficha-clinica.html?pet=${a.pet_id}&apt=${a.id}'" title="Ficha clínica">📋</button>` : ''}
               </div>
-            </div>
-          `;
+            </div>`;
         }).join('');
-      } catch (err) {
-        container.innerHTML = '<p class="summary-empty">Error: ' + err.message + '</p>';
-      }
+      } catch (err) { container.innerHTML = '<p class="summary-empty">Error: ' + escapeHtml(err.message) + '</p>'; }
     }
 
+    // ── WEEK ──
     async function loadWeekAppointments() {
       const container = document.getElementById('weekAppointments');
-      const today = new Date();
-      const weekEnd = new Date(today);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-
+      const today = new Date(); const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
       let query = supabase.from('appointments')
-        .select('*, services(name, icon)')
-        .gte('date_time', today.toISOString())
-        .lte('date_time', weekEnd.toISOString())
-        .order('date_time');
-
-      if (staffProfile.role !== 'admin' && staffProfile.role !== 'owner') {
-        query = query.eq('vet_id', staffProfile.id);
-      }
+        .select('*, services(name, icon), pets(name)').gte('date_time', today.toISOString())
+        .lte('date_time', weekEnd.toISOString()).order('date_time');
+      if (!['admin','owner'].includes(staffProfile.role)) query = query.eq('vet_id', staffProfile.id);
 
       const { data } = await query;
-      if (!data?.length) {
-        container.innerHTML = '<p class="summary-empty">No hay citas esta semana</p>';
-        return;
-      }
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay citas esta semana</p>'; return; }
 
-      const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
       container.innerHTML = data.map(a => {
         const dt = new Date(a.date_time);
-        const day = days[dt.getDay()];
-        const date = dt.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const date = dt.toLocaleDateString('es-CL', { weekday: 'short', day:'numeric', month:'short' });
         const time = dt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
         return `
           <div class="appointment-row">
-            <span class="apt-date">${day} ${date}</span>
-            <span class="apt-time">${time}</span>
-            <span class="apt-service">${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</span>
-            <span class="apt-status">${a.status}</span>
-          </div>
-        `;
+            <span class="apt-date">${escapeHtml(date)}</span>
+            <span class="apt-time">${escapeHtml(time)}</span>
+            <span class="apt-service">${a.services?.icon || '🩺'} ${escapeHtml(a.services?.name || a.service_type)}</span>
+            <span style="font-size:0.82rem;color:var(--gray-500)">🐾 ${escapeHtml(a.pets?.name || a.guest_pet_name || '')}</span>
+            <span class="apt-status" style="color:${statusColors[a.status]}">${escapeHtml(a.status)}</span>
+          </div>`;
       }).join('');
     }
 
+    // ── PATIENTS ──
+    async function loadPatients() {
+      const container = document.getElementById('patientsList');
+      try {
+        // Get all pets that have had appointments with this professional
+        let query = supabase.from('pets').select('*, profiles!pets_owner_id_fkey(full_name, phone, email)').order('name');
+        // Vets only see pets they've treated; admins see all
+        if (!['admin','owner'].includes(staffProfile.role)) {
+          const { data: myAppts } = await supabase.from('appointments').select('pet_id').eq('vet_id', staffProfile.id).not('pet_id', 'is', null);
+          const petIds = [...new Set((myAppts || []).map(a => a.pet_id))];
+          if (!petIds.length) { container.innerHTML = '<p class="summary-empty">No tienes pacientes registrados aún</p>'; return; }
+          query = query.in('id', petIds);
+        }
+        const { data, error } = await query;
+        if (error) { container.innerHTML = '<p class="summary-empty">Error: ' + escapeHtml(error.message) + '</p>'; return; }
+
+        allPatients = data || [];
+        renderPatients(allPatients);
+      } catch (err) { container.innerHTML = '<p class="summary-empty">Error: ' + escapeHtml(err.message) + '</p>'; }
+    }
+
+    function renderPatients(list) {
+      const container = document.getElementById('patientsList');
+      if (!list.length) { container.innerHTML = '<p class="summary-empty">No se encontraron pacientes</p>'; return; }
+
+      const speciesIcons = { perro: '🐕', gato: '🐈', otro: '🐾' };
+      container.innerHTML = list.map(p => {
+        const age = p.birth_date ? calcAge(p.birth_date) : '';
+        const owner = p.profiles?.full_name || 'Dueño desconocido';
+        return `
+          <div class="appointment-row" style="cursor:pointer" onclick="this.querySelector('.patient-detail')?.classList.toggle('hidden')">
+            <span style="font-size:1.8rem">${speciesIcons[p.species] || '🐾'}</span>
+            <div style="flex:1;min-width:150px">
+              <strong style="font-size:1rem">${escapeHtml(p.name)}</strong>
+              <div style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(p.breed || p.species)} ${age ? '· ' + age : ''} ${p.weight_kg ? '· ' + p.weight_kg + 'kg' : ''}</div>
+              <div style="font-size:0.75rem;color:var(--gray-400)">👤 ${escapeHtml(owner)}</div>
+            </div>
+            <div class="apt-actions">
+              <button onclick="event.stopPropagation();window.location.href='/pages/ficha-clinica.html?pet=${p.id}'" title="Nueva ficha">📋</button>
+              <button onclick="event.stopPropagation();window.location.href='/pages/historial.html?pet=${p.id}'" title="Historial">📜</button>
+            </div>
+            <div class="patient-detail hidden" style="width:100%;padding:0.75rem;background:var(--blue-50,#eff6ff);border-radius:var(--radius-md);margin-top:0.5rem;font-size:0.85rem" onclick="event.stopPropagation()">
+              ${p.chip_number ? `<p>🔖 Chip: ${escapeHtml(p.chip_number)}</p>` : ''}
+              ${p.notes ? `<p>📝 ${escapeHtml(p.notes)}</p>` : ''}
+              ${p.profiles?.phone ? `<p>📱 Dueño: <a href="tel:${escapeHtml(p.profiles.phone)}">${escapeHtml(p.profiles.phone)}</a></p>` : ''}
+              ${p.profiles?.email ? `<p>📧 <a href="mailto:${escapeHtml(p.profiles.email)}">${escapeHtml(p.profiles.email)}</a></p>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    window.filterPatients = function() {
+      const q = document.getElementById('patientSearch').value.toLowerCase();
+      const filtered = allPatients.filter(p => 
+        (p.name || '').toLowerCase().includes(q) || (p.profiles?.full_name || '').toLowerCase().includes(q) || (p.breed || '').toLowerCase().includes(q)
+      );
+      renderPatients(filtered);
+    };
+
+    // ── PRESCRIPTIONS ──
+    async function loadPrescriptions() {
+      const container = document.getElementById('rxList');
+      try {
+        // Load pets for the form selector
+        const { data: petsData } = await supabase.from('pets').select('id, name, species').order('name');
+        const petSelect = document.getElementById('rxPet');
+        petSelect.innerHTML = '<option value="">Seleccionar paciente...</option>' +
+          (petsData || []).map(p => `<option value="${p.id}">${p.species === 'perro' ? '🐕' : p.species === 'gato' ? '🐈' : '🐾'} ${escapeHtml(p.name)}</option>`).join('');
+
+        // Load prescriptions
+        let query = supabase.from('prescriptions')
+          .select('*, pets(name, species), profiles!prescriptions_prescribed_by_fkey(full_name)')
+          .order('created_at', { ascending: false }).limit(50);
+        if (!['admin','owner'].includes(staffProfile.role)) query = query.eq('prescribed_by', staffProfile.id);
+
+        const { data, error } = await query;
+        if (error) { container.innerHTML = '<p class="summary-empty">Error: ' + escapeHtml(error.message) + '</p>'; return; }
+        if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay recetas registradas</p>'; return; }
+
+        const statusColors = { active: '#16a34a', completed: '#3b82f6', cancelled: '#ef4444' };
+        const statusLabels = { active: 'Activa', completed: 'Completada', cancelled: 'Cancelada' };
+        container.innerHTML = data.map(rx => {
+          const date = new Date(rx.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' });
+          return `
+            <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
+              <span style="font-size:1.3rem">💊</span>
+              <div style="flex:2;min-width:150px">
+                <strong>${escapeHtml(rx.dosage || 'Sin dosis')}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">🐾 ${escapeHtml(rx.pets?.name || 'Desconocido')} · ${escapeHtml(date)}</div>
+                ${rx.frequency ? `<div style="font-size:0.75rem;color:var(--gray-400)">⏰ ${escapeHtml(rx.frequency)} ${rx.duration_days ? '· ' + rx.duration_days + ' días' : ''} ${rx.is_chronic ? '· 🔄 Crónico' : ''}</div>` : ''}
+              </div>
+              <span style="color:${statusColors[rx.status]};font-weight:700;font-size:0.82rem">${escapeHtml(statusLabels[rx.status] || rx.status)}</span>
+              <div class="apt-actions">
+                <button onclick="changeRxStatus('${rx.id}','completed')" title="Completar">✅</button>
+                <button onclick="changeRxStatus('${rx.id}','cancelled')" title="Cancelar">❌</button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (err) { container.innerHTML = '<p class="summary-empty">Error: ' + escapeHtml(err.message) + '</p>'; }
+    }
+
+    window.showRxForm = () => { document.getElementById('rxFormContainer').classList.remove('hidden'); };
+    window.hideRxForm = () => { document.getElementById('rxFormContainer').classList.add('hidden'); };
+
+    window.saveRx = async function() {
+      const petId = document.getElementById('rxPet').value;
+      const dosage = document.getElementById('rxDosage').value.trim();
+      if (!petId || !dosage) { alert('Selecciona paciente y dosis.'); return; }
+
+      const rxData = {
+        pet_id: petId,
+        prescribed_by: staffProfile.id,
+        dosage: document.getElementById('rxDrug').value.trim() + ' — ' + dosage,
+        frequency: document.getElementById('rxFreq').value.trim() || null,
+        duration_days: parseInt(document.getElementById('rxDays').value) || null,
+        is_chronic: document.getElementById('rxChronic').value === 'true',
+        status: 'active'
+      };
+
+      const { error } = await supabase.from('prescriptions').insert(rxData);
+      if (error) { alert('Error: ' + error.message); return; }
+      alert('✅ Receta guardada');
+      hideRxForm();
+      loadPrescriptions();
+    };
+
+    window.changeRxStatus = async function(id, status) {
+      if (!confirm(`¿Marcar receta como ${status === 'completed' ? 'completada' : 'cancelada'}?`)) return;
+      await supabase.from('prescriptions').update({ status }).eq('id', id);
+      loadPrescriptions();
+    };
+
+    // ── SCHEDULE ──
     async function loadMySchedule() {
       const container = document.getElementById('mySchedule');
       const dayNames = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-      
-      const { data } = await supabase.from('staff_schedules')
-        .select('*').eq('staff_id', staffProfile.id).order('day_of_week');
-
-      const schedMap = {};
-      (data || []).forEach(s => { schedMap[s.day_of_week] = s; });
+      const { data } = await supabase.from('staff_schedules').select('*').eq('staff_id', staffProfile.id).order('day_of_week');
+      const schedMap = {}; (data || []).forEach(s => { schedMap[s.day_of_week] = s; });
 
       container.innerHTML = dayNames.map((name, i) => {
         const s = schedMap[i];
@@ -268,12 +416,8 @@
             <input type="time" class="sched-input" data-day="${i}" data-field="start" value="${s?.start_time?.slice(0,5) || '09:00'}" />
             <span>a</span>
             <input type="time" class="sched-input" data-day="${i}" data-field="end" value="${s?.end_time?.slice(0,5) || '18:00'}" />
-            <label class="sched-toggle">
-              <input type="checkbox" data-day="${i}" data-field="active" ${s?.is_active !== false ? 'checked' : ''} />
-              Activo
-            </label>
-          </div>
-        `;
+            <label class="sched-toggle"><input type="checkbox" data-day="${i}" data-field="active" ${s?.is_active !== false ? 'checked' : ''} /> Activo</label>
+          </div>`;
       }).join('');
     }
 
@@ -281,39 +425,31 @@
       const rows = document.querySelectorAll('.schedule-row');
       const schedules = [];
       rows.forEach((row, i) => {
-        const start = row.querySelector(`[data-day="${i}"][data-field="start"]`)?.value;
-        const end = row.querySelector(`[data-day="${i}"][data-field="end"]`)?.value;
-        const active = row.querySelector(`[data-day="${i}"][data-field="active"]`)?.checked;
         schedules.push({
           staff_id: staffProfile.id, day_of_week: i,
-          start_time: start + ':00', end_time: end + ':00', is_active: active
+          start_time: row.querySelector(`[data-day="${i}"][data-field="start"]`)?.value + ':00',
+          end_time: row.querySelector(`[data-day="${i}"][data-field="end"]`)?.value + ':00',
+          is_active: row.querySelector(`[data-day="${i}"][data-field="active"]`)?.checked
         });
       });
-
-      const { error } = await supabase.from('staff_schedules')
-        .upsert(schedules, { onConflict: 'staff_id,day_of_week' });
-
+      const { error } = await supabase.from('staff_schedules').upsert(schedules, { onConflict: 'staff_id,day_of_week' });
       alert(error ? 'Error al guardar' : '✅ Horario guardado');
     });
 
+    // ── TIME OFF ──
     async function loadTimeOff() {
       const container = document.getElementById('timeOffList');
-      const { data } = await supabase.from('staff_time_off')
-        .select('*').eq('staff_id', staffProfile.id).order('start_date', { ascending: false });
-
-      if (!data?.length) {
-        container.innerHTML = '<p class="summary-empty">No tienes solicitudes registradas</p>';
-        return;
-      }
+      const { data } = await supabase.from('staff_time_off').select('*').eq('staff_id', staffProfile.id).order('start_date', { ascending: false });
+      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No tienes solicitudes registradas</p>'; return; }
 
       const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };
       const statusColors = { pending: '#f59e0b', approved: '#16a34a', rejected: '#ef4444' };
-
+      const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada' };
       container.innerHTML = data.map(t => `
         <div class="appointment-row">
-          <span>${typeLabels[t.type] || t.type}</span>
-          <span>${t.start_date} → ${t.end_date}</span>
-          <span style="color:${statusColors[t.status]};font-weight:700">${t.status}</span>
+          <span>${escapeHtml(typeLabels[t.type] || t.type)}</span>
+          <span>${escapeHtml(t.start_date)} → ${escapeHtml(t.end_date)}</span>
+          <span style="color:${statusColors[t.status]};font-weight:700">${escapeHtml(statusLabels[t.status] || t.status)}</span>
         </div>
       `).join('');
     }
@@ -322,12 +458,9 @@
 
     window.submitTimeOff = async function() {
       const { error } = await supabase.from('staff_time_off').insert({
-        staff_id: staffProfile.id,
-        type: document.getElementById('toType').value,
-        start_date: document.getElementById('toStart').value,
-        end_date: document.getElementById('toEnd').value,
-        notes: document.getElementById('toNotes').value,
-        status: 'pending'
+        staff_id: staffProfile.id, type: document.getElementById('toType').value,
+        start_date: document.getElementById('toStart').value, end_date: document.getElementById('toEnd').value,
+        notes: document.getElementById('toNotes').value, status: 'pending'
       });
       if (error) { alert('Error: ' + error.message); return; }
       alert('✅ Solicitud enviada');
@@ -335,10 +468,61 @@
       loadTimeOff();
     };
 
+    // ── PROFILE ──
+    async function loadProfile() {
+      if (!staffProfile) return;
+      const roleIcons = { vet: '🩺', groomer: '✂️', admin: '⚙️', owner: '🏥', receptionist: '📋' };
+      document.getElementById('profileAvatar').innerHTML = `
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue-100),var(--purple-100));display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto">${staffProfile.avatar_url ? `<img src="${escapeHtml(staffProfile.avatar_url)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"/>` : (roleIcons[staffProfile.role] || '👤')}</div>
+        <p style="margin:0.5rem 0 0;font-weight:700;color:var(--blue-800)">${escapeHtml(staffProfile.role?.toUpperCase())}</p>
+      `;
+      document.getElementById('profName').value = staffProfile.full_name || '';
+      document.getElementById('profEmail').value = staffProfile.email || '';
+      document.getElementById('profPhone').value = staffProfile.phone || '';
+      document.getElementById('profWhatsapp').value = staffProfile.whatsapp || '';
+      document.getElementById('profAddress').value = staffProfile.address || '';
+      document.getElementById('profSpecialty').value = staffProfile.specialty || '';
+      document.getElementById('profLicense').value = staffProfile.license_number || '';
+      document.getElementById('profPosition').value = staffProfile.position || '';
+      document.getElementById('profBirth').value = staffProfile.birth_date || '';
+      document.getElementById('profRut').value = staffProfile.rut || '';
+    }
+
+    window.saveProfile = async function() {
+      const name = document.getElementById('profName').value.trim();
+      if (!name) { alert('El nombre es obligatorio.'); return; }
+
+      const updates = {
+        full_name: name,
+        phone: document.getElementById('profPhone').value.trim() || null,
+        whatsapp: document.getElementById('profWhatsapp').value.trim() || null,
+        address: document.getElementById('profAddress').value.trim() || null,
+        specialty: document.getElementById('profSpecialty').value.trim() || null,
+        license_number: document.getElementById('profLicense').value.trim() || null,
+        position: document.getElementById('profPosition').value.trim() || null,
+        birth_date: document.getElementById('profBirth').value || null,
+        rut: document.getElementById('profRut').value.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase.from('profiles').update(updates).eq('id', staffProfile.id);
+      if (error) { alert('Error: ' + error.message); return; }
+      staffProfile = { ...staffProfile, ...updates };
+      document.getElementById('staffGreeting').textContent = `Bienvenido/a, ${staffProfile.full_name}`;
+      alert('✅ Perfil actualizado');
+    };
+
     window.updateStatus = async function(id, status) {
       await supabase.from('appointments').update({ status }).eq('id', id);
       loadTodayAppointments();
     };
+
+    function calcAge(bd) {
+      const b = new Date(bd), n = new Date();
+      let y = n.getFullYear() - b.getFullYear(), m = n.getMonth() - b.getMonth();
+      if (m < 0) { y--; m += 12; }
+      return y > 0 ? `${y}a ${m}m` : `${m}m`;
+    }
   </script>
 
   <style>
@@ -348,9 +532,9 @@
     .appointment-row {
       display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
       background: var(--white); border-radius: var(--radius-lg); margin-bottom: 0.5rem;
-      border: 1px solid var(--gray-100); box-shadow: var(--card-shadow);
-      flex-wrap: wrap;
+      border: 1px solid var(--gray-100); box-shadow: var(--card-shadow); flex-wrap: wrap; transition: var(--transition);
     }
+    .appointment-row:hover { border-color: var(--blue-200); }
     .apt-time { font-weight: 700; color: var(--blue-700); min-width: 50px; }
     .apt-date { font-weight: 600; color: var(--gray-600); min-width: 80px; }
     .apt-service { flex: 1; font-weight: 600; color: var(--blue-800); }
@@ -369,15 +553,14 @@
       border: 1px solid var(--gray-100); flex-wrap: wrap;
     }
     .sched-day { font-weight: 700; color: var(--blue-800); min-width: 90px; }
-    .sched-input {
-      padding: 0.4rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
-      font-family: inherit; font-weight: 600; min-height: 44px;
-    }
+    .sched-input { padding: 0.4rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-family: inherit; font-weight: 600; min-height: 44px; }
     .sched-toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; font-weight: 600; color: var(--gray-600); cursor: pointer; }
+    .pet-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
     @media (max-width: 768px) {
       .appointment-row { flex-direction: column; align-items: flex-start; }
       .schedule-row { flex-direction: column; align-items: flex-start; }
       .apt-actions button { width: 44px; height: 44px; }
+      .pet-form-grid { grid-template-columns: 1fr; }
     }
   </style>
 </body>
