@@ -198,7 +198,7 @@
             <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
-              <select onchange="changeStatus('${a.id}', this.value)" style="padding:0.3rem;border-radius:4px;border:1px solid #ccc;font-size:0.8rem">
+              <select onchange="changeStatus('${a.id}', this.value)" class="auth-input appointment-status-select">
                 <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
                 <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
                 <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
@@ -251,6 +251,12 @@
       font-size: 0.88rem; color: var(--gray-700);
     }
     .appointments-table td select { min-height: 40px; }
+    .appointment-status-select {
+      width: auto;
+      min-width: 130px;
+      padding: 0.4rem 0.55rem;
+      font-size: 0.82rem;
+    }
     .appointments-table tr:hover td { background: var(--blue-50); }
     @media (max-width: 768px) {
       .filters-bar { flex-direction: column; }
@@ -258,6 +264,7 @@
       .appointments-table { font-size: 0.78rem; }
       .appointments-table th, .appointments-table td { padding: 0.5rem; }
       .appointments-table td select { min-height: 44px; width: 100%; }
+      .appointment-status-select { min-width: 0; }
     }
   </style>
 </body>

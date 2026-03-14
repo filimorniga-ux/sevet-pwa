@@ -8,14 +8,12 @@ import { initAuth } from './auth.js';
 // Legacy agendamiento disabled — booking.js handles this now
 // import { initAgendamiento } from './modules/agendamiento.js';
 import { initMiMascota } from './modules/mi-mascota.js';
-import { initTienda } from './modules/tienda.js';
 import { initPeluqueria } from './modules/peluqueria.js';
 import { initChatbot } from './modules/chatbot.js';
 import { initAnatomia } from './modules/anatomia.js';
 import { initTelemedicina } from './modules/telemedicina.js';
 import { initHistorial } from './modules/historial.js';
 import { initImagenes } from './modules/imagenes.js';
-import { initFinanciero } from './modules/financiero.js';
 import {
   clampCarouselIndex,
   getBodyLockTop,
@@ -70,14 +68,12 @@ function initApp() {
   initAuth();
   // initAgendamiento(); // disabled — booking.js is the active engine
   initMiMascota();
-  initTienda();
   initPeluqueria();
   initChatbot();
   initAnatomia();
   initTelemedicina();
   initHistorial();
   initImagenes();
-  initFinanciero();
   initParticles();
   initNavScroll();
   initHeroSlider();
@@ -175,7 +171,7 @@ function lockBodyScroll() {
 function unlockBodyScroll() {
   document.body.classList.remove('nav-open');
   document.body.style.top = '';
-  window.scrollTo(0, scrollPos);
+  window.scrollTo({ left: 0, top: scrollPos, behavior: 'instant' });
 }
 
 function closeNavMenu() {

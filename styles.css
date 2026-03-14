@@ -2327,13 +2327,19 @@ section { position: relative; z-index: 1; }
   font-size: 0.78rem; font-weight: 700; color: var(--gray-700);
   display: block; margin-bottom: 0.3rem;
 }
-.auth-field input {
+.auth-input,
+.auth-field input,
+.auth-field select,
+.auth-field textarea {
   width: 100%; padding: 0.7rem 0.85rem; border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm); font-size: 0.88rem;
   transition: var(--transition); background: var(--white);
-  box-sizing: border-box; min-height: 44px;
+  box-sizing: border-box; min-height: 44px; font-family: inherit;
 }
-.auth-field input:focus {
+.auth-input:focus,
+.auth-field input:focus,
+.auth-field select:focus,
+.auth-field textarea:focus {
   outline: none; border-color: var(--blue-400);
   box-shadow: 0 0 0 3px rgba(139,45,139,0.1);
 }
