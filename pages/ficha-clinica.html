@@ -20,8 +20,8 @@
     <ul class="nav-links" id="navLinks">
     <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
     <li><a href="/">Inicio</a></li>
-    <li><a href="/pages/agendar.html">Agendar</a></li>
-    <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
+    <li><a href="/pages/historial.html">Historial</a></li>
+    <li><a href="/pages/ficha-clinica.html" class="active">Ficha Clínica</a></li>
     <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
     <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
   </ul>
@@ -29,17 +29,186 @@
   </nav>
 
   <section class="section-pad" style="margin-top:80px">
-    <div class="section-header reveal">
+    <div class="section-header">
       <p class="section-tag">Panel Profesional</p>
       <h1 class="section-title">Ficha <span class="grad">Clínica SOAP</span></h1>
-      <p class="section-sub">Evolución médica estructurada de cada paciente con enfoque subjetivo, objetivo, evaluación y plan.</p>
+      <p class="section-sub" id="fichaSubtitle">Crear nuevo registro clínico.</p>
     </div>
 
-    <div class="reveal" id="historial-container">
-      <p class="summary-empty">Cargando ficha clínica...</p>
+    <div style="max-width:750px;margin:0 auto">
+      <div class="confirmation-card" style="padding:1.5rem">
+        <!-- Patient selector -->
+        <div class="soap-compose-grid" style="margin-bottom:1.5rem">
+          <div class="auth-field">
+            <label>Mascota *</label>
+            <select id="soapPet" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="">Seleccionar paciente...</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>Tipo de registro *</label>
+            <select id="soapType" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="consulta">🩺 Consulta</option>
+              <option value="cirugia">🔪 Cirugía</option>
+              <option value="vacuna">💉 Vacunación</option>
+              <option value="control">📋 Control</option>
+              <option value="emergencia">🚨 Emergencia</option>
+              <option value="peluqueria">✂️ Peluquería</option>
+              <option value="laboratorio">🔬 Laboratorio</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>Vinculado a cita</label>
+            <select id="soapAppointment" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="">Sin cita vinculada</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SOAP fields -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div class="soap-field">
+            <label class="soap-label" style="color:#3b82f6">S — Subjetivo</label>
+            <p style="font-size:0.75rem;color:var(--gray-500);margin:0 0 0.3rem">Motivo de consulta, síntomas que reporta el tutor, historial del problema.</p>
+            <textarea id="soapS" rows="3" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit;font-size:0.9rem" placeholder="El tutor reporta que la mascota presenta..."></textarea>
+          </div>
+          <div class="soap-field">
+            <label class="soap-label" style="color:#8b5cf6">O — Objetivo</label>
+            <p style="font-size:0.75rem;color:var(--gray-500);margin:0 0 0.3rem">Signos vitales, hallazgos del examen físico, resultados de laboratorio.</p>
+            <textarea id="soapO" rows="3" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit;font-size:0.9rem" placeholder="T: 38.5°C, FC: 120 bpm, FR: 28 rpm..."></textarea>
+          </div>
+          <div class="soap-field">
+            <label class="soap-label" style="color:#f59e0b">A — Evaluación</label>
+            <p style="font-size:0.75rem;color:var(--gray-500);margin:0 0 0.3rem">Diagnóstico o diagnóstico diferencial, interpretación de hallazgos.</p>
+            <textarea id="soapA" rows="3" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit;font-size:0.9rem" placeholder="Diagnóstico presuntivo: ..."></textarea>
+          </div>
+          <div class="soap-field">
+            <label class="soap-label" style="color:#16a34a">P — Plan</label>
+            <p style="font-size:0.75rem;color:var(--gray-500);margin:0 0 0.3rem">Tratamientos, medicaciones, procedimientos, indicaciones y seguimiento.</p>
+            <textarea id="soapP" rows="3" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit;font-size:0.9rem" placeholder="1. Administrar... 2. Control en..."></textarea>
+          </div>
+
+          <!-- Vitals -->
+          <div style="border-top:1px solid var(--gray-100);padding-top:1rem">
+            <label class="soap-label" style="color:var(--blue-700)">📊 Signos Vitales (opcional)</label>
+            <div class="soap-compose-grid" style="margin-top:0.5rem">
+              <div class="auth-field"><label>Peso (kg)</label><input type="number" id="vitalWeight" step="0.1" placeholder="5.2"/></div>
+              <div class="auth-field"><label>Temperatura (°C)</label><input type="number" id="vitalTemp" step="0.1" placeholder="38.5"/></div>
+              <div class="auth-field"><label>FC (bpm)</label><input type="number" id="vitalHR" placeholder="120"/></div>
+              <div class="auth-field"><label>FR (rpm)</label><input type="number" id="vitalRR" placeholder="28"/></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-top:1.5rem">
+          <button class="btn-primary" onclick="saveSoapRecord()" style="flex:1;justify-content:center;padding:0.7rem">💾 Guardar Ficha Clínica</button>
+          <a href="/pages/historial.html" class="btn-back" style="text-decoration:none;display:flex;align-items:center">← Volver</a>
+        </div>
+      </div>
     </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    let currentProfile = null;
+
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+
+      if (!profile || !['vet','admin','owner'].includes(profile.role)) {
+        alert('Solo veterinarios y administradores pueden crear fichas clínicas.');
+        window.location.href = '/'; return;
+      }
+
+      currentProfile = profile;
+      document.getElementById('fichaSubtitle').textContent =
+        `Registrando como ${profile.full_name}`;
+
+      // Load all pets for selector
+      const { data: pets } = await supabase.from('pets')
+        .select('id, name, species, breed, owner_id, profiles!pets_owner_id_fkey(full_name)')
+        .order('name');
+
+      const petSelect = document.getElementById('soapPet');
+      (pets || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.species || ''}) — Tutor: ${p.profiles?.full_name || 'N/A'}`;
+        petSelect.appendChild(opt);
+      });
+
+      // Load today's appointments for linking
+      const today = new Date().toISOString().split('T')[0];
+      const { data: appts } = await supabase.from('appointments')
+        .select('id, date_time, service_type, guest_pet_name')
+        .gte('date_time', `${today}T00:00:00`)
+        .lte('date_time', `${today}T23:59:59`)
+        .order('date_time');
+
+      const apptSelect = document.getElementById('soapAppointment');
+      (appts || []).forEach(a => {
+        const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = `${time} — ${a.service_type || a.guest_pet_name || 'Cita'}`;
+        apptSelect.appendChild(opt);
+      });
+
+      // Check URL params for pre-selection
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('pet')) petSelect.value = params.get('pet');
+      if (params.get('appointment')) apptSelect.value = params.get('appointment');
+
+      document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await supabase.auth.signOut(); } catch(err) {}
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+        window.location.href = '/';
+      });
+    }
+    init();
+
+    window.saveSoapRecord = async function() {
+      const petId = document.getElementById('soapPet').value;
+      if (!petId) { alert('Selecciona un paciente.'); return; }
+
+      const record = {
+        pet_id: petId,
+        vet_id: currentProfile.id,
+        record_type: document.getElementById('soapType').value,
+        appointment_id: document.getElementById('soapAppointment').value || null,
+        subjective: document.getElementById('soapS').value.trim() || null,
+        objective: document.getElementById('soapO').value.trim() || null,
+        assessment: document.getElementById('soapA').value.trim() || null,
+        plan: document.getElementById('soapP').value.trim() || null,
+        weight_kg: parseFloat(document.getElementById('vitalWeight').value) || null,
+        temperature_c: parseFloat(document.getElementById('vitalTemp').value) || null,
+        heart_rate_bpm: parseInt(document.getElementById('vitalHR').value) || null,
+        respiratory_rate: parseInt(document.getElementById('vitalRR').value) || null,
+      };
+
+      const { error } = await supabase.from('medical_records').insert(record);
+      if (error) { alert('Error al guardar: ' + error.message); return; }
+
+      alert('✅ Ficha clínica guardada exitosamente.');
+      window.location.href = '/pages/historial.html';
+    };
+  </script>
+
+  <style>
+    .soap-label { font-weight: 700; font-size: 1rem; display: block; margin-bottom: 0.25rem; }
+    .soap-compose-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;
+    }
+    @media (max-width: 768px) {
+      .soap-compose-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </body>
 </html>

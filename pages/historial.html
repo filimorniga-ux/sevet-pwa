@@ -21,7 +21,7 @@
     <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
     <li><a href="/">Inicio</a></li>
     <li><a href="/pages/agendar.html">Agendar</a></li>
-    <li><a href="/pages/mi-mascota.html">Mi Mascota</a></li>
+    <li><a href="/pages/historial.html" class="active">Historial</a></li>
     <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
     <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
   </ul>
@@ -29,16 +29,221 @@
   </nav>
 
   <section class="section-pad" style="margin-top:80px">
-    <div class="section-header reveal">
-      <p class="section-tag">Ficha Clínica SOAP</p>
+    <div class="section-header">
+      <p class="section-tag" id="historialTag">Ficha Clínica SOAP</p>
       <h1 class="section-title">Historial <span class="grad">Médico</span></h1>
-      <p class="section-sub">Registro completo de consultas, vacunaciones, cirugías y tratamientos con metodología SOAP.</p>
+      <p class="section-sub" id="historialSub">Cargando...</p>
     </div>
-    <div class="reveal" id="historial-container">
-      <p class="summary-empty">Cargando historial...</p>
+
+    <!-- Export buttons -->
+    <div style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap" id="exportBar" class="hidden">
+      <button class="btn-primary" onclick="exportPDF()" style="padding:0.5rem 1rem">📄 Exportar PDF</button>
+      <button class="btn-primary" onclick="exportExcel()" style="padding:0.5rem 1rem;background:var(--green-600,#16a34a)">📊 Exportar Excel</button>
+    </div>
+
+    <!-- Pet selector (for owners with multiple pets) -->
+    <div id="petSelectorContainer" class="hidden" style="text-align:center;margin-bottom:1.5rem">
+      <select id="petSelector" onchange="loadRecordsForPet()" style="padding:0.6rem 1rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.9rem;min-width:200px"></select>
+    </div>
+
+    <!-- Timeline -->
+    <div id="historial-container" class="appointments-list" style="max-width:800px;margin:0 auto">
+      <div class="loading-spinner">Cargando historial...</div>
+    </div>
+
+    <!-- Create new record link (for professionals) -->
+    <div id="newRecordBar" class="hidden" style="text-align:center;margin-top:1.5rem">
+      <a href="/pages/ficha-clinica.html" class="btn-primary" style="display:inline-flex;padding:0.6rem 1.5rem">➕ Nueva Ficha Clínica</a>
     </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    let currentProfile = null;
+    let currentPets = [];
+    let allRecords = [];
+
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return; }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('*').eq('user_id', session.user.id).single();
+
+      if (!profile) { window.location.href = '/'; return; }
+      currentProfile = profile;
+
+      const roleLabels = { client: 'Dueño', vet: 'Veterinario', groomer: 'Peluquero/a', admin: 'Administrador', owner: 'Director', receptionist: 'Recepcionista' };
+      document.getElementById('historialTag').textContent = roleLabels[profile.role] || 'Panel';
+
+      if (profile.role === 'client') {
+        // Owner: show their pets' records
+        document.getElementById('historialSub').textContent = 'Historial médico de tus mascotas';
+        const { data: pets } = await supabase.from('pets').select('id, name, species').eq('owner_id', profile.id);
+        currentPets = pets || [];
+
+        if (!currentPets.length) {
+          document.getElementById('historial-container').innerHTML = '<p class="summary-empty">No tienes mascotas registradas.</p>';
+          return;
+        }
+
+        if (currentPets.length > 1) {
+          const selector = document.getElementById('petSelector');
+          selector.innerHTML = currentPets.map(p => `<option value="${p.id}">${p.name} (${p.species})</option>`).join('');
+          document.getElementById('petSelectorContainer').classList.remove('hidden');
+        }
+
+        await loadRecordsForPet();
+      } else {
+        // Professional: show records they've attended
+        document.getElementById('historialSub').textContent = `Registros clínicos — ${profile.full_name}`;
+        document.getElementById('newRecordBar').classList.remove('hidden');
+
+        let query = supabase.from('medical_records')
+          .select('*, pets(name, species), profiles!medical_records_vet_id_fkey(full_name)')
+          .order('created_at', { ascending: false }).limit(50);
+
+        if (!['admin','owner'].includes(profile.role)) {
+          query = query.eq('vet_id', profile.id);
+        }
+
+        const { data } = await query;
+        allRecords = data || [];
+        renderTimeline(allRecords);
+      }
+
+      document.getElementById('exportBar').classList.remove('hidden');
+
+      document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await supabase.auth.signOut(); } catch(err) {}
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+        window.location.href = '/';
+      });
+    }
+    init();
+
+    window.loadRecordsForPet = async function() {
+      const petId = document.getElementById('petSelector')?.value || currentPets[0]?.id;
+      if (!petId) return;
+
+      const { data } = await supabase.from('medical_records')
+        .select('*, profiles!medical_records_vet_id_fkey(full_name)')
+        .eq('pet_id', petId)
+        .order('created_at', { ascending: false });
+
+      allRecords = data || [];
+      renderTimeline(allRecords);
+    };
+
+    function renderTimeline(records) {
+      const container = document.getElementById('historial-container');
+      if (!records.length) {
+        container.innerHTML = '<p class="summary-empty">No hay registros clínicos aún.</p>';
+        return;
+      }
+
+      const escapeHtml = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+      const typeIcons = { consulta: '🩺', cirugia: '🔪', vacuna: '💉', peluqueria: '✂️', emergencia: '🚨', control: '📋', laboratorio: '🔬' };
+
+      container.innerHTML = records.map(r => {
+        const date = new Date(r.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+        const icon = typeIcons[r.record_type] || '📋';
+        const vetName = r.profiles?.full_name || 'N/A';
+        const petName = r.pets?.name || '';
+        return `
+          <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem;cursor:pointer" onclick="this.querySelector('.record-detail').classList.toggle('hidden')">
+            <span style="font-size:1.5rem">${icon}</span>
+            <div style="flex:2;min-width:140px">
+              <strong>${escapeHtml(r.record_type || 'Consulta')}${petName ? ' — ' + escapeHtml(petName) : ''}</strong>
+              <div style="font-size:0.75rem;color:var(--gray-500)">${date} · Dr. ${escapeHtml(vetName)}</div>
+            </div>
+            <div class="record-detail hidden" style="width:100%;padding:0.75rem;background:var(--blue-50);border-radius:var(--radius-md);margin-top:0.5rem" onclick="event.stopPropagation()">
+              ${r.subjective ? `<div style="margin-bottom:0.5rem"><strong style="color:var(--blue-700)">S – Subjetivo:</strong><p style="margin:0.25rem 0;font-size:0.88rem">${escapeHtml(r.subjective)}</p></div>` : ''}
+              ${r.objective ? `<div style="margin-bottom:0.5rem"><strong style="color:var(--blue-700)">O – Objetivo:</strong><p style="margin:0.25rem 0;font-size:0.88rem">${escapeHtml(r.objective)}</p></div>` : ''}
+              ${r.assessment ? `<div style="margin-bottom:0.5rem"><strong style="color:var(--blue-700)">A – Evaluación:</strong><p style="margin:0.25rem 0;font-size:0.88rem">${escapeHtml(r.assessment)}</p></div>` : ''}
+              ${r.plan ? `<div><strong style="color:var(--blue-700)">P – Plan:</strong><p style="margin:0.25rem 0;font-size:0.88rem">${escapeHtml(r.plan)}</p></div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Export functions
+    window.exportPDF = async function() {
+      if (!allRecords.length) { alert('No hay registros para exportar.'); return; }
+      // Dynamic import jsPDF
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text('SEVET — Historial Médico', 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString('es-CL')}`, 14, 28);
+
+        let y = 38;
+        allRecords.forEach((r, i) => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          const date = new Date(r.created_at).toLocaleDateString('es-CL');
+          const vet = r.profiles?.full_name || r.pets?.name || '';
+          doc.setFontSize(11);
+          doc.setFont(undefined, 'bold');
+          doc.text(`${i+1}. ${r.record_type || 'Consulta'} — ${date} (${vet})`, 14, y);
+          y += 6;
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(9);
+          if (r.subjective) { doc.text('S: ' + r.subjective.substring(0, 90), 18, y); y += 5; }
+          if (r.objective) { doc.text('O: ' + r.objective.substring(0, 90), 18, y); y += 5; }
+          if (r.assessment) { doc.text('A: ' + r.assessment.substring(0, 90), 18, y); y += 5; }
+          if (r.plan) { doc.text('P: ' + r.plan.substring(0, 90), 18, y); y += 5; }
+          y += 4;
+        });
+
+        doc.save('historial-medico-sevet.pdf');
+      };
+      document.head.appendChild(script);
+    };
+
+    window.exportExcel = async function() {
+      if (!allRecords.length) { alert('No hay registros para exportar.'); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => {
+        const rows = allRecords.map(r => ({
+          Fecha: new Date(r.created_at).toLocaleDateString('es-CL'),
+          Tipo: r.record_type || 'consulta',
+          Mascota: r.pets?.name || '',
+          Profesional: r.profiles?.full_name || '',
+          Subjetivo: r.subjective || '',
+          Objetivo: r.objective || '',
+          Evaluación: r.assessment || '',
+          Plan: r.plan || '',
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+        XLSX.writeFile(wb, 'historial-medico-sevet.xlsx');
+      };
+      document.head.appendChild(script);
+    };
+  </script>
+
+  <style>
+    .appointments-list { max-width: 800px; margin: 0 auto; }
+    .appointment-row {
+      display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
+      background: var(--white); border-radius: var(--radius-lg); margin-bottom: 0.5rem;
+      border: 1px solid var(--gray-100); box-shadow: var(--card-shadow);
+      transition: var(--transition);
+    }
+    .appointment-row:hover { border-color: var(--blue-200); }
+    @media (max-width: 768px) {
+      .appointment-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
 </body>
 </html>
