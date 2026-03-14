@@ -96,7 +96,7 @@
           </button>
         </div>
         <p class="auth-footer-text" style="margin-top:-0.2rem;margin-bottom:0.75rem">
-          El alta de personal clínico y administrativo se gestiona internamente por dirección.
+          El registro de perfiles profesionales y administrativos requiere código interno.
         </p>
         <div class="auth-field">
           <label>Nombre completo</label>
@@ -135,6 +135,11 @@
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
+    import {
+      getRoleFieldVisibility,
+      mapRoleSelection,
+      validateRoleSelection,
+    } from '/js/modules/auth-role-utils.js';
 
     // Tab switching
     window._switchAuthTab = function(tab) {
@@ -158,21 +163,21 @@
     // Role selection
     let selectedRole = 'client';
     window._selectRole = function(role, btn) {
-      if (role !== 'client') {
-        selectedRole = 'client';
-        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.role-btn')?.classList.add('active');
-        document.getElementById('staffCodeField').style.display = 'none';
-        document.getElementById('adminCodeField').style.display = 'none';
-        showMessage('El registro de personal se realiza por invitación interna de la clínica.', 'error');
-        return;
-      }
-
-      selectedRole = 'client';
+      selectedRole = role;
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('staffCodeField').style.display = 'none';
-      document.getElementById('adminCodeField').style.display = 'none';
+      if (btn) btn.classList.add('active');
+
+      const visibility = getRoleFieldVisibility(selectedRole);
+      document.getElementById('staffCodeField').style.display = visibility.showStaffCode ? 'block' : 'none';
+      document.getElementById('adminCodeField').style.display = visibility.showAdminCode ? 'block' : 'none';
+
+      if (selectedRole === 'client') {
+        showMessage('Registro estándar para dueños de mascotas.', 'success');
+      } else if (selectedRole === 'staff') {
+        showMessage('Seleccionaste perfil profesional. Ingresa tu código de staff.', 'success');
+      } else if (selectedRole === 'admin') {
+        showMessage('Seleccionaste perfil administrativo. Ingresa tu código interno.', 'success');
+      }
     };
 
     // Show message helper
@@ -252,12 +257,15 @@
       const email = document.getElementById('regEmail').value;
       const phone = document.getElementById('regPhone').value;
       const password = document.getElementById('regPassword').value;
-      const role = 'client';
-
-      if (selectedRole !== 'client') {
-        showMessage('El registro de personal se realiza por invitación interna de la clínica.', 'error');
+      const roleValidationError = validateRoleSelection(selectedRole, {
+        staffCode: document.getElementById('staffCode')?.value || '',
+        adminCode: document.getElementById('adminCode')?.value || '',
+      });
+      if (roleValidationError) {
+        showMessage(roleValidationError, 'error');
         return;
       }
+      const role = mapRoleSelection(selectedRole);
 
       const { data, error } = await supabase.auth.signUp({
         email,
