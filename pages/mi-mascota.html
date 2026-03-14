@@ -81,11 +81,19 @@
       <!-- Quick stats -->
       <div class="pet-stats-grid" id="petStatsGrid" style="margin-bottom:1.5rem"></div>
 
-      <!-- Tabs: Próximas citas, Vacunas, Historial -->
+      <!-- Tabs: Próximas citas, Vacunas, Historial, Recetas -->
       <div class="pet-tabs-bar" style="margin-bottom:1rem">
-        <button class="spec-tab active" onclick="showPetTab('appointments', this)">📅 Próximas Citas</button>
+        <button class="spec-tab active" onclick="showPetTab('appointments', this)">📅 Citas</button>
         <button class="spec-tab" onclick="showPetTab('vaccines', this)">💉 Vacunas</button>
         <button class="spec-tab" onclick="showPetTab('history', this)">📋 Historial</button>
+        <button class="spec-tab" onclick="showPetTab('prescriptions', this)">💊 Recetas</button>
+      </div>
+
+      <!-- Download bar -->
+      <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem" id="downloadBar">
+        <button class="btn-back" onclick="downloadVaccineCard()" style="font-size:0.82rem">📄 Carnet Vacunas</button>
+        <button class="btn-back" onclick="downloadHistory()" style="font-size:0.82rem">📄 Ficha Clínica</button>
+        <button class="btn-back" onclick="downloadPrescriptions()" style="font-size:0.82rem">📄 Recetas</button>
       </div>
 
       <div id="petTabContent" class="appointments-list"></div>
@@ -209,27 +217,30 @@
       `;
 
       // Load stats in parallel
-      const [appointmentsRes, vaccinesRes, recordsRes] = await Promise.all([
+      const [appointmentsRes, vaccinesRes, recordsRes, prescriptionsRes] = await Promise.all([
         supabase.from('appointments').select('id, date_time, status, service_type, services(name,icon)', { count: 'exact' })
           .eq('pet_id', selectedPetId).gte('date_time', new Date().toISOString()).order('date_time').limit(5),
         supabase.from('vaccinations').select('*', { count: 'exact' }).eq('pet_id', selectedPetId).order('applied_date', { ascending: false }),
         supabase.from('medical_records').select('*', { count: 'exact' }).eq('pet_id', selectedPetId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('prescriptions').select('*', { count: 'exact' }).eq('pet_id', selectedPetId).order('created_at', { ascending: false }),
       ]);
 
       const upcomingAppts = appointmentsRes.data || [];
       const vaccines = vaccinesRes.data || [];
       const records = recordsRes.data || [];
+      const prescriptions = prescriptionsRes.data || [];
 
       // Stats grid
       document.getElementById('petStatsGrid').innerHTML = `
         <div class="pet-stat-card"><span class="pet-stat-num">${upcomingAppts.length}</span><span class="pet-stat-label">Próximas Citas</span></div>
         <div class="pet-stat-card"><span class="pet-stat-num">${vaccines.length}</span><span class="pet-stat-label">Vacunas</span></div>
         <div class="pet-stat-card"><span class="pet-stat-num">${records.length}</span><span class="pet-stat-label">Registros Clínicos</span></div>
+        <div class="pet-stat-card"><span class="pet-stat-num">${prescriptions.length}</span><span class="pet-stat-label">Recetas</span></div>
         <div class="pet-stat-card"><span class="pet-stat-num">${pet.weight_kg != null ? escapeHtml(pet.weight_kg) : '-'}</span><span class="pet-stat-label">Peso (kg)</span></div>
       `;
 
       // Store data for tabs
-      window._petData = { appointments: upcomingAppts, vaccines, records };
+      window._petData = { appointments: upcomingAppts, vaccines, records, prescriptions };
       showPetTab(currentTab);
     }
 
@@ -314,7 +325,127 @@
               </div>
             </div>`;
         }).join('') + `<div style="text-align:center;margin-top:1rem"><a href="/pages/historial.html" style="color:var(--blue-600);font-weight:600">Ver historial completo →</a></div>`;
+      } else if (tab === 'prescriptions') {
+        const rxs = d.prescriptions || [];
+        if (!rxs.length) {
+          container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400)"><p style="font-size:1.5rem">💊</p><p>No hay recetas médicas registradas</p></div>';
+          return;
+        }
+        const statusLabels = { active: '🟢 Activa', completed: '✅ Completada', cancelled: '❌ Cancelada' };
+        container.innerHTML = rxs.map(rx => {
+          const date = new Date(rx.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+          return `
+            <div class="appointment-row" style="gap:1rem;flex-wrap:wrap">
+              <span style="font-size:1.5rem">💊</span>
+              <div style="flex:2;min-width:120px">
+                <strong>${escapeHtml(rx.dosage || 'Sin detalle')}</strong>
+                <div style="font-size:0.78rem;color:var(--gray-500)">${date}${rx.frequency ? ' · ' + escapeHtml(rx.frequency) : ''}${rx.duration_days ? ' · ' + rx.duration_days + ' días' : ''}</div>
+                ${rx.is_chronic ? '<span style="font-size:0.72rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px">🔄 Crónico</span>' : ''}
+              </div>
+              <span style="font-size:0.82rem;font-weight:600">${statusLabels[rx.status] || rx.status}</span>
+            </div>`;
+        }).join('');
       }
+    };
+
+    // ── PDF DOWNLOADS (jsPDF) ──
+    async function loadJsPDF() {
+      if (window.jspdf) return;
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+        script.onload = resolve; script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    window.downloadVaccineCard = async function() {
+      const pet = pets.find(p => p.id === selectedPetId);
+      if (!pet) return;
+      await loadJsPDF();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18); doc.text('CARNET DE VACUNAS', 105, 20, { align: 'center' });
+      doc.setFontSize(10); doc.text('Clínica Pediátrica Veterinaria San Alberto — SEVET', 105, 28, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Mascota: ${pet.name}`, 20, 42);
+      doc.text(`Especie: ${pet.species} ${pet.breed ? '| Raza: ' + pet.breed : ''}`, 20, 50);
+      doc.text(`Chip: ${pet.chip_number || 'N/A'}`, 20, 58);
+      doc.text(`Peso: ${pet.weight_kg ? pet.weight_kg + ' kg' : 'N/A'}`, 120, 58);
+
+      const vacc = (window._petData?.vaccines || []);
+      if (vacc.length) {
+        let y = 74;
+        doc.setFontSize(11); doc.setFont(undefined, 'bold');
+        doc.text('Vacuna', 20, y); doc.text('Fecha', 90, y); doc.text('Lote', 130, y); doc.text('Próxima', 165, y);
+        doc.setFont(undefined, 'normal'); doc.setFontSize(10);
+        vacc.forEach(v => {
+          y += 8; if (y > 270) { doc.addPage(); y = 20; }
+          doc.text(v.vaccine_name || '', 20, y);
+          doc.text(v.applied_date || '', 90, y);
+          doc.text(v.batch_number || '-', 130, y);
+          doc.text(v.next_due_date || '-', 165, y);
+        });
+      } else { doc.text('Sin vacunas registradas.', 20, 74); }
+      doc.save(`carnet_vacunas_${pet.name}.pdf`);
+    };
+
+    window.downloadHistory = async function() {
+      const pet = pets.find(p => p.id === selectedPetId);
+      if (!pet) return;
+      await loadJsPDF();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18); doc.text('FICHA CLÍNICA', 105, 20, { align: 'center' });
+      doc.setFontSize(10); doc.text('Clínica Pediátrica Veterinaria San Alberto — SEVET', 105, 28, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Mascota: ${pet.name} | ${pet.species} ${pet.breed || ''} | Chip: ${pet.chip_number || 'N/A'}`, 20, 42);
+
+      const recs = (window._petData?.records || []);
+      let y = 56;
+      if (recs.length) {
+        recs.forEach(r => {
+          if (y > 250) { doc.addPage(); y = 20; }
+          const date = new Date(r.created_at).toLocaleDateString('es-CL');
+          doc.setFont(undefined, 'bold'); doc.setFontSize(11);
+          doc.text(`${r.record_type || 'Consulta'} — ${date}`, 20, y); y += 7;
+          doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+          if (r.subjective) { doc.text(`S: ${r.subjective.substring(0, 80)}`, 20, y); y += 5; }
+          if (r.objective) { doc.text(`O: ${r.objective.substring(0, 80)}`, 20, y); y += 5; }
+          if (r.assessment) { doc.text(`A: ${r.assessment.substring(0, 80)}`, 20, y); y += 5; }
+          if (r.plan) { doc.text(`P: ${r.plan.substring(0, 80)}`, 20, y); y += 5; }
+          y += 4;
+        });
+      } else { doc.text('Sin registros clínicos.', 20, y); }
+      doc.save(`ficha_clinica_${pet.name}.pdf`);
+    };
+
+    window.downloadPrescriptions = async function() {
+      const pet = pets.find(p => p.id === selectedPetId);
+      if (!pet) return;
+      await loadJsPDF();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18); doc.text('RECETAS MÉDICAS', 105, 20, { align: 'center' });
+      doc.setFontSize(10); doc.text('Clínica Pediátrica Veterinaria San Alberto — SEVET', 105, 28, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Mascota: ${pet.name} | ${pet.species} ${pet.breed || ''}`, 20, 42);
+
+      const rxs = (window._petData?.prescriptions || []);
+      let y = 56;
+      if (rxs.length) {
+        rxs.forEach(rx => {
+          if (y > 260) { doc.addPage(); y = 20; }
+          const date = new Date(rx.created_at).toLocaleDateString('es-CL');
+          doc.setFont(undefined, 'bold'); doc.setFontSize(11);
+          doc.text(`${rx.dosage || 'Receta'} — ${date}`, 20, y); y += 6;
+          doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+          if (rx.frequency) { doc.text(`Frecuencia: ${rx.frequency}`, 20, y); y += 5; }
+          if (rx.duration_days) { doc.text(`Duración: ${rx.duration_days} días`, 20, y); y += 5; }
+          doc.text(`Estado: ${rx.status} ${rx.is_chronic ? '| Crónico' : ''}`, 20, y); y += 8;
+        });
+      } else { doc.text('Sin recetas registradas.', 20, y); }
+      doc.save(`recetas_${pet.name}.pdf`);
     };
 
     // ── PET FORM ──

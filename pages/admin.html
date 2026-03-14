@@ -246,7 +246,7 @@
       const { data: profile, error } = await supabase.from('profiles')
         .select('*').eq('user_id', session.user.id).single();
 
-      if (!profile || !['admin','owner'].includes(profile.role)) {
+      if (!profile || !['admin','owner','receptionist'].includes(profile.role)) {
         window.location.href = '/'; return;
       }
 
