@@ -224,7 +224,7 @@
     }
     .filter-input {
       padding: 0.5rem 0.75rem; border: 1px solid var(--gray-200); border-radius: var(--radius-md);
-      font-family: inherit; font-size: 0.88rem; background: var(--white);
+      font-family: inherit; font-size: 0.88rem; background: var(--white); min-height: 44px;
     }
     .stats-row {
       display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap;
@@ -250,12 +250,14 @@
       padding: 0.65rem 1rem; border-bottom: 1px solid var(--gray-100);
       font-size: 0.88rem; color: var(--gray-700);
     }
+    .appointments-table td select { min-height: 40px; }
     .appointments-table tr:hover td { background: var(--blue-50); }
     @media (max-width: 768px) {
       .filters-bar { flex-direction: column; }
       .filter-input { width: 100%; }
       .appointments-table { font-size: 0.78rem; }
       .appointments-table th, .appointments-table td { padding: 0.5rem; }
+      .appointments-table td select { min-height: 44px; width: 100%; }
     }
   </style>
 </body>

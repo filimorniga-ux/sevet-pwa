@@ -355,7 +355,8 @@
     .apt-actions { display: flex; gap: 0.3rem; }
     .apt-actions button {
       background: none; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
-      padding: 0.3rem 0.5rem; cursor: pointer; font-size: 0.85rem; transition: var(--transition);
+      width: 42px; height: 42px; cursor: pointer; font-size: 0.9rem; transition: var(--transition);
+      display: inline-flex; align-items: center; justify-content: center;
     }
     .apt-actions button:hover { background: var(--blue-50); border-color: var(--blue-300); }
     .schedule-grid { max-width: 600px; margin: 0 auto; }
@@ -367,12 +368,13 @@
     .sched-day { font-weight: 700; color: var(--blue-800); min-width: 90px; }
     .sched-input {
       padding: 0.4rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
-      font-family: inherit; font-weight: 600;
+      font-family: inherit; font-weight: 600; min-height: 44px;
     }
     .sched-toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; font-weight: 600; color: var(--gray-600); cursor: pointer; }
     @media (max-width: 768px) {
       .appointment-row { flex-direction: column; align-items: flex-start; }
       .schedule-row { flex-direction: column; align-items: flex-start; }
+      .apt-actions button { width: 44px; height: 44px; }
     }
   </style>
 </body>

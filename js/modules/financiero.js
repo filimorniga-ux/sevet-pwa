@@ -124,21 +124,23 @@ export function initFinanciero() {
     <div class="fin-bottom-grid">
       <div class="fin-chart-card">
         <h4 class="fin-chart-title">🏆 Top Clientes</h4>
-        <table class="fin-table">
-          <thead>
-            <tr><th>Cliente</th><th>Mascotas</th><th>Visitas</th><th>Total</th></tr>
-          </thead>
-          <tbody>
-            ${TOP_CLIENTS.map((c, i) => `
-              <tr>
-                <td><span class="fin-rank">#${i + 1}</span> ${c.name}</td>
-                <td>${c.pets}</td>
-                <td>${c.visits}</td>
-                <td class="fin-amount">$${(c.total / 1000).toFixed(0)}K</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="fin-table-scroll">
+          <table class="fin-table">
+            <thead>
+              <tr><th>Cliente</th><th>Mascotas</th><th>Visitas</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              ${TOP_CLIENTS.map((c, i) => `
+                <tr>
+                  <td><span class="fin-rank">#${i + 1}</span> ${c.name}</td>
+                  <td>${c.pets}</td>
+                  <td>${c.visits}</td>
+                  <td class="fin-amount">$${(c.total / 1000).toFixed(0)}K</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="fin-chart-card">
         <h4 class="fin-chart-title">💳 Últimas Transacciones</h4>

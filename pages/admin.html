@@ -766,11 +766,21 @@
       box-shadow: var(--card-shadow); border: 1px solid var(--gray-100);
     }
     .chart-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--blue-800); margin-bottom: 1rem; }
+    .appointments-list button,
+    .appointments-list select {
+      min-height: 38px;
+      border-radius: var(--radius-sm);
+    }
 
     @media (max-width: 768px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .charts-row { grid-template-columns: 1fr; }
       .kpi-value { font-size: 1.5rem; }
+      .appointments-list button,
+      .appointments-list select {
+        min-height: 44px;
+        font-size: 0.9rem;
+      }
     }
     @media (max-width: 480px) {
       .kpi-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }

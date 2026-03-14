@@ -16,6 +16,14 @@ import { initTelemedicina } from './modules/telemedicina.js';
 import { initHistorial } from './modules/historial.js';
 import { initImagenes } from './modules/imagenes.js';
 import { initFinanciero } from './modules/financiero.js';
+import {
+  clampCarouselIndex,
+  getBodyLockTop,
+  getVisibleCardsForWidth,
+} from './modules/mobile-ui-utils.js';
+
+let carouselIndex = 0;
+let scrollPos = 0;
 
 // ── Registro Service Worker (Offline-First) ──
 if ('serviceWorker' in navigator) {
@@ -143,35 +151,72 @@ function initParticles() {
 function initNavScroll() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
-  window.addEventListener('scroll', () => {
+  const onScroll = () => {
     nav.classList.toggle('scrolled', window.scrollY > 60);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeNavMenu();
   });
 }
 
 // ── MENÚ MOBILE ──
-let scrollPos = 0;
-window.toggleNav = function() {
-  const navLinks = document.getElementById('navLinks');
-  const isOpen = navLinks.classList.contains('open');
-  
-  if (isOpen) {
-    // Close menu — restore scroll
-    navLinks.classList.remove('open');
-    document.body.classList.remove('nav-open');
-    window.scrollTo(0, scrollPos);
-  } else {
-    // Open menu — lock scroll
-    scrollPos = window.pageYOffset;
-    navLinks.classList.add('open');
-    document.body.classList.add('nav-open');
-    document.body.style.top = `-${scrollPos}px`;
+function getNavLinks() {
+  return document.getElementById('navLinks');
+}
+
+function lockBodyScroll() {
+  scrollPos = window.pageYOffset || window.scrollY || 0;
+  document.body.classList.add('nav-open');
+  document.body.style.top = getBodyLockTop(scrollPos);
+}
+
+function unlockBodyScroll() {
+  document.body.classList.remove('nav-open');
+  document.body.style.top = '';
+  window.scrollTo(0, scrollPos);
+}
+
+function closeNavMenu() {
+  const navLinks = getNavLinks();
+  if (!navLinks?.classList.contains('open')) return;
+  navLinks.classList.remove('open');
+  unlockBodyScroll();
+}
+
+window.toggleNav = function(forceOpen) {
+  const navLinks = getNavLinks();
+  if (!navLinks) return;
+
+  const shouldOpen = typeof forceOpen === 'boolean'
+    ? forceOpen
+    : !navLinks.classList.contains('open');
+
+  if (!shouldOpen) {
+    closeNavMenu();
+    return;
   }
+
+  navLinks.classList.add('open');
+  lockBodyScroll();
 };
-document.addEventListener('click', e => {
-  if (e.target.closest('#navLinks a')) {
-    document.getElementById('navLinks').classList.remove('open');
-    document.body.classList.remove('nav-open');
-    window.scrollTo(0, scrollPos);
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeNavMenu();
+});
+
+document.addEventListener('click', (event) => {
+  const navLinks = getNavLinks();
+  if (!navLinks?.classList.contains('open')) return;
+
+  if (event.target.closest('#navLinks a') || event.target.closest('.nav-close-btn')) {
+    closeNavMenu();
+    return;
+  }
+
+  if (!event.target.closest('#navLinks') && !event.target.closest('#navBurger')) {
+    closeNavMenu();
   }
 });
 
@@ -254,9 +299,8 @@ function initComparison() {
 }
 
 // ── CARRUSEL PRODUCTOS ──
-let carouselIndex = 0;
 function getVisibleCards() {
-  return window.innerWidth < 768 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+  return getVisibleCardsForWidth(window.innerWidth);
 }
 function updateCarousel() {
   const track = document.getElementById('carouselTrack');
@@ -266,8 +310,7 @@ function updateCarousel() {
   const visible = getVisibleCards();
   const cardWidth = cards[0].offsetWidth;
   const gap = 24;
-  const maxIndex = Math.max(0, cards.length - visible);
-  carouselIndex = Math.max(0, Math.min(carouselIndex, maxIndex));
+  carouselIndex = clampCarouselIndex(carouselIndex, cards.length, visible);
   track.style.transform = `translateX(-${carouselIndex * (cardWidth + gap)}px)`;
 }
 function initCarousel() {
@@ -282,7 +325,8 @@ const CHAT_AI_URL = import.meta.env.VITE_CHAT_AI_URL || 'https://zyvwcxsqdbegzjl
 let chatHistory = [];
 
 window.toggleAI = function() {
-  document.getElementById('aiChat').classList.toggle('open');
+  const chat = document.getElementById('aiChat');
+  if (chat) chat.classList.toggle('open');
 };
 
 const aiFallback = {
@@ -294,6 +338,7 @@ const aiFallback = {
 
 window.aiQuick = function(text) {
   const input = document.getElementById('aiInput');
+  if (!input) return;
   input.value = text;
   window.aiSend();
 };
@@ -301,6 +346,7 @@ window.aiQuick = function(text) {
 window.aiSend = async function() {
   const input = document.getElementById('aiInput');
   const messages = document.getElementById('aiMessages');
+  if (!input || !messages) return;
   const text = input.value.trim();
   if (!text) return;
 
