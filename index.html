@@ -44,7 +44,7 @@
   <ul class="nav-links" id="navLinks">
     <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
     <li><a href="/" class="active">Inicio</a></li>
-    <li><a href="/pages/quienes-somos.html">Quiénes Somos</a></li>
+    <li><a href="#quienes-somos">Quiénes Somos</a></li>
     <li><a href="/pages/agendar.html">Agendar</a></li>
     <li><a href="#especialidades">Servicios</a></li>
     <li><a href="#contacto">Contacto</a></li>
@@ -145,67 +145,16 @@
 <section class="section-pad" id="especialidades">
   <div class="section-header reveal">
     <p class="section-tag">Ecosistema de Servicios</p>
-    <h2 class="section-title">Especialidades de<br/>Vanguardia Médica</h2>
-    <p class="section-sub">Tecnología clínica de nivel hospitalario para el bienestar integral de tu mascota</p>
+    <h2 class="section-title">Nuestros Servicios</h2>
+    <p class="section-sub">Servicios actualizados en tiempo real. Precios, duración y categorías se gestionan desde el panel administrativo.</p>
   </div>
-  <div class="bento-grid">
-    <!-- Cirugías – grande -->
-    <div class="bento-card span-6 row-2 featured reveal" style="--delay:0.1s">
-      <div class="card-img-bg" style="background-image:url('assets/images/hero-cat.png')"></div>
-      <div class="card-overlay">
-        <span class="card-icon">🔬</span>
-        <div>
-          <div class="card-tag">Especialidad Premium</div>
-          <div class="card-title">Cirugías de Alta Complejidad</div>
-          <div class="card-desc">Quirófano equipado con tecnología 2026. El Dr. Sánchez lidera intervenciones de precisión milimétrica.</div>
-        </div>
-      </div>
-      <div class="card-badge">Disponible</div>
-    </div>
-    <!-- Consultas -->
-    <div class="bento-card span-3 reveal" style="--delay:0.15s">
-      <div class="card-overlay">
-        <span class="card-icon">🩺</span>
-        <div>
-          <div class="card-tag">Core</div>
-          <div class="card-title">Consultas Médicas</div>
-          <div class="card-desc">Diagnóstico integral con historial digital.</div>
-        </div>
-      </div>
-    </div>
-    <!-- Vacunas -->
-    <div class="bento-card span-3 reveal" style="--delay:0.2s">
-      <div class="card-overlay">
-        <span class="card-icon">💉</span>
-        <div>
-          <div class="card-tag">Preventivo</div>
-          <div class="card-title">Plan de Vacunas</div>
-          <div class="card-desc">Esquema personalizado y recordatorios digitales.</div>
-        </div>
-      </div>
-    </div>
-    <!-- Farmacia -->
-    <div class="bento-card span-4 reveal" style="--delay:0.25s">
-      <div class="card-overlay">
-        <span class="card-icon">💊</span>
-        <div>
-          <div class="card-tag">In-House</div>
-          <div class="card-title">Farmacia Especializada</div>
-          <div class="card-desc">Medicamentos veterinarios de línea completa, disponibles en el acto.</div>
-        </div>
-      </div>
-    </div>
-    <!-- Alimentos Premium -->
-    <div class="bento-card span-8 reveal" style="--delay:0.3s">
-      <div class="card-img-bg" style="background-image:url('assets/images/premium-food.png')"></div>
-      <div class="card-overlay">
-        <span class="card-icon">🥩</span>
-        <div>
-          <div class="card-tag">Nutrición de Élite</div>
-          <div class="card-title">Venta de Alimentos Premium</div>
-          <div class="card-desc">Línea gourmet curada por nuestros veterinarios. Nutrición que se ve en el pelaje, la energía y la salud.</div>
-        </div>
-      </div>
+  <!-- Category filter -->
+  <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem" id="serviceCategoryFilter"></div>
+  <!-- Dynamic services grid -->
+  <div class="bento-grid" id="servicesGrid">
+    <div style="text-align:center;padding:3rem;color:var(--gray-400);grid-column:1/-1">
+      <p style="font-size:1.5rem">⏳</p>
+      <p>Cargando servicios...</p>
     </div>
   </div>
 </section>
@@ -365,6 +314,75 @@
     <a href="https://tiktok.com" target="_blank" rel="noopener" class="social-pill tk">
       <span>🎵</span> TikTok
     </a>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────
+     QUIÉNES SOMOS (merged from separate page)
+     ───────────────────────────────────────── -->
+<section class="section-pad" id="quienes-somos" style="background:var(--gray-50,#f9fafb)">
+  <div class="section-header reveal">
+    <p class="section-tag">Nuestra Identidad</p>
+    <h2 class="section-title">Quiénes Somos</h2>
+    <p class="section-sub">Más que una clínica veterinaria, somos una familia dedicada al bienestar integral de tus mascotas.</p>
+  </div>
+
+  <!-- Historia -->
+  <div class="reveal" style="max-width:800px;margin:0 auto 3rem;text-align:center;line-height:1.8;color:var(--gray-600)">
+    <p><strong>Veterinaria San Alberto</strong> nació con la convicción de que las mascotas merecen el mismo nivel de atención médica que reciben los niños en una clínica pediátrica. Fundada en Lo Prado, Santiago, nuestra clínica se ha convertido en un referente de atención veterinaria integral.</p>
+    <p style="margin-top:1rem">Hoy, con un equipo de profesionales altamente capacitados, ofrecemos consultas médicas, cirugías, urgencias, farmacia veterinaria, peluquería canina y felina, y un ecosistema digital que permite a nuestros clientes agendar citas, acceder a fichas clínicas y recibir seguimiento personalizado.</p>
+  </div>
+
+  <!-- Misión + Visión -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;max-width:900px;margin:0 auto 3rem">
+    <div class="reveal" style="background:white;border-radius:var(--radius-lg);padding:2rem;box-shadow:0 2px 12px rgba(0,0,0,0.06);border-left:4px solid var(--purple-600)">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🎯</div>
+      <h3 style="margin-bottom:0.5rem;color:var(--purple-700)">Misión</h3>
+      <p style="font-size:0.9rem;color:var(--gray-600);line-height:1.7">Brindar atención veterinaria de excelencia con el mismo cuidado, dedicación y rigurosidad clínica de una clínica pediátrica, garantizando el bienestar integral de cada paciente.</p>
+    </div>
+    <div class="reveal" style="background:white;border-radius:var(--radius-lg);padding:2rem;box-shadow:0 2px 12px rgba(0,0,0,0.06);border-left:4px solid var(--blue-600,#3b82f6)">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🔭</div>
+      <h3 style="margin-bottom:0.5rem;color:var(--blue-700,#1d4ed8)">Visión</h3>
+      <p style="font-size:0.9rem;color:var(--gray-600);line-height:1.7">Ser la clínica veterinaria de referencia en Santiago y Chile, reconocida por transformar el estándar de atención animal hacia un modelo de medicina preventiva e innovación.</p>
+    </div>
+  </div>
+
+  <!-- Valores -->
+  <div class="reveal" style="max-width:1000px;margin:0 auto 3rem">
+    <h3 style="text-align:center;margin-bottom:1.5rem;color:var(--purple-700)">💎 Nuestros Valores</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+      <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 1px 6px rgba(0,0,0,0.04)">
+        <div style="font-size:1.8rem">❤️</div><strong>Empatía</strong>
+        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:0.3rem">Entendemos el vínculo entre las familias y sus mascotas</p>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 1px 6px rgba(0,0,0,0.04)">
+        <div style="font-size:1.8rem">🏆</div><strong>Excelencia</strong>
+        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:0.3rem">Protocolos médicos rigurosos y formación constante</p>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 1px 6px rgba(0,0,0,0.04)">
+        <div style="font-size:1.8rem">🔍</div><strong>Transparencia</strong>
+        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:0.3rem">Comunicación clara de diagnósticos y costos</p>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 1px 6px rgba(0,0,0,0.04)">
+        <div style="font-size:1.8rem">💡</div><strong>Innovación</strong>
+        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:0.3rem">Tecnología de vanguardia en cada proceso</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipo dinámico -->
+  <div class="reveal" style="max-width:1000px;margin:0 auto">
+    <h3 style="text-align:center;margin-bottom:1.5rem;color:var(--purple-700)">👨‍⚕️ Nuestro Equipo</h3>
+    <p style="text-align:center;color:var(--gray-500);margin-bottom:1.5rem">Profesionales comprometidos con la salud y felicidad de tus mascotas.</p>
+    <div id="teamGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem"></div>
+  </div>
+
+  <!-- Propósito + CTA -->
+  <div class="reveal" style="text-align:center;max-width:700px;margin:3rem auto 0;padding:2rem;background:linear-gradient(135deg,var(--purple-700),var(--purple-900,#581c87));border-radius:var(--radius-lg);color:white">
+    <div style="font-size:2rem;margin-bottom:0.5rem">🌍</div>
+    <h3>Nuestro Propósito</h3>
+    <p style="margin:0.75rem 0 1rem;opacity:0.9;font-size:0.9rem">Transformar la relación entre las familias chilenas y sus mascotas, elevando el estándar de atención veterinaria al nivel de la medicina humana pediátrica.</p>
+    <blockquote style="font-style:italic;opacity:0.85;margin:1rem 0">"El amor de una mascota es un abrazo que nunca se acaba"</blockquote>
   </div>
 </section>
 
@@ -534,5 +552,85 @@
 </script>
 
 <script type="module" src="/js/main.js"></script>
+<script type="module">
+  import { supabase } from '/js/supabase.js';
+
+  const esc = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
+
+  // ── LOAD SERVICES FROM SUPABASE ──
+  async function loadServices() {
+    const grid = document.getElementById('servicesGrid');
+    const filterBar = document.getElementById('serviceCategoryFilter');
+    const { data: services, error } = await supabase
+      .from('services').select('*').eq('active', true).order('name');
+
+    if (error || !services?.length) {
+      grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray-400);grid-column:1/-1"><p>No hay servicios disponibles.</p></div>';
+      return;
+    }
+
+    // Build category filter
+    const categories = [...new Set(services.map(s => s.category).filter(Boolean))].sort();
+    filterBar.innerHTML = `<button class="spec-tab active" onclick="filterServices('all', this)">Todos</button>` +
+      categories.map(c => `<button class="spec-tab" onclick="filterServices('${esc(c)}', this)">${esc(c)}</button>`).join('');
+
+    window.filterServices = function(cat, btn) {
+      document.querySelectorAll('#serviceCategoryFilter .spec-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderServices(cat === 'all' ? services : services.filter(s => s.category === cat));
+    };
+
+    function renderServices(list) {
+      const formatPrice = (p) => p != null ? '$' + Number(p).toLocaleString('es-CL') : '';
+      grid.innerHTML = list.map((s, i) => `
+        <div class="bento-card span-4 reveal" style="--delay:${0.05 * i}s">
+          <div class="card-overlay">
+            <span class="card-icon">${esc(s.icon) || '🩺'}</span>
+            <div>
+              <div class="card-tag">${esc(s.category) || 'General'}</div>
+              <div class="card-title">${esc(s.name)}</div>
+              <div class="card-desc">${esc(s.description) || ''}</div>
+              <div style="margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:var(--purple-600)">
+                ${s.duration_min ? '⏱ ' + s.duration_min + ' min' : ''} ${formatPrice(s.price) ? '&nbsp;·&nbsp;💰 ' + formatPrice(s.price) : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    renderServices(services);
+  }
+
+  // ── LOAD TEAM FROM SUPABASE ──
+  async function loadTeam() {
+    const grid = document.getElementById('teamGrid');
+    const { data: team, error } = await supabase
+      .from('profiles')
+      .select('full_name, role, specialty, position, avatar_url')
+      .in('role', ['vet','admin','owner','groomer','receptionist'])
+      .order('full_name');
+
+    if (error || !team?.length) {
+      grid.innerHTML = '<p style="text-align:center;color:var(--gray-400)">Equipo no disponible.</p>';
+      return;
+    }
+
+    const roleEmojis = { vet: '👨‍⚕️', admin: '⚙️', owner: '🏥', groomer: '✂️', receptionist: '📋' };
+    const roleLabels = { vet: 'Veterinario/a', admin: 'Administrador/a', owner: 'Director/a', groomer: 'Peluquero/a', receptionist: 'Recepcionista' };
+
+    grid.innerHTML = team.map(m => `
+      <div style="text-align:center;padding:1.5rem;background:white;border-radius:var(--radius-lg);box-shadow:0 2px 12px rgba(0,0,0,0.06)">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem">${roleEmojis[m.role] || '👤'}</div>
+        <strong style="display:block">${esc(m.full_name)}</strong>
+        <span style="font-size:0.82rem;color:var(--purple-600);font-weight:600">${esc(m.position) || roleLabels[m.role] || m.role}</span>
+        ${m.specialty ? `<p style="font-size:0.78rem;color:var(--gray-500);margin-top:0.3rem">${esc(m.specialty)}</p>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // Init
+  loadServices();
+  loadTeam();
+</script>
 </body>
 </html>
