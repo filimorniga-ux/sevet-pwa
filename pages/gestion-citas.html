@@ -53,6 +53,46 @@
       <button class="btn-primary" onclick="loadAllAppointments()" style="padding:0.5rem 1.2rem">
         🔍 Buscar
       </button>
+      <button class="btn-primary" onclick="showManualForm()" style="padding:0.5rem 1.2rem;background:var(--green-600,#16a34a)">
+        ➕ Cita Manual
+      </button>
+    </div>
+
+    <!-- Manual Appointment Form (hidden) -->
+    <div id="manualFormContainer" class="hidden" style="max-width:700px;margin:0 auto 1.5rem">
+      <div class="confirmation-card">
+        <h3 style="margin-bottom:1rem;color:var(--purple-700)" id="manualFormTitle">➕ Crear Cita Manual</h3>
+        <input type="hidden" id="editApptId" />
+        <div class="soap-compose-grid">
+          <div class="auth-field"><label>Fecha y hora *</label><input type="datetime-local" id="apptDateTime" /></div>
+          <div class="auth-field">
+            <label>Servicio *</label>
+            <select id="apptService" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+          </div>
+          <div class="auth-field">
+            <label>Profesional</label>
+            <select id="apptVet" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+          </div>
+          <div class="auth-field"><label>Nombre mascota</label><input type="text" id="apptPetName" placeholder="Nombre de la mascota" /></div>
+          <div class="auth-field"><label>Tutor (nombre)</label><input type="text" id="apptGuestName" placeholder="Nombre tutor" /></div>
+          <div class="auth-field"><label>Teléfono tutor</label><input type="tel" id="apptGuestPhone" placeholder="+56 9 ..." /></div>
+          <div class="auth-field"><label>Email tutor</label><input type="email" id="apptGuestEmail" placeholder="correo@ejemplo.cl" /></div>
+          <div class="auth-field">
+            <label>Origen</label>
+            <select id="apptSource" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <option value="walk-in">Presencial</option>
+              <option value="phone">Teléfono</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="web">Web</option>
+            </select>
+          </div>
+          <div class="auth-field" style="grid-column:1/-1"><label>Notas</label><input type="text" id="apptNotes" placeholder="Notas adicionales" /></div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:1rem">
+          <button class="btn-primary" onclick="saveManualAppointment()" style="flex:1;justify-content:center">💾 Guardar</button>
+          <button class="btn-back" onclick="hideManualForm()">Cancelar</button>
+        </div>
+      </div>
     </div>
 
     <!-- Stats row -->
@@ -88,6 +128,9 @@
   <script type="module">
     import { supabase } from '/js/supabase.js';
 
+    let servicesData = [];
+    let vetsData = [];
+
     // Auth check
     async function init() {
       try {
@@ -104,14 +147,29 @@
         // Set today's date
         document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
 
-        // Load vet filter options
+        // Load vet filter options + form selects
         const { data: vets } = await supabase.from('profiles')
-          .select('id, full_name').in('role', ['vet','groomer','owner']);
+          .select('id, full_name, role').in('role', ['vet','groomer','owner']).eq('is_active', true);
+        vetsData = vets || [];
         const vetSelect = document.getElementById('filterVet');
-        (vets || []).forEach(v => {
+        const formVetSelect = document.getElementById('apptVet');
+        formVetSelect.innerHTML = '<option value="">Sin asignar</option>';
+        vetsData.forEach(v => {
           const opt = document.createElement('option');
           opt.value = v.id; opt.textContent = v.full_name;
           vetSelect.appendChild(opt);
+          formVetSelect.appendChild(opt.cloneNode(true));
+        });
+
+        // Load services for form
+        const { data: services } = await supabase.from('services')
+          .select('id, name, icon, duration_min').eq('active', true).order('name');
+        servicesData = services || [];
+        const svcSelect = document.getElementById('apptService');
+        servicesData.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id; opt.textContent = `${s.icon || '🩺'} ${s.name} (${s.duration_min}min)`;
+          svcSelect.appendChild(opt);
         });
 
         loadAllAppointments();
@@ -129,6 +187,83 @@
       }
     }
     init();
+
+    // Manual form
+    window.showManualForm = function(editData) {
+      const container = document.getElementById('manualFormContainer');
+      const title = document.getElementById('manualFormTitle');
+      container.classList.remove('hidden');
+
+      if (editData) {
+        title.textContent = '✏️ Editar Cita';
+        document.getElementById('editApptId').value = editData.id;
+        const dt = new Date(editData.date_time);
+        document.getElementById('apptDateTime').value = dt.toISOString().slice(0, 16);
+        document.getElementById('apptService').value = editData.service_id || '';
+        document.getElementById('apptVet').value = editData.vet_id || '';
+        document.getElementById('apptPetName').value = editData.guest_pet_name || editData.pets?.name || '';
+        document.getElementById('apptGuestName').value = editData.guest_name || '';
+        document.getElementById('apptGuestPhone').value = editData.guest_phone || '';
+        document.getElementById('apptGuestEmail').value = editData.guest_email || '';
+        document.getElementById('apptSource').value = editData.source || 'walk-in';
+        document.getElementById('apptNotes').value = editData.notes || '';
+      } else {
+        title.textContent = '➕ Crear Cita Manual';
+        document.getElementById('editApptId').value = '';
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 30 - (now.getMinutes() % 30));
+        document.getElementById('apptDateTime').value = now.toISOString().slice(0, 16);
+        ['apptPetName','apptGuestName','apptGuestPhone','apptGuestEmail','apptNotes'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('apptSource').value = 'walk-in';
+      }
+    };
+
+    window.hideManualForm = function() {
+      document.getElementById('manualFormContainer').classList.add('hidden');
+    };
+
+    window.saveManualAppointment = async function() {
+      const dateTime = document.getElementById('apptDateTime').value;
+      const serviceId = document.getElementById('apptService').value;
+      if (!dateTime || !serviceId) { alert('Fecha/hora y servicio son obligatorios.'); return; }
+
+      const service = servicesData.find(s => s.id === serviceId);
+      const editId = document.getElementById('editApptId').value;
+
+      const apptData = {
+        date_time: new Date(dateTime).toISOString(),
+        service_id: serviceId,
+        service_type: service?.name || '',
+        duration_min: service?.duration_min || 30,
+        vet_id: document.getElementById('apptVet').value || null,
+        guest_pet_name: document.getElementById('apptPetName').value.trim() || null,
+        guest_name: document.getElementById('apptGuestName').value.trim() || null,
+        guest_phone: document.getElementById('apptGuestPhone').value.trim() || null,
+        guest_email: document.getElementById('apptGuestEmail').value.trim() || null,
+        source: document.getElementById('apptSource').value || 'walk-in',
+        notes: document.getElementById('apptNotes').value.trim() || null,
+        status: 'pendiente',
+      };
+
+      if (editId) {
+        delete apptData.status; // Keep existing status on edit
+        const { error } = await supabase.from('appointments').update(apptData).eq('id', editId);
+        if (error) { alert('Error al actualizar: ' + error.message); return; }
+        alert('Cita actualizada.');
+      } else {
+        const { error } = await supabase.from('appointments').insert(apptData);
+        if (error) { alert('Error al crear: ' + error.message); return; }
+        alert('Cita creada correctamente.');
+      }
+
+      hideManualForm();
+      loadAllAppointments();
+    };
+
+    // Load all (with edit support)
+    let allAppointments = [];
 
     window.loadAllAppointments = async function() {
       const body = document.getElementById('appointmentsBody');
@@ -152,6 +287,8 @@
       if (error) { body.innerHTML = '<tr><td colspan="7">Error al cargar</td></tr>'; return; }
       if (!data?.length) { body.innerHTML = '<tr><td colspan="7" class="summary-empty">No hay citas</td></tr>'; return; }
 
+      allAppointments = data;
+
       // Stats
       document.getElementById('statTotal').textContent = data.length;
       document.getElementById('statPendiente').textContent = data.filter(a => a.status === 'pendiente').length;
@@ -165,30 +302,21 @@
 
       const escapeHTML = (str) => {
         if (!str) return '';
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
       };
 
       body.innerHTML = data.map(a => {
         const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-
         const safePetName = escapeHTML(a.pets?.name || a.guest_pet_name || 'N/A');
         const safePetSpecies = escapeHTML(a.pets?.species || '');
         const safeGuestName = escapeHTML(a.guest_name || '');
-
         const petLabel = a.pets?.name
           ? `${safePetName}${safePetSpecies ? ` (${safePetSpecies})` : ''}`
-          : `${safePetName}${safeGuestName ? ` · Tutor: ${safeGuestName}` : ''}`;
-
+          : `${safePetName}${safeGuestName ? ` · ${safeGuestName}` : ''}`;
         const safeIcon = escapeHTML(a.services?.icon || '🩺');
         const safeServiceName = escapeHTML(a.services?.name || a.service_type);
         const safeVetName = escapeHTML(a.profiles?.full_name || 'Sin asignar');
         const safeNotes = escapeHTML(a.notes || '');
-
         return `
           <tr>
             <td>${time}</td>
@@ -198,17 +326,25 @@
             <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
-              <select onchange="changeStatus('${a.id}', this.value)" class="auth-input appointment-status-select">
-                <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
-                <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
-                <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
-                <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
-              </select>
+              <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+                <select onchange="changeStatus('${a.id}', this.value)" class="auth-input appointment-status-select">
+                  <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                  <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
+                  <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
+                  <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+                </select>
+                <button onclick="editAppointment('${a.id}')" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0.3rem 0.5rem;cursor:pointer;background:none;min-height:40px" title="Editar">✏️</button>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
+    };
+
+    window.editAppointment = function(id) {
+      const appt = allAppointments.find(a => a.id === id);
+      if (appt) showManualForm(appt);
     };
 
     window.changeStatus = async function(id, status) {
