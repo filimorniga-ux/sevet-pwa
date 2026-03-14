@@ -13,18 +13,13 @@ function getHtmlFiles() {
 }
 
 describe('navigation links', () => {
-  it('el enlace nav-shopify-link apunta siempre a la tienda interna', () => {
+  it('no incluye enlaces legacy de tienda online', () => {
     const htmlFiles = getHtmlFiles();
 
     for (const file of htmlFiles) {
       const html = readFileSync(file, 'utf8');
-      const navShopifyLinks = html.match(/<a\b[^>]*class="[^"]*\bnav-shopify-link\b[^"]*"[^>]*>/g) || [];
-
-      for (const linkTag of navShopifyLinks) {
-        expect(linkTag).toContain('href="/pages/tienda.html"');
-        expect(linkTag).not.toContain('href="#"');
-        expect(linkTag).not.toContain('target="_blank"');
-      }
+      expect(html).not.toContain('nav-shopify-link');
+      expect(html).not.toContain('href="/pages/tienda.html"');
     }
   });
 });

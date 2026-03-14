@@ -463,7 +463,7 @@ function renderSOAP(record) {
       ${medications.length ? `
         <div class="soap-actions">
           <button class="soap-buy-btn" onclick="event.stopPropagation(); window._buyTreatmentFromEncoded('${encodedMeds}')">
-            🛒 Comprar Tratamiento
+            📅 Coordinar Tratamiento
           </button>
           <span class="soap-buy-hint">${medications.length} medicamento${medications.length > 1 ? 's' : ''} detectado${medications.length > 1 ? 's' : ''}</span>
         </div>` : ''}
@@ -568,7 +568,7 @@ function buildPetListFromRows(petsRows) {
 function buyTreatment(medications) {
   const safeItems = Array.isArray(medications) ? medications : [];
   sessionStorage.setItem('sevet_prescription_items', JSON.stringify(safeItems));
-  window.location.href = '/pages/tienda.html?from=prescription';
+  window.location.href = '/pages/agendar.html?from=prescription';
 }
 
 export function mapMedicalRecordRow(row) {

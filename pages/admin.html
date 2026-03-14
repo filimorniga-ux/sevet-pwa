@@ -260,11 +260,21 @@
     // Logout
     document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
       e.preventDefault();
-      try { await supabase.auth.signOut(); } catch(err) {}
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      });
-      window.location.href = '/';
+      try {
+        await supabase.auth.signOut();
+      } catch(err) {
+        console.warn('Sign out error (expected in incognito):', err);
+      }
+      // Clear all Supabase storage (works in incognito too)
+      try {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('sb-')) sessionStorage.removeItem(key);
+        });
+      } catch(err) {}
+      window.location.replace('/');
     });
 
     // Panel switching
@@ -715,34 +725,45 @@
 
     // ── TIME OFF MANAGEMENT ──
     async function loadTimeOffRequests() {
-      const { data, error } = await supabase.from('staff_time_off')
-        .select('*, profiles!staff_time_off_staff_id_fkey(full_name, role)')
-        .order('created_at', { ascending: false });
-
       const container = document.getElementById('timeOffRequests');
-      if (error) {
-        container.innerHTML = '<p class="summary-empty">Módulo de permisos no habilitado en la base de datos actual.</p>';
-        return;
+      try {
+        const { data, error } = await supabase.from('staff_time_off')
+          .select('*, profiles(full_name, role)')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.warn('Time off load error:', error);
+          container.innerHTML = '<p class="summary-empty">⚠️ No se pudo cargar solicitudes de permisos.</p>';
+          return;
+        }
+        if (!data?.length) {
+          container.innerHTML = '<p class="summary-empty">✅ No hay solicitudes de permisos pendientes.</p>';
+          return;
+        }
+
+        const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };
+        const statusColors = { pending: '#f59e0b', approved: '#16a34a', rejected: '#ef4444' };
+        const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada' };
+
+        container.innerHTML = data.map(t => `
+          <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
+            <span class="apt-service">${escapeHtml(t.profiles?.full_name || 'Desconocido')}</span>
+            <span>${escapeHtml(typeLabels[t.type] || t.type)}</span>
+            <span style="font-size:0.82rem">${escapeHtml(t.start_date)} → ${escapeHtml(t.end_date)}</span>
+            <span style="color:${statusColors[t.status]};font-weight:700">${escapeHtml(statusLabels[t.status] || t.status)}</span>
+            ${t.notes ? `<span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(t.notes)}</span>` : ''}
+            ${t.status === 'pending' ? `
+              <div class="apt-actions">
+                <button onclick="approveTimeOff('${t.id}')" title="Aprobar">✅</button>
+                <button onclick="rejectTimeOff('${t.id}')" title="Rechazar">❌</button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Time off error:', err);
+        container.innerHTML = '<p class="summary-empty">⚠️ Error al cargar permisos: ' + escapeHtml(err.message) + '</p>';
       }
-      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay solicitudes pendientes</p>'; return; }
-
-      const typeLabels = { vacation: '🏖️ Vacaciones', sick_leave: '🤒 Licencia', personal: '🏠 Personal', other: '📋 Otro' };
-      const statusColors = { pending: '#f59e0b', approved: '#16a34a', rejected: '#ef4444' };
-
-      container.innerHTML = data.map(t => `
-        <div class="appointment-row">
-          <span class="apt-service">${escapeHtml(t.profiles?.full_name || 'Desconocido')}</span>
-          <span>${escapeHtml(typeLabels[t.type] || t.type)}</span>
-          <span style="font-size:0.82rem">${escapeHtml(t.start_date)} → ${escapeHtml(t.end_date)}</span>
-          <span style="color:${statusColors[t.status]};font-weight:700">${escapeHtml(t.status)}</span>
-          ${t.status === 'pending' ? `
-            <div class="apt-actions">
-              <button onclick="approveTimeOff('${t.id}')" title="Aprobar">✅</button>
-              <button onclick="rejectTimeOff('${t.id}')" title="Rechazar">❌</button>
-            </div>
-          ` : ''}
-        </div>
-      `).join('');
     }
 
     window.approveTimeOff = async function(id) {

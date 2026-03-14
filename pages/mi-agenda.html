@@ -145,9 +145,12 @@
       // Logout
       document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
         e.preventDefault();
-        try { await supabase.auth.signOut(); } catch(err) {}
-        Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
-        window.location.href = '/';
+        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut error:', err); }
+        try {
+          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
+          Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-')) sessionStorage.removeItem(k); });
+        } catch(err) {}
+        window.location.replace('/');
       });
     }
     init();
