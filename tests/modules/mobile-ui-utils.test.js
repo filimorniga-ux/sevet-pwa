@@ -8,11 +8,15 @@ import {
 describe('mobile-ui-utils', () => {
   it('calcula correctamente las tarjetas visibles según ancho de viewport', () => {
     const mobileCards = getVisibleCardsForWidth(390);
+    const exactly768 = getVisibleCardsForWidth(768);
     const tabletCards = getVisibleCardsForWidth(820);
+    const exactly1024 = getVisibleCardsForWidth(1024);
     const desktopCards = getVisibleCardsForWidth(1280);
 
     expect(mobileCards).toBe(1);
+    expect(exactly768).toBe(1);
     expect(tabletCards).toBe(2);
+    expect(exactly1024).toBe(2);
     expect(desktopCards).toBe(3);
   });
 

@@ -117,13 +117,13 @@
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <h3>🩺 Gestión de Servicios</h3>
-          <button class="btn-primary" onclick="showServiceForm()" style="padding:0.5rem 1rem">➕ Nuevo Servicio</button>
+          <button class="btn-primary" onclick="showServiceForm()" >➕ Nuevo Servicio</button>
         </div>
         <div id="serviceFormContainer" class="hidden" style="margin-bottom:1.5rem">
           <div class="confirmation-card">
             <div class="auth-field"><label>Nombre</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
             <div class="auth-field"><label>Categoría</label>
-              <select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+              <select id="svcCategory" class="auth-input">
                 <option value="consulta">Consulta</option><option value="cirugia">Cirugía</option>
                 <option value="laboratorio">Laboratorio</option><option value="peluqueria">Peluquería</option>
                 <option value="urgencia">Urgencia</option>
@@ -134,7 +134,7 @@
             <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
             <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
             <div style="display:flex;gap:0.5rem">
-              <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar</button>
+              <button class="btn-primary" onclick="saveService()" style="flex:1;">💾 Guardar</button>
               <button class="btn-back" onclick="hideServiceForm()">Cancelar</button>
             </div>
           </div>
@@ -148,7 +148,7 @@
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <h3>📦 Estado de Inventario</h3>
-          <button class="btn-primary" onclick="loadInventoryPanel()" style="padding:0.5rem 1rem">↻ Recargar</button>
+          <button class="btn-primary" onclick="loadInventoryPanel()" >↻ Recargar</button>
         </div>
         <div id="inventorySummary" class="kpi-grid" style="margin-bottom:1rem"></div>
         <div id="inventoryTable" class="appointments-list"><div class="loading-spinner">Cargando inventario...</div></div>
@@ -159,11 +159,11 @@
         <div class="soap-compose-grid">
           <div class="auth-field">
             <label>Producto</label>
-            <select id="invProduct" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+            <select id="invProduct" class="auth-input"></select>
           </div>
           <div class="auth-field">
             <label>Tipo</label>
-            <select id="invType" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+            <select id="invType" class="auth-input">
               <option value="entrada">Entrada</option>
               <option value="salida">Salida</option>
             </select>
@@ -177,7 +177,7 @@
             <input type="text" id="invNotes" placeholder="Motivo del movimiento" />
           </div>
         </div>
-        <button class="btn-primary" onclick="saveInventoryMovement()" style="justify-content:center">💾 Guardar Movimiento</button>
+        <button class="btn-primary" onclick="saveInventoryMovement()" >💾 Guardar Movimiento</button>
       </div>
 
       <div class="chart-card" style="margin-top:1rem">
@@ -685,7 +685,7 @@
           <span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(u.email || '')}</span>
           <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
           <span style="color:${u.is_active !== false ? '#16a34a':'#ef4444'};font-size:0.78rem">${u.is_active !== false ? '● Activo':'● Inactivo'}</span>
-          <select onchange="changeUserRole('${u.id}', this.value)" style="padding:0.3rem;border-radius:4px;border:1px solid #ccc;font-size:0.78rem">
+          <select onchange="changeUserRole('${u.id}', this.value)" style="min-height:44px; padding:0.3rem; border-radius:4px; border:1px solid #ccc; font-size:0.8rem; width:100%;">
             ${Object.entries(roleLabels).map(([k,v]) => `<option value="${k}" ${u.role===k?'selected':''}>${v}</option>`).join('')}
           </select>
         </div>

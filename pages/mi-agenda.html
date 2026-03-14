@@ -85,7 +85,7 @@
           <h3 style="margin-bottom:1rem;color:var(--blue-800)">Nueva Solicitud</h3>
           <div class="auth-field">
             <label>Tipo</label>
-            <select id="toType" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+            <select id="toType" class="auth-input">
               <option value="vacation">Vacaciones</option>
               <option value="sick_leave">Licencia Médica</option>
               <option value="personal">Personal</option>
@@ -94,17 +94,17 @@
           </div>
           <div class="auth-field">
             <label>Fecha Inicio</label>
-            <input type="date" id="toStart" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"/>
+            <input type="date" id="toStart" class="auth-input"/>
           </div>
           <div class="auth-field">
             <label>Fecha Fin</label>
-            <input type="date" id="toEnd" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"/>
+            <input type="date" id="toEnd" class="auth-input"/>
           </div>
           <div class="auth-field">
             <label>Notas</label>
-            <textarea id="toNotes" rows="2" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-family:inherit;resize:vertical" placeholder="Motivo..."></textarea>
+            <textarea id="toNotes" rows="2" class="auth-input" style="resize:vertical" placeholder="Motivo..."></textarea>
           </div>
-          <button class="btn-primary" onclick="submitTimeOff()" style="width:100%;justify-content:center">
+          <button class="btn-primary" onclick="submitTimeOff()" style="width:100%;">
             Enviar Solicitud
           </button>
         </div>
