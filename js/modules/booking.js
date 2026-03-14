@@ -279,8 +279,13 @@ async function loadTimeSlots() {
     }
   }
 
+  // Fix timezone shift by extracting local date string directly
+  const y = state.selectedDate.getFullYear();
+  const m = String(state.selectedDate.getMonth() + 1).padStart(2, '0');
+  const d = String(state.selectedDate.getDate()).padStart(2, '0');
+  const dateStr = `${y}-${m}-${d}`;
+
   // Check existing appointments for this date + professional
-  const dateStr = state.selectedDate.toISOString().split('T')[0];
   let query = supabase
     .from('appointments')
     .select('date_time')
@@ -288,18 +293,27 @@ async function loadTimeSlots() {
     .lte('date_time', `${dateStr}T23:59:59`)
     .not('status', 'eq', 'cancelada');
 
+  const availableStaffIds = state.professionals.map(p => p.id);
+
   if (state.selectedProfessional?.id) {
     query = query.eq('vet_id', state.selectedProfessional.id);
+  } else {
+    // If "Cualquier disponible", filter existing appointments by the eligible staff for this service
+    query = query.in('vet_id', availableStaffIds);
   }
 
   const { data: existing } = await query;
   const bookedTimes = (existing || []).map(a => {
-    const d = new Date(a.date_time);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    const dObj = new Date(a.date_time);
+    return `${dObj.getHours().toString().padStart(2, '0')}:${dObj.getMinutes().toString().padStart(2, '0')}`;
   });
 
-  // Check staff time off  
+  // Calculate capacity
+  let capacity = 1;
+  let availableSlots = [];
+
   if (state.selectedProfessional?.id) {
+    // Check staff time off
     const { data: timeOff } = await supabase
       .from('staff_time_off')
       .select('*')
@@ -312,9 +326,37 @@ async function loadTimeSlots() {
       grid.innerHTML = '<p class="summary-empty">⚠️ Este profesional no está disponible en esta fecha (día libre/vacaciones)</p>';
       return;
     }
-  }
+    availableSlots = slots.filter(s => !bookedTimes.includes(s));
+  } else {
+    // "Cualquier disponible" capacity logic
+    // We already loaded state.professionals filtered by the correct role in step 2 (loadProfessionals)
+    const totalProfessionals = availableStaffIds.length;
 
-  const availableSlots = slots.filter(s => !bookedTimes.includes(s));
+    // Check how many of THESE specific professionals are on time off
+    const { data: timeOffs } = await supabase
+      .from('staff_time_off')
+      .select('staff_id')
+      .eq('status', 'approved')
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr)
+      .in('staff_id', availableStaffIds);
+
+    const staffOnLeave = new Set((timeOffs || []).map(t => t.staff_id)).size;
+    capacity = Math.max(0, totalProfessionals - staffOnLeave);
+
+    if (capacity === 0) {
+      grid.innerHTML = '<p class="summary-empty">No hay profesionales disponibles en esta fecha.</p>';
+      return;
+    }
+
+    // Filter slots based on total booked count vs capacity
+    const bookedCountPerSlot = {};
+    for (const time of bookedTimes) {
+      bookedCountPerSlot[time] = (bookedCountPerSlot[time] || 0) + 1;
+    }
+
+    availableSlots = slots.filter(s => (bookedCountPerSlot[s] || 0) < capacity);
+  }
 
   if (!availableSlots.length) {
     grid.innerHTML = '<p class="summary-empty">No hay horarios disponibles para esta fecha</p>';
@@ -335,7 +377,7 @@ window.selectTime = function(time, el) {
 };
 
 // ── STEP 4: Confirmation ──
-function renderConfirmation() {
+async function renderConfirmation() {
   const s = state.selectedService;
   const p = state.selectedProfessional;
   const d = state.selectedDate;
@@ -352,6 +394,24 @@ function renderConfirmation() {
   document.getElementById('confTime').textContent = state.selectedTime || '-';
   document.getElementById('confDuration').textContent = s ? `${s.duration_min} minutos` : '-';
   document.getElementById('confPrice').textContent = s ? `$${(s.price || 0).toLocaleString('es-CL')} CLP` : '-';
+
+  // Check auth to hide guest contact form if logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  const guestContact = document.getElementById('guestContact');
+  if (guestContact) {
+    guestContact.style.display = session ? 'none' : 'block';
+
+    // Disable inputs when hidden to prevent HTML5 validation issues
+    const inputs = guestContact.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+      if (session) {
+        input.disabled = true;
+        input.removeAttribute('required');
+      } else {
+        input.disabled = false;
+      }
+    });
+  }
 }
 
 function setupConfirmButton() {

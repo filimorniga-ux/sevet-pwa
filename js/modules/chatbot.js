@@ -15,7 +15,8 @@ function esc(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;') : '';
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;') : '';
 }
 
 // ── Format AI response text ──
@@ -112,6 +113,10 @@ window.aiSend = async function() {
     appendMessage('bot', reply);
     chatHistory.push({ role: 'assistant', content: reply });
 
+    // Prevent memory leaks by limiting history array
+    if (chatHistory.length > MAX_HISTORY * 2) {
+      chatHistory = chatHistory.slice(-(MAX_HISTORY * 2));
+    }
   } catch (err) {
     typingEl.remove();
     console.error('Chat AI error:', err);
