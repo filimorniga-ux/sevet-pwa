@@ -253,6 +253,12 @@
       adminProfile = profile;
       document.getElementById('adminGreeting').textContent =
         `Bienvenido, ${profile.full_name} — Panel de Control`;
+
+      if (adminProfile.role === 'receptionist') {
+        const addBtn = document.querySelector('button[onclick="showStaffForm()"]');
+        if (addBtn) addBtn.style.display = 'none';
+      }
+
       loadOverview();
     }
     initAdmin();
@@ -699,6 +705,8 @@
       const roleColors = { admin: '#8b2d8b', owner: '#8b2d8b', vet: '#3b82f6', groomer: '#f59e0b', receptionist: '#16a34a', client: '#6b7280' };
       const roleLabels = { admin: 'Admin', owner: 'Director', vet: 'Veterinario', groomer: 'Peluquero', receptionist: 'Recepcionista', client: 'Cliente' };
 
+      const isAdminOrOwner = ['admin', 'owner'].includes(adminProfile?.role);
+
       container.innerHTML = staffData.map(u => {
         const isActive = u.is_active !== false;
         const age = u.birth_date ? Math.floor((Date.now() - new Date(u.birth_date)) / 31557600000) + ' años' : '';
@@ -712,8 +720,8 @@
               ${age ? `<div style="font-size:0.72rem;color:var(--gray-400)">${age}</div>` : ''}
             </div>
             <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
-            <span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;cursor:pointer" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">${isActive ? '● Activo':'● Inactivo'}</span>
-            <button onclick="editStaff('${u.id}')" class="btn-back" style="padding:0.3rem 0.6rem;font-size:0.78rem">✏️ Editar</button>
+            ${isAdminOrOwner ? `<span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;cursor:pointer" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">${isActive ? '● Activo':'● Inactivo'}</span>` : `<span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;">${isActive ? '● Activo':'● Inactivo'}</span>`}
+            ${isAdminOrOwner ? `<button onclick="editStaff('${u.id}')" class="btn-back" style="padding:0.3rem 0.6rem;font-size:0.78rem">✏️ Editar</button>` : ''}
           </div>
         `;
       }).join('');
