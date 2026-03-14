@@ -162,19 +162,40 @@
         completada: '#16a34a', cancelada: '#ef4444'
       };
 
+      const escapeHTML = (str) => {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+
       body.innerHTML = data.map(a => {
         const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+
+        const safePetName = escapeHTML(a.pets?.name || a.guest_pet_name || 'N/A');
+        const safePetSpecies = escapeHTML(a.pets?.species || '');
+        const safeGuestName = escapeHTML(a.guest_name || '');
+
         const petLabel = a.pets?.name
-          ? `${a.pets.name}${a.pets?.species ? ` (${a.pets.species})` : ''}`
-          : `${a.guest_pet_name || 'N/A'}${a.guest_name ? ` · Tutor: ${a.guest_name}` : ''}`;
+          ? `${safePetName}${safePetSpecies ? ` (${safePetSpecies})` : ''}`
+          : `${safePetName}${safeGuestName ? ` · Tutor: ${safeGuestName}` : ''}`;
+
+        const safeIcon = escapeHTML(a.services?.icon || '🩺');
+        const safeServiceName = escapeHTML(a.services?.name || a.service_type);
+        const safeVetName = escapeHTML(a.profiles?.full_name || 'Sin asignar');
+        const safeNotes = escapeHTML(a.notes || '');
+
         return `
           <tr>
             <td>${time}</td>
-            <td>${a.services?.icon || '🩺'} ${a.services?.name || a.service_type}</td>
+            <td>${safeIcon} ${safeServiceName}</td>
             <td>${petLabel}</td>
-            <td>${a.profiles?.full_name || 'Sin asignar'}</td>
+            <td>${safeVetName}</td>
             <td><span style="color:${statusColors[a.status]};font-weight:700">${a.status}</span></td>
-            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.notes || ''}">${a.notes || '-'}</td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
               <select onchange="changeStatus('${a.id}', this.value)" style="padding:0.3rem;border-radius:4px;border:1px solid #ccc;font-size:0.8rem">
                 <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
