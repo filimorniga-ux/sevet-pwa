@@ -24,12 +24,20 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── LOADER ──
+// ── LOADER (only on first visit per session) ──
 (function runLoader() {
   const bar = document.getElementById('loaderBar');
   const dog = document.getElementById('loaderDog');
   const loader = document.getElementById('loader');
   if (!bar || !dog || !loader) { initApp(); return; }
+
+  // Skip loader if already shown this session
+  if (sessionStorage.getItem('sevet_loaded')) {
+    loader.style.display = 'none';
+    initApp();
+    return;
+  }
+
   let progress = 0;
   const interval = setInterval(() => {
     progress += Math.random() * 15 + 5;
@@ -39,7 +47,11 @@ if ('serviceWorker' in navigator) {
     if (progress >= 100) {
       setTimeout(() => {
         loader.classList.add('fade-out');
-        setTimeout(() => { loader.style.display = 'none'; initApp(); }, 650);
+        setTimeout(() => {
+          loader.style.display = 'none';
+          sessionStorage.setItem('sevet_loaded', '1');
+          initApp();
+        }, 650);
       }, 400);
     }
   }, 120);
