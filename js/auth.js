@@ -156,13 +156,16 @@ function updateNavbarForRole(profile) {
     const insertBefore = loginItem || ctaItem || null;
 
     roleLinks.forEach(link => {
-      const li = document.createElement('li');
-      li.className = 'nav-role-item';
-      li.innerHTML = `<a href="${link.href}">${link.label}</a>`;
-      if (insertBefore) {
-        navLinks.insertBefore(li, insertBefore);
-      } else {
-        navLinks.appendChild(li);
+      const exists = Array.from(navLinks.querySelectorAll('a')).some(a => a.getAttribute('href') === link.href);
+      if (!exists) {
+        const li = document.createElement('li');
+        li.className = 'nav-role-item';
+        li.innerHTML = `<a href="${link.href}">${link.label}</a>`;
+        if (insertBefore) {
+          navLinks.insertBefore(li, insertBefore);
+        } else {
+          navLinks.appendChild(li);
+        }
       }
     });
 

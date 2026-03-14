@@ -32,7 +32,7 @@ if ('serviceWorker' in navigator) {
   if (!bar || !dog || !loader) { initApp(); return; }
 
   // Skip loader if already shown this session
-  if (sessionStorage.getItem('sevet_loaded')) {
+  if (document.cookie.includes('sevet_loaded=1')) {
     loader.style.display = 'none';
     initApp();
     return;
@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
         loader.classList.add('fade-out');
         setTimeout(() => {
           loader.style.display = 'none';
-          sessionStorage.setItem('sevet_loaded', '1');
+          document.cookie = "sevet_loaded=1; path=/; SameSite=Lax";
           initApp();
         }, 650);
       }, 400);
