@@ -100,6 +100,152 @@ Para que el sistema funcione bajo **su marca y sus cuentas**, necesitamos que us
 
 ---
 
+## 3B. Información requerida del cliente para configuración
+
+Esta sección debe ser completada por el cliente antes del inicio de la puesta en marcha. La información se usará para configurar el **chatbot IA, el panel de servicios, el contenido del sitio y las notificaciones automáticas de WhatsApp**.
+
+> [!IMPORTANT]
+> Sin esta información no podemos configurar el chatbot, los precios reales ni las notificaciones. Mientras no esté completa, el sistema funcionará con datos de ejemplo.
+
+---
+
+### 🕐 Horarios y Atención
+
+| Pregunta | Respuesta del cliente |
+| --- | --- |
+| ¿Días de atención? (ej: Lunes a Viernes) | |
+| ¿Horario de apertura? (ej: 09:00) | |
+| ¿Horario de cierre? (ej: 00:00 / medianoche) | |
+| ¿Atienden sábados? ¿En qué horario? | |
+| ¿Atienden domingos o festivos? | |
+| ¿La telemedicina tiene horario diferente al presencial? | |
+| ¿Requieren cita previa o también atienden sin hora? | |
+| ¿Cuánto tiempo promedio dura una consulta general? | |
+
+---
+
+### 💰 Precios y Servicios
+
+> Completa la tabla con todos los servicios y sus precios actuales. Si el precio varía por tamaño de mascota u otro factor, indicarlo en la columna de observaciones.
+
+| Servicio | Precio CLP | Duración estimada | Observaciones |
+| --- | --- | --- | --- |
+| Consulta general | | | |
+| Consulta de urgencia | | | |
+| Vacunación (perro) | | | |
+| Vacunación (gato) | | | |
+| Desparasitación | | | |
+| Cirugía menor | | | |
+| Cirugía mayor | | | |
+| Esterilización (hembra) | | | |
+| Esterilización (macho) | | | |
+| Telemedicina | | | |
+| Peluquería básica (perro pequeño) | | | |
+| Peluquería básica (perro mediano) | | | |
+| Peluquería básica (perro grande) | | | |
+| Peluquería felina | | | |
+| Control de peso | | | |
+| Radiografía | | | |
+| Ecografía / Ultrasonido | | | |
+| Examen de sangre | | | |
+| Hospitalización (por día) | | | |
+| Guardería (por día) | | | |
+| Otros servicios (agregar filas) | | | |
+
+---
+
+### 🐾 Especialidades y Capacidades
+
+| Pregunta | Respuesta |
+| --- | --- |
+| ¿Qué especies atienden? (perros, gatos, conejos, aves, reptiles...) | |
+| ¿Tienen especialista en cardiología? | |
+| ¿Tienen especialista en dermatología? | |
+| ¿Hacen cirugías de alta complejidad en la misma clínica? | |
+| ¿Tienen servicio de hospitalización? ¿Cuántos cupos? | |
+| ¿Hacen exámenes de laboratorio in-situ o los envían a externo? | |
+| ¿Tienen radiografías en la clínica? | |
+| ¿Tienen ecógrafo? | |
+| ¿Tienen farmacia propia con medicamentos veterinarios? | |
+
+---
+
+### 💳 Pagos y Comodidades
+
+| Pregunta | Respuesta |
+| --- | --- |
+| ¿Qué métodos de pago aceptan? (efectivo, tarjeta, WebPay, transferencia...) | |
+| ¿Tienen cuotas o financiamiento? | |
+| ¿Tienen convenio con seguros de mascotas? ¿Cuáles? | |
+| ¿Tienen estacionamiento propio? ¿Es gratuito? | |
+| ¿Cómo llegar en transporte público? (línea de metro / micro) | |
+| ¿Hay acceso para personas con movilidad reducida? | |
+
+---
+
+### 📋 Vacunas y Protocolos
+
+| Pregunta | Respuesta |
+| --- | --- |
+| ¿Qué vacunas aplican para perros? (ej: Polivalente 5en1, Rabia, Bordetella...) | |
+| ¿Qué vacunas aplican para gatos? (ej: Triple felina, Leucemia, Rabia...) | |
+| ¿Entregan libreta/carnet de vacunación? | |
+| ¿Tienen plan de vacunación anual con precio especial? | |
+| ¿Requieren que la mascota esté desparasitada para vacunar? | |
+| ¿Con qué frecuencia recomiendan la desparasitación? | |
+
+---
+
+### 📸 Contenido Visual y Marca
+
+| Recurso | Estado | Observaciones |
+| --- | --- | --- |
+| Logo principal (PNG fondo transparente) | ☐ Pendiente / ☐ Entregado | |
+| Logo versión cuadrada (para ícono app) | ☐ Pendiente / ☐ Entregado | |
+| Fotos del equipo profesional (con nombres y cargos) | ☐ Pendiente / ☐ Entregado | |
+| Fotos del interior de la clínica | ☐ Pendiente / ☐ Entregado | |
+| Fotos del exterior / fachada | ☐ Pendiente / ☐ Entregado | |
+| Video institucional o de redes sociales | ☐ Pendiente / ☐ Entregado | |
+| Paleta de colores oficial (o referencia a usar) | ☐ Pendiente / ☐ Entregado | |
+| Tipografía oficial (si la hay) | ☐ Pendiente / ☐ Entregado | |
+
+---
+
+### 👥 Equipo de la Clínica
+
+> Para mostrar en el sitio y configurar los perfiles del sistema
+
+| Nombre completo | Cargo / Especialidad | ¿Aparece en el sitio? |
+| --- | --- | --- |
+| Dr. Alberto Sánchez | Director Médico | Sí |
+| | | |
+| | | |
+| | | |
+
+---
+
+### 💬 FAQ — Preguntas frecuentes de sus clientes
+
+> Estas respuestas se cargarán directamente en el chatbot. Si hay preguntas que los clientes hacen repetidamente, agrégalas aquí con la respuesta exacta que quieres que el bot entregue.
+
+| Pregunta frecuente | Respuesta ideal |
+| --- | --- |
+| ¿Atienden urgencias en la noche? | |
+| ¿Puedo ir sin cita previa? | |
+| ¿Cuánto cuesta una consulta? | |
+| ¿Qué debo llevar a la primera consulta? | |
+| ¿La clínica hace seguimiento post-operatorio? | |
+| ¿Tienen servicio a domicilio? | |
+| ¿Qué hago si mi mascota tiene una emergencia en la madrugada? | |
+| (Agregar más según experiencia real) | |
+
+---
+
+> [!NOTE]
+> Una vez completada esta tabla, la información se cargará en el sistema en un plazo de **2-3 días hábiles**. El chatbot quedará actualizado con datos reales de la clínica, los precios del panel administrativo reflejarán los valores correctos y las notificaciones de WhatsApp usarán los datos actualizados.
+
+---
+
 ## 4. Propuesta Económica
 
 ### Opción A — Entrega del proyecto (sin mantenimiento)
