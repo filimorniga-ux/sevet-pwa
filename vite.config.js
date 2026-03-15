@@ -26,6 +26,7 @@ export default defineConfig({
         quienesSomos: resolve(__dirname, 'pages/quienes-somos.html'),
         miAgenda: resolve(__dirname, 'pages/mi-agenda.html'),
         gestionCitas: resolve(__dirname, 'pages/gestion-citas.html'),
+        completarPerfil: resolve(__dirname, 'pages/completar-perfil.html'),
       },
     },
   },
