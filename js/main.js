@@ -65,7 +65,17 @@ if ('serviceWorker' in navigator) {
 
 // ── INICIALIZAR APP ──
 async function initApp() {
+  // Inicializaciones puramente visuales que no requieren auth
+  initParticles();
+  initNavScroll();
+  initHeroSlider();
+  initScrollReveal();
+  initCounters();
+  initComparison();
+
   await initAuth(); // Esperar sesión antes de renderizar navbar
+
+  // Módulos que pueden requerir o usar estado de sesión
   // initAgendamiento(); // disabled — booking.js is the active engine
   initMiMascota();
   initPeluqueria();
@@ -74,12 +84,6 @@ async function initApp() {
   initTelemedicina();
   initHistorial();
   initImagenes();
-  initParticles();
-  initNavScroll();
-  initHeroSlider();
-  initScrollReveal();
-  initCounters();
-  initComparison();
 }
 
 // ── HUELLITAS FLOTANTES 🐾 ──

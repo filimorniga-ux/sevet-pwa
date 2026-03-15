@@ -10,6 +10,16 @@ let currentUser = null;
 let currentProfile = null;
 let initialized = false;
 
+function escapeHtml(unsafe) {
+  if (unsafe == null) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // ── Role config ──
 const ROLE_CONFIG = {
   client:       { label: 'Dueño/a',        home: '/pages/mi-mascota.html',   icon: '🐕', color: '#3b82f6' },
@@ -32,7 +42,7 @@ export async function initAuth() {
     if (session?.user) {
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
-      updateNavbarForRole(currentProfile);
+      updateNavbarForRole(currentProfile, currentUser);
       document.dispatchEvent(new CustomEvent('auth:ready', {
         detail: { user: currentUser, profile: currentProfile }
       }));
@@ -46,10 +56,11 @@ export async function initAuth() {
 
   // 2) Escuchar cambios dinámicos (login/logout en vivo)
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if (['INITIAL_SESSION', 'SIGNED_IN', 'PASSWORD_RECOVERY'].includes(event) && session?.user) {
+      if (currentUser?.id === session.user.id && event === 'INITIAL_SESSION') return;
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
-      updateNavbarForRole(currentProfile);
+      updateNavbarForRole(currentProfile, currentUser);
       document.dispatchEvent(new CustomEvent('auth:login', {
         detail: { user: currentUser, profile: currentProfile }
       }));
@@ -99,29 +110,43 @@ export async function signOut() {
 
 function _cleanStorage() {
   try {
-    Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
-    Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-') || k === 'skipProfile') sessionStorage.removeItem(k); });
+    const lKeys = Object.keys(localStorage);
+    for (let i = lKeys.length - 1; i >= 0; i--) {
+      if (lKeys[i].startsWith('sb-')) localStorage.removeItem(lKeys[i]);
+    }
+    const sKeys = Object.keys(sessionStorage);
+    for (let i = sKeys.length - 1; i >= 0; i--) {
+      if (sKeys[i].startsWith('sb-') || sKeys[i] === 'skipProfile') sessionStorage.removeItem(sKeys[i]);
+    }
   } catch (err) {}
 }
 
 // ── Logout global (llamable desde HTML inline) ──
 window.signOutUser = async function(e) {
   if (e) e.preventDefault();
-  await signOut();
-  window.location.replace('/');
+  try {
+    await signOut();
+  } finally {
+    window.location.replace('/');
+  }
 };
 
 // ── Obtener perfil ──
 async function fetchProfile(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-  if (error && error.code !== 'PGRST116' && error.name !== 'AbortError') {
-    console.warn('[auth] Perfil no encontrado:', error.message);
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    if (error && error.code !== 'PGRST116' && error.name !== 'AbortError') {
+      console.warn('[auth] Perfil no encontrado:', error.message);
+    }
+    return data || null;
+  } catch (err) {
+    console.warn('[auth] Error de red obteniendo perfil:', err);
+    return null;
   }
-  return data || null;
 }
 
 // ── Page Guard ──
@@ -147,7 +172,7 @@ export function redirectByRole(role) {
 }
 
 // ── Dynamic Navbar Update + Session Pill ──
-function updateNavbarForRole(profile) {
+function updateNavbarForRole(profile, user = null) {
   const navLinks = document.getElementById('navLinks');
   if (!navLinks) return;
 
@@ -157,16 +182,25 @@ function updateNavbarForRole(profile) {
   // Limpiar session pill previa
   document.getElementById('sessionPill')?.remove();
 
-  if (!profile) {
+  if (!profile && !user) {
     // Sin sesión: asegurarse de que el botón de login es visible
     const loginBtn = navLinks.querySelector('.nav-login-btn');
     if (loginBtn) loginBtn.style.display = '';
+    const ctaBtn = navLinks.querySelector('.nav-cta');
+    if (ctaBtn && ctaBtn.parentElement) ctaBtn.parentElement.style.display = '';
     return;
   }
 
-  const role = profile.role;
-  const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
-  const firstName = (profile.full_name || '').split(' ')[0] || 'Usuario';
+  if (!profile && user) {
+    profile = { role: 'client', full_name: user.email };
+  }
+
+  const role = escapeHtml(profile.role);
+  const config = ROLE_CONFIG[profile.role] || ROLE_CONFIG.client;
+  const firstName = escapeHtml((profile.full_name || '').split(' ')[0] || 'Usuario');
+  const safeHome = escapeHtml(config.home);
+  const safeIcon = escapeHtml(config.icon);
+  const safeLabel = escapeHtml(config.label);
 
   // ── Inyectar links de rol en el menú ──
   const roleLinks = [];
@@ -203,13 +237,13 @@ function updateNavbarForRole(profile) {
   pill.id = 'sessionPill';
   pill.className = 'nav-role-item session-pill-wrapper';
   pill.innerHTML = `
-    <div class="session-pill" data-role="${role}" style="--role-color:${config.color}">
-      <span class="sp-avatar">${config.icon}</span>
+    <div class="session-pill" data-role="${role}" style="--role-color:${escapeHtml(config.color)}">
+      <span class="sp-avatar">${safeIcon}</span>
       <div class="sp-info">
         <span class="sp-name">${firstName}</span>
-        <span class="sp-role">${config.label}</span>
+        <span class="sp-role">${safeLabel}</span>
       </div>
-      <a href="${config.home}" class="sp-panel-btn" title="Ir a mi panel">Panel</a>
+      <a href="${safeHome}" class="sp-panel-btn" title="Ir a mi panel">Panel</a>
       <button class="sp-logout-btn" onclick="signOutUser(event)" title="Cerrar sesión" aria-label="Cerrar sesión">
         &#x2715;
       </button>
