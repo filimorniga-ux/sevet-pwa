@@ -74,13 +74,20 @@ async function sendWhatsAppTemplate(
   }
 }
 
-// getDynamicOffset removed — not needed for date-only comparisons
+function getDynamicOffset(): string {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santiago',
+    timeZoneName: 'longOffset'
+  });
+  const parts = formatter.formatToParts(new Date());
+  const tzPart = parts.find(p => p.type === 'timeZoneName');
+  return tzPart?.value?.replace('GMT', '') || '-03:00';
+}
 
 function getTodayAndFutureDates(): {
   todayStr: string;
   in7days: string;
   in14days: string;
-  dateLabel: string;
 } {
   const now = new Date();
 
@@ -104,13 +111,7 @@ function getTodayAndFutureDates(): {
   const in7days = `${d7.getFullYear()}-${String(d7.getMonth() + 1).padStart(2, '0')}-${String(d7.getDate()).padStart(2, '0')}`;
   const in14days = `${d14.getFullYear()}-${String(d14.getMonth() + 1).padStart(2, '0')}-${String(d14.getDate()).padStart(2, '0')}`;
 
-  const labelFormatter = new Intl.DateTimeFormat('es-CL', {
-    timeZone: 'America/Santiago',
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-  const dateLabel = labelFormatter.format(now);
-
-  return { todayStr, in7days, in14days, dateLabel };
+  return { todayStr, in7days, in14days };
 }
 
 function formatDate(dateStr: string): string {
@@ -159,9 +160,9 @@ Deno.serve(async (req: Request) => {
       .from('vaccinations')
       .select(`
         id, vaccine_name, next_due_date,
-        pet:pets!vaccinations_pet_id_fkey(
+        pet:pets!inner(
           id, name,
-          owner:profiles!pets_owner_id_fkey(full_name, phone, whatsapp)
+          owner:profiles!inner(full_name, phone, whatsapp)
         )
       `)
       .gte('next_due_date', todayStr)
@@ -193,7 +194,7 @@ Deno.serve(async (req: Request) => {
           .select('id')
           .eq('notification_type', 'reminder_vaccine')
           .eq('recipient_phone', ownerPhone)
-          .gte('created_at', todayStr + 'T00:00:00')
+          .gte('created_at', todayStr + 'T00:00:00' + getDynamicOffset())
           .neq('status', 'failed')
           .limit(1);
 
@@ -216,7 +217,11 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (insertErr) {
-          results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'skipped' });
+          if (insertErr.code === '23505') {
+            results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'skipped' });
+            continue;
+          }
+          console.error(`[check-medical-reminders] Insert error for ${ownerName}:`, insertErr);
           continue;
         }
 
