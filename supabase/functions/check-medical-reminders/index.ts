@@ -88,7 +88,6 @@ function getTodayAndFutureDates(): {
   todayStr: string;
   in7days: string;
   in14days: string;
-  dateLabel: string;
 } {
   const now = new Date();
 
@@ -112,13 +111,7 @@ function getTodayAndFutureDates(): {
   const in7days = `${d7.getFullYear()}-${String(d7.getMonth() + 1).padStart(2, '0')}-${String(d7.getDate()).padStart(2, '0')}`;
   const in14days = `${d14.getFullYear()}-${String(d14.getMonth() + 1).padStart(2, '0')}-${String(d14.getDate()).padStart(2, '0')}`;
 
-  const labelFormatter = new Intl.DateTimeFormat('es-CL', {
-    timeZone: 'America/Santiago',
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-  const dateLabel = labelFormatter.format(now);
-
-  return { todayStr, in7days, in14days, dateLabel };
+  return { todayStr, in7days, in14days };
 }
 
 function formatDate(dateStr: string): string {
@@ -167,9 +160,9 @@ Deno.serve(async (req: Request) => {
       .from('vaccinations')
       .select(`
         id, vaccine_name, next_due_date,
-        pet:pets!vaccinations_pet_id_fkey(
+        pet:pets!inner(
           id, name,
-          owner:profiles!pets_owner_id_fkey(full_name, phone, whatsapp)
+          owner:profiles!inner(full_name, phone, whatsapp)
         )
       `)
       .gte('next_due_date', todayStr)
@@ -201,7 +194,7 @@ Deno.serve(async (req: Request) => {
           .select('id')
           .eq('notification_type', 'reminder_vaccine')
           .eq('recipient_phone', ownerPhone)
-          .gte('created_at', todayStr + 'T00:00:00')
+          .gte('created_at', todayStr + 'T00:00:00' + getDynamicOffset())
           .neq('status', 'failed')
           .limit(1);
 
@@ -224,7 +217,12 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (insertErr) {
-          results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'skipped' });
+          if (insertErr.code === '23505') {
+            results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'skipped' });
+          } else {
+            console.error('[check-medical-reminders] Error inserting log for vaccine:', insertErr);
+            results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'failed', error: String(insertErr.message) });
+          }
           continue;
         }
 
@@ -272,8 +270,8 @@ Deno.serve(async (req: Request) => {
       `)
       .eq('service_type', 'control')
       .in('status', ['pendiente', 'confirmada'])
-      .gte('date_time', todayStr + 'T00:00:00')
-      .lte('date_time', in7days + 'T23:59:59');
+      .gte('date_time', todayStr + 'T00:00:00' + getDynamicOffset())
+      .lte('date_time', in7days + 'T23:59:59' + getDynamicOffset());
 
     if (ctrlErr) {
       console.error('[check-medical-reminders] Error fetching controls:', ctrlErr);
@@ -322,7 +320,12 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (insertErr) {
-          results.push({ type: 'control', pet: petName, owner: clientName, status: 'skipped' });
+          if (insertErr.code === '23505') {
+            results.push({ type: 'control', pet: petName, owner: clientName, status: 'skipped' });
+          } else {
+            console.error('[check-medical-reminders] Error inserting log for control:', insertErr);
+            results.push({ type: 'control', pet: petName, owner: clientName, status: 'failed', error: String(insertErr.message) });
+          }
           continue;
         }
 
