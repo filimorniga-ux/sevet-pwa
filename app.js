@@ -255,8 +255,8 @@ function toggleAI() {
 }
 
 const aiResponses = {
-  default: '¡Gracias por tu consulta! Para atención inmediata, llama al +56 9 8419 6310 o al +56 2 2773 1554. El Dr. Sánchez y su equipo están disponibles hasta la 01:00 AM. 🐾',
-  horario: '📅 Atendemos de <strong>Lunes a Viernes hasta la 01:00 AM</strong>. Para urgencias nocturnas, llama directamente al +56 9 8419 6310.',
+  default: '¡Gracias por tu consulta! Para atención inmediata, llama al +56 9 8419 6310 o al +56 2 2773 1554. El Dr. Sánchez y su equipo están disponibles hasta medianoche. 🐾',
+  horario: '📅 Atendemos de <strong>Lunes a Viernes hasta medianoche</strong>. Para urgencias nocturnas, llama directamente al +56 9 8419 6310.',
   precio: '💰 Nuestras tarifas varían según el tipo de consulta. Te recomendamos llamar al +56 2 2773 1554 para obtener información actualizada sobre precios.',
   urgencia: '🚨 <strong>¡Llama ahora!</strong> +56 9 8419 6310. Estamos ubicados en Av. San Pablo 6106, Lo Prado. El Dr. Alberto Sánchez está disponible.',
 };
