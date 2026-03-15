@@ -241,10 +241,12 @@
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
+    import { ROLE_CONFIG, isProfileComplete } from '/js/auth.js';
 
     // ── State ──
     let currentProfile = null;
     let currentUserId = null;
+    let currentSession = null;
 
     // ── Init: load session + profile ──
     async function init() {
@@ -254,6 +256,7 @@
         return;
       }
 
+      currentSession = session;
       currentUserId = session.user.id;
       const meta = session.user.user_metadata || {};
 
@@ -282,16 +285,10 @@
       if (profile?.address) document.getElementById('addressInput').value = profile.address;
 
       // If profile is already complete, redirect
-      if (profile?.phone || profile?.whatsapp) {
-        const ROLE_HOMES = {
-          client: '/pages/mi-mascota.html',
-          vet: '/pages/mi-agenda.html',
-          groomer: '/pages/mi-agenda.html',
-          receptionist: '/pages/gestion-citas.html',
-          admin: '/pages/admin.html',
-          owner: '/pages/admin.html',
-        };
-        window.location.href = ROLE_HOMES[profile.role] || '/';
+      if (isProfileComplete(profile)) {
+        const role = profile?.role || 'client';
+        const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
+        window.location.href = config.home;
         return;
       }
     }
@@ -379,7 +376,15 @@
       btn.disabled = true;
       btn.textContent = '⏳ Guardando...';
 
+      const fallbackName = currentSession?.user?.user_metadata?.full_name ||
+                           currentSession?.user?.email?.split('@')[0] ||
+                           'Usuario';
+
       const updates = {
+        user_id: currentUserId,
+        full_name: currentProfile?.full_name || fallbackName,
+        email: currentProfile?.email || currentSession?.user?.email,
+        role: currentProfile?.role || 'client',
         whatsapp,
         phone: phone || whatsapp, // If no separate phone, use WhatsApp
         updated_at: new Date().toISOString(),
@@ -388,8 +393,7 @@
       if (address) updates.address = address;
 
       const { error } = await supabase.from('profiles')
-        .update(updates)
-        .eq('user_id', currentUserId);
+        .upsert(updates, { onConflict: 'user_id' });
 
       if (error) {
         showMsg('Error al guardar: ' + error.message, 'error');
@@ -400,32 +404,19 @@
 
       showMsg('✅ ¡Perfil actualizado! Redirigiendo...', 'success');
 
-      const ROLE_HOMES = {
-        client: '/pages/mi-mascota.html',
-        vet: '/pages/mi-agenda.html',
-        groomer: '/pages/mi-agenda.html',
-        receptionist: '/pages/gestion-citas.html',
-        admin: '/pages/admin.html',
-        owner: '/pages/admin.html',
-      };
       const role = currentProfile?.role || 'client';
+      const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
       setTimeout(() => {
-        window.location.href = ROLE_HOMES[role] || '/';
+        window.location.href = config.home;
       }, 1000);
     });
 
     // ── Skip ──
     document.getElementById('btnSkip').addEventListener('click', () => {
-      const ROLE_HOMES = {
-        client: '/pages/mi-mascota.html',
-        vet: '/pages/mi-agenda.html',
-        groomer: '/pages/mi-agenda.html',
-        receptionist: '/pages/gestion-citas.html',
-        admin: '/pages/admin.html',
-        owner: '/pages/admin.html',
-      };
+      sessionStorage.setItem('skipProfile', 'true');
       const role = currentProfile?.role || 'client';
-      window.location.href = ROLE_HOMES[role] || '/';
+      const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
+      window.location.href = config.home;
     });
   </script>
 </body>

@@ -172,6 +172,7 @@
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
+    import { ROLE_CONFIG, isProfileComplete } from '/js/auth.js';
     import {
       getRoleFieldVisibility,
       mapRoleSelection,
@@ -239,31 +240,34 @@
     }
 
     // ── REDIRECT ──
-    const ROLE_HOMES = {
-      client: '/pages/mi-mascota.html',
-      vet: '/pages/mi-agenda.html',
-      groomer: '/pages/mi-agenda.html',
-      receptionist: '/pages/gestion-citas.html',
-      admin: '/pages/admin.html',
-      owner: '/pages/admin.html',
-    };
     function redirectByRole(role) {
-      window.location.href = ROLE_HOMES[role] || '/';
+      const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
+      window.location.href = config.home;
     }
 
     // ── CHECK EXISTING SESSION ──
     async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase.from('profiles')
-          .select('*').eq('user_id', session.user.id).single();
-        if (profile) {
-          if (!profile.phone && !profile.whatsapp) {
-            window.location.href = '/pages/completar-perfil.html';
-          } else {
-            redirectByRole(profile.role);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: profile, error } = await supabase.from('profiles')
+            .select('*').eq('user_id', session.user.id).single();
+
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error);
+            return;
+          }
+
+          if (profile) {
+            if (!isProfileComplete(profile)) {
+              window.location.href = '/pages/completar-perfil.html';
+            } else {
+              redirectByRole(profile.role);
+            }
           }
         }
+      } catch (err) {
+        console.error('Check auth error:', err);
       }
     }
     checkAuth();
@@ -297,9 +301,11 @@
 
       setLoading('btnLogin', true);
 
+      window._isManualLogin = true;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
+        window._isManualLogin = false;
         setLoading('btnLogin', false);
         // Translate common Supabase errors
         if (error.message.includes('Invalid login')) {
@@ -313,25 +319,35 @@
       }
 
       // Get or create profile
-      const { data: profile } = await supabase.from('profiles')
-        .select('*').eq('user_id', data.user.id).single();
+      try {
+        const { data: profile, error: profileError } = await supabase.from('profiles')
+          .select('*').eq('user_id', data.user.id).single();
 
-      if (!profile) {
-        // First login with email — create client profile
-        await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          full_name: data.user.user_metadata?.full_name || email.split('@')[0],
-          email: data.user.email,
-          role: 'client'
-        });
-        showMessage('¡Bienvenido! Completa tu perfil...', 'success');
-        setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
-      } else if (!profile.phone && !profile.whatsapp) {
-        showMessage('¡Bienvenido! Completa tu perfil...', 'success');
-        setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
-      } else {
-        showMessage('¡Bienvenido de vuelta! Redirigiendo...', 'success');
-        setTimeout(() => redirectByRole(profile.role), 800);
+        if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Error fetching profile on login:', profileError);
+            showMessage('Error al cargar perfil. Reintenta.', 'error');
+            return;
+        }
+
+        if (!profile) {
+          // First login with email — create client profile
+          await supabase.from('profiles').insert({
+            user_id: data.user.id,
+            full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+            email: data.user.email,
+            role: 'client'
+          });
+          showMessage('¡Bienvenido! Completa tu perfil...', 'success');
+          setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
+        } else if (!isProfileComplete(profile)) {
+          showMessage('¡Bienvenido! Completa tu perfil...', 'success');
+          setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
+        } else {
+          showMessage('¡Bienvenido de vuelta! Redirigiendo...', 'success');
+          setTimeout(() => redirectByRole(profile.role), 800);
+        }
+      } catch (err) {
+          console.error('Login error:', err);
       }
     });
 
@@ -360,6 +376,7 @@
       const role = mapRoleSelection(selectedRole);
 
       setLoading('btnRegister', true);
+      window._isManualLogin = true;
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -373,6 +390,7 @@
       setLoading('btnRegister', false);
 
       if (error) {
+        window._isManualLogin = false;
         if (error.message.includes('already registered')) {
           showMessage('Este email ya está registrado. Intenta iniciar sesión.', 'error');
         } else {
@@ -494,25 +512,34 @@
 
     // ── HANDLE OAUTH REDIRECT CALLBACK ──
     supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const { data: profile } = await supabase.from('profiles')
-          .select('*').eq('user_id', session.user.id).single();
+      if (event === 'SIGNED_IN' && session && !window._isManualLogin) {
+        try {
+          const { data: profile, error } = await supabase.from('profiles')
+            .select('*').eq('user_id', session.user.id).single();
 
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            user_id: session.user.id,
-            full_name: session.user.user_metadata?.full_name || session.user.email,
-            email: session.user.email,
-            avatar_url: session.user.user_metadata?.avatar_url,
-            role: 'client'
-          });
-          // New profile — always go to complete profile
-          window.location.href = '/pages/completar-perfil.html';
-        } else if (!profile.phone && !profile.whatsapp) {
-          // Existing profile but incomplete
-          window.location.href = '/pages/completar-perfil.html';
-        } else {
-          redirectByRole(profile.role);
+          if (error && error.code !== 'PGRST116') {
+             console.error('Error fetching profile on SSO:', error);
+             return;
+          }
+
+          if (!profile) {
+            await supabase.from('profiles').insert({
+              user_id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              email: session.user.email,
+              avatar_url: session.user.user_metadata?.avatar_url,
+              role: 'client'
+            });
+            // New profile — always go to complete profile
+            window.location.href = '/pages/completar-perfil.html';
+          } else if (!isProfileComplete(profile)) {
+            // Existing profile but incomplete
+            window.location.href = '/pages/completar-perfil.html';
+          } else {
+            redirectByRole(profile.role);
+          }
+        } catch (err) {
+            console.error('SSO callback error:', err);
         }
       }
     });
