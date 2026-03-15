@@ -64,8 +64,8 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── INICIALIZAR APP ──
-function initApp() {
-  initAuth();
+async function initApp() {
+  await initAuth(); // Esperar sesión antes de renderizar navbar
   // initAgendamiento(); // disabled — booking.js is the active engine
   initMiMascota();
   initPeluqueria();
