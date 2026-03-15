@@ -196,6 +196,22 @@ function updateNavbarForRole(profile) {
   }
 }
 
+// ── Profile completeness check ──
+export function isProfileComplete(profile) {
+  if (!profile) return false;
+  return !!(profile.phone || profile.whatsapp);
+}
+
+export function checkAndRedirect(profile) {
+  if (!profile) return;
+  if (!isProfileComplete(profile)) {
+    window.location.href = '/pages/completar-perfil.html';
+    return;
+  }
+  const config = ROLE_CONFIG[profile.role] || ROLE_CONFIG.client;
+  window.location.href = config.home;
+}
+
 // ── Getters ──
 export function getUser() { return currentUser; }
 export function getProfile() { return currentProfile; }

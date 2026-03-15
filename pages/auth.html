@@ -256,8 +256,14 @@
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: profile } = await supabase.from('profiles')
-          .select('role').eq('user_id', session.user.id).single();
-        if (profile) redirectByRole(profile.role);
+          .select('*').eq('user_id', session.user.id).single();
+        if (profile) {
+          if (!profile.phone && !profile.whatsapp) {
+            window.location.href = '/pages/completar-perfil.html';
+          } else {
+            redirectByRole(profile.role);
+          }
+        }
       }
     }
     checkAuth();
@@ -308,7 +314,7 @@
 
       // Get or create profile
       const { data: profile } = await supabase.from('profiles')
-        .select('role').eq('user_id', data.user.id).single();
+        .select('*').eq('user_id', data.user.id).single();
 
       if (!profile) {
         // First login with email — create client profile
@@ -318,8 +324,11 @@
           email: data.user.email,
           role: 'client'
         });
-        showMessage('¡Bienvenido! Redirigiendo...', 'success');
-        setTimeout(() => redirectByRole('client'), 800);
+        showMessage('¡Bienvenido! Completa tu perfil...', 'success');
+        setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
+      } else if (!profile.phone && !profile.whatsapp) {
+        showMessage('¡Bienvenido! Completa tu perfil...', 'success');
+        setTimeout(() => window.location.href = '/pages/completar-perfil.html', 800);
       } else {
         showMessage('¡Bienvenido de vuelta! Redirigiendo...', 'success');
         setTimeout(() => redirectByRole(profile.role), 800);
@@ -487,7 +496,7 @@
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         const { data: profile } = await supabase.from('profiles')
-          .select('role').eq('user_id', session.user.id).single();
+          .select('*').eq('user_id', session.user.id).single();
 
         if (!profile) {
           await supabase.from('profiles').insert({
@@ -497,7 +506,11 @@
             avatar_url: session.user.user_metadata?.avatar_url,
             role: 'client'
           });
-          redirectByRole('client');
+          // New profile — always go to complete profile
+          window.location.href = '/pages/completar-perfil.html';
+        } else if (!profile.phone && !profile.whatsapp) {
+          // Existing profile but incomplete
+          window.location.href = '/pages/completar-perfil.html';
         } else {
           redirectByRole(profile.role);
         }
