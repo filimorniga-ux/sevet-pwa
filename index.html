@@ -213,7 +213,7 @@
         <span style="font-size:0.85rem;font-weight:700;color:var(--blue-600)">75%</span>
       </div>
       <div class="dash-progress-bar"><div class="dash-progress-fill"></div></div>
-      <a href="/assets/docs/Ficha_Control_SanAlberto.pdf" download class="btn-secondary" style="display:flex; width:100%; justify-content:center; margin-top:1.5rem; background:var(--blue-50); color:var(--blue-700); border-color:var(--blue-200);">
+      <a href="/assets/docs/Ficha_Control_SanAlberto.pdf" download target="_blank" rel="noopener" class="btn-secondary" style="display:flex; width:100%; justify-content:center; margin-top:1.5rem; background:var(--blue-50); color:var(--blue-700); border-color:var(--blue-200);">
         📄 Descargar Ficha de Control PDF
       </a>
     </div>
@@ -241,7 +241,7 @@
       </a>
     </div>
     <div class="vinipets-visual">
-       <img src="/assets/images/product-dog-food.png" alt="Productos Premium Vinipets" class="vinipets-img"/>
+       <img src="/assets/images/product-dog-food.png" alt="Productos Premium Vinipets" class="vinipets-img" loading="lazy"/>
     </div>
   </div>
 
@@ -548,10 +548,13 @@
       renderServices(cat === 'all' ? services : services.filter(s => s.category === cat));
     };
 
+    let servicesObserver = null;
+
     function renderServices(list) {
+      const spanClass = list.length === 1 ? 'span-12' : list.length === 2 ? 'span-6' : 'span-4';
       const formatPrice = (p) => (p !== null && p !== undefined && p !== '') ? '$' + Number(p).toLocaleString('es-CL') : '';
       grid.innerHTML = list.map((s, i) => `
-        <div class="bento-card span-4 reveal" style="--delay:${0.05 * i}s">
+        <div class="bento-card ${spanClass} reveal" style="--delay:${0.05 * i}s">
           <div class="card-overlay">
             <span class="card-icon">${esc(s.icon) || '🩺'}</span>
             <div>
@@ -567,17 +570,23 @@
       `).join('');
 
       // Observer dinámico para las tarjetas de servicios recién inyectadas
+      if (servicesObserver) {
+        servicesObserver.disconnect();
+      }
+
+      servicesObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const delay = parseFloat(getComputedStyle(entry.target).getPropertyValue('--delay') || '0');
+            setTimeout(() => entry.target.classList.add('visible'), delay * 1000);
+            servicesObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      // Allow DOM to update slightly before observing, matching previous behavior without memory leak
       setTimeout(() => {
-        const observer = new IntersectionObserver(entries => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const delay = parseFloat(getComputedStyle(entry.target).getPropertyValue('--delay') || '0');
-              setTimeout(() => entry.target.classList.add('visible'), delay * 1000);
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.12 });
-        grid.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        grid.querySelectorAll('.reveal').forEach(el => servicesObserver.observe(el));
       }, 50);
     }
     renderServices(services);
