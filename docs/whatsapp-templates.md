@@ -1,7 +1,7 @@
 # 📱 Plantillas WhatsApp — SEVET
 
 > Referencia rápida de todas las plantillas de mensaje de WhatsApp Business API.
-> **WABA ID:** `229745983408226`
+> **WABA ID:** `2297459834082260`
 > **Phone Number ID:** `1006914325847395`
 > **Número de prueba:** +1 555 140 2688
 
