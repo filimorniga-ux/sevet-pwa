@@ -14,12 +14,14 @@ const MAX_HISTORY = 10;
 let chatHistory = [];
 let isTyping = false;
 let userContext = null; // nombre + mascota del usuario logueado
+let userContextPromise = null;
 
 // ── Keywords que disparan el botón de agendar ──
 const BOOKING_KEYWORDS = [
   'agendar', 'agenda', 'reservar', 'cita', 'hora', 'turno',
   'quiero ir', 'necesito ir', 'cuándo puedo', 'cuando puedo',
-  'disponibilidad', 'appointment', 'consulta hoy', 'consulta mañana'
+  'disponibilidad', 'appointment', 'consulta hoy', 'consulta mañana',
+  'pedir hora', 'tomar hora', 'agendar hora'
 ];
 
 // ── Escape XSS ──
@@ -34,17 +36,32 @@ function esc(s) {
 
 // ── Detectar intención de agendar en texto ──
 function hasBookingIntent(text) {
-  const lower = text.toLowerCase();
-  return BOOKING_KEYWORDS.some(kw => lower.includes(kw));
+  // Usa una expresión regular con límites de palabra flexibles para evitar
+  // coincidencias parciales como "ahora" para "hora", pero permitiendo plurales
+  // y sufijos comunes en español (s, es, lo, la, me, te).
+  const keywordsPattern = BOOKING_KEYWORDS.join('|');
+  const regex = new RegExp(`\\b(${keywordsPattern})(s|es|lo|la|me|te)?\\b`, 'i');
+  return regex.test(text);
 }
 
 // ── Format AI response text ──
 function formatReply(text) {
-  return esc(text)
+  let html = esc(text)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>')
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--purple-600)">$1</a>')
-    .replace(/(\+?56[\s\-]?\d[\s\-]?\d{4}[\s\-]?\d{4})/g, '<a href="tel:$1" style="color:var(--purple-600)">$1</a>');
+    .replace(/\n/g, '<br>');
+
+  // Combina URLs y teléfonos en un solo replace para evitar XSS por reemplazos anidados
+  const combinedRegex = /(https?:\/\/[^\s<]+)|(\+?56[\s\-]?\d[\s\-]?\d{4}[\s\-]?\d{4})/g;
+  return html.replace(combinedRegex, (match, url, phone) => {
+    if (url) {
+      // url ya está escapada por esc()
+      return `<a href="${url}" target="_blank" rel="noopener" style="color:var(--purple-600)">${url}</a>`;
+    } else if (phone) {
+      const cleanPhone = phone.replace(/[\s\-]/g, '');
+      return `<a href="tel:${cleanPhone}" style="color:var(--purple-600)">${phone}</a>`;
+    }
+    return match;
+  });
 }
 
 // ── Append message to chat UI ──
@@ -62,7 +79,7 @@ function appendMessage(role, text, showBookingBtn = false) {
     const btn = document.createElement('div');
     btn.className = 'ai-booking-cta';
     btn.innerHTML = `
-      <a href="/pages/agendar.html" class="ai-booking-btn">
+      <a href="/pages/agendar.html" class="ai-booking-btn" aria-label="Agendar cita ahora">
         📅 Agendar cita ahora →
       </a>
     `;
@@ -81,28 +98,30 @@ function appendMessage(role, text, showBookingBtn = false) {
 // ── Cargar contexto del usuario logueado ──
 async function loadUserContext() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data?.session) return null;
+    const session = data.session;
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, role')
-      .eq('user_id', session.user.id)
-      .single();
+    // Cargar profile y mascotas en paralelo
+    const [profileRes, petsRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('user_id', session.user.id)
+        .single(),
+      supabase
+        .from('pets')
+        .select('name, species')
+        .eq('owner_id', session.user.id)
+        .limit(3)
+    ]);
 
-    if (!profile) return null;
-
-    // Buscar mascotas del usuario
-    const { data: pets } = await supabase
-      .from('pets')
-      .select('name, species')
-      .eq('owner_id', session.user.id)
-      .limit(3);
+    if (!profileRes.data) return null;
 
     return {
-      name: profile.full_name?.split(' ')[0] || 'amigo/a', // Solo primer nombre
-      role: profile.role,
-      pets: pets || [],
+      name: profileRes.data.full_name?.split(' ')[0] || 'amigo/a', // Solo primer nombre
+      role: profileRes.data.role,
+      pets: petsRes.data || [],
     };
   } catch {
     return null;
@@ -168,6 +187,11 @@ window.aiSend = async function () {
   messages.appendChild(typingEl);
   messages.scrollTop = messages.scrollHeight;
 
+  // Esperar a que se cargue el contexto del usuario si aún está pendiente
+  if (userContextPromise && !userContext) {
+    userContext = await userContextPromise;
+  }
+
   // Construir contexto personalizado si hay usuario logueado
   let contextMsg = text;
   if (userContext && chatHistory.length === 1) {
@@ -213,14 +237,17 @@ window.aiSend = async function () {
 
 // ── Init ──
 export async function initChatbot() {
-  // Cargar contexto del usuario (no bloquea la UI)
-  userContext = await loadUserContext();
+  // Iniciar la carga de contexto de forma no bloqueante
+  userContextPromise = loadUserContext();
 
-  // Personalizar saludo inicial
-  const welcomeEl = document.querySelector('#aiMessages .ai-msg.bot');
-  if (welcomeEl) {
-    welcomeEl.innerHTML = formatReply(buildWelcomeMessage(userContext));
-  }
+  // Cargar contexto del usuario y luego personalizar el saludo inicial
+  userContextPromise.then((ctx) => {
+    userContext = ctx;
+    const welcomeEl = document.querySelector('#aiMessages .ai-msg.bot');
+    if (welcomeEl) {
+      welcomeEl.innerHTML = formatReply(buildWelcomeMessage(ctx));
+    }
+  });
 
   // Wiring del input
   const input = document.getElementById('aiInput');
