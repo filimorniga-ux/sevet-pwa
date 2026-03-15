@@ -12,7 +12,8 @@
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** Al agendar cita
 
 **Cuerpo:**
-```
+
+```text
 🐾 *SEVET - Cita Confirmada*
 
 Hola {{1}}, te confirmamos tu cita para el servicio de {{2}}.
@@ -38,7 +39,8 @@ Hola {{1}}, te confirmamos tu cita para el servicio de {{2}}.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** pg_cron/Make 24h antes
 
 **Cuerpo:**
-```
+
+```text
 ⏰ *Recordatorio de Cita — SEVET*
 
 Hola {{1}}, te recordamos que mañana tienes una cita:
@@ -61,7 +63,8 @@ Si no puedes asistir, por favor avísanos con anticipación.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** pg_cron/Make 1h antes
 
 **Cuerpo:**
-```
+
+```text
 🔔 *Tu cita es en 1 hora — SEVET*
 
 Hola {{1}}, te recordamos que tu cita para {{2}} es hoy a las {{3}}.
@@ -79,7 +82,8 @@ Hola {{1}}, te recordamos que tu cita para {{2}} es hoy a las {{3}}.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** Al agendar (notifica a recepción)
 
 **Cuerpo:**
-```
+
+```text
 📋 *Nueva Cita Agendada*
 
 👤 *Cliente:* {{1}}
@@ -101,7 +105,8 @@ Agendada desde la web.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** Al agendar (notifica al profesional)
 
 **Cuerpo:**
-```
+
+```text
 📌 *Nueva cita asignada — SEVET*
 
 Tienes una nueva cita agendada:
@@ -122,7 +127,8 @@ Tienes una nueva cita agendada:
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** pg_cron diario 7:00 AM
 
 **Cuerpo:**
-```
+
+```text
 ☀️ *Buenos días, {{1}}*
 
 Tu agenda de hoy ({{2}}) tiene {{3}} cita(s):
@@ -141,7 +147,8 @@ Tu agenda de hoy ({{2}}) tiene {{3}} cita(s):
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** pg_cron diario 9:00 AM (14 días antes)
 
 **Cuerpo:**
-```
+
+```text
 💉 *Recordatorio de Vacuna — SEVET*
 
 Hola {{1}}, te informamos que la vacuna de {{2}} para tu mascota *{{3}}* vence el {{4}}.
@@ -160,7 +167,8 @@ Te recomendamos agendar una cita para mantener al día su protección.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** pg_cron diario 9:00 AM (7 días antes)
 
 **Cuerpo:**
-```
+
+```text
 🩺 *Control Pendiente — SEVET*
 
 Hola {{1}}, te recordamos que tu mascota *{{2}}* tiene un control de {{3}} programado para el {{4}}.
@@ -179,7 +187,8 @@ Agenda tu cita para asegurar su bienestar.
 **Categoría:** Utilidad | **Idioma:** es_CL | **Disparador:** Al cancelar cita
 
 **Cuerpo:**
-```
+
+```text
 ❌ *Cita Cancelada — SEVET*
 
 Hola {{1}}, te informamos que tu cita de {{2}} del {{3}} a las {{4}} ha sido cancelada.
@@ -196,8 +205,9 @@ Si deseas reagendar, puedes hacerlo desde nuestra web o llamando al +56 2 2773 1
 > Reemplaza `$TOKEN` por tu System User Token permanente.
 
 ### recordatorio_cita_24h
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -207,20 +217,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "⏰ *Recordatorio de Cita — SEVET*\n\nHola {{1}}, te recordamos que mañana tienes una cita:\n\n🩺 *Servicio:* {{2}}\n👨‍⚕️ *Profesional:* {{3}}\n📅 *Fecha:* {{4}}\n🕐 *Hora:* {{5}}\n\n📍 Av. San Pablo 6106, Lo Prado.\nSi no puedes asistir, por favor avísanos con anticipación.",
+        "text": "Hola {{1}}, te recordamos que manana tienes una cita.\n\nServicio: {{2}}\nProfesional: {{3}}\nFecha: {{4}}\nHora: {{5}}\n\nAv. San Pablo 6106, Lo Prado.\nSi no puedes asistir, avisanos con anticipacion.",
         "example": { "body_text": [["Miguel", "Consulta General", "Dr. Sánchez", "lunes 17 de marzo", "10:00"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### recordatorio_cita_1h
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -230,20 +241,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "🔔 *Tu cita es en 1 hora — SEVET*\n\nHola {{1}}, te recordamos que tu cita para {{2}} es hoy a las {{3}}.\n\n📍 Av. San Pablo 6106, Lo Prado.\n¡Te esperamos!",
+        "text": "Hola {{1}}, te recordamos que tu cita para {{2}} es hoy a las {{3}}.\n\nAv. San Pablo 6106, Lo Prado.\nTe esperamos!",
         "example": { "body_text": [["Miguel", "Consulta General", "10:00"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### nueva_cita_recepcion
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -253,20 +265,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "📋 *Nueva Cita Agendada*\n\n👤 *Cliente:* {{1}}\n🐾 *Mascota:* {{2}}\n🩺 *Servicio:* {{3}}\n👨‍⚕️ *Profesional:* {{4}}\n📅 *Fecha:* {{5}}\n🕐 *Hora:* {{6}}\n\nAgendada desde la web.",
+        "text": "Nueva Cita Agendada\n\nCliente: {{1}}\nMascota: {{2}}\nServicio: {{3}}\nProfesional: {{4}}\nFecha: {{5}}\nHora: {{6}}\n\nAgendada desde la web.",
         "example": { "body_text": [["Miguel", "Luna", "Consulta General", "Dr. Sánchez", "lunes 17 de marzo", "10:00"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### nueva_cita_vet
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -276,20 +289,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "📌 *Nueva cita asignada — SEVET*\n\nTienes una nueva cita agendada:\n\n👤 *Cliente:* {{1}}\n🐾 *Mascota:* {{2}}\n🩺 *Servicio:* {{3}}\n📅 *Fecha:* {{4}}\n🕐 *Hora:* {{5}}",
-        "example": { "body_text": [["Miguel", "Luna", "Consulta General", "lunes 17 de marzo", "10:00"]] }
+        "text": "SEVET - Nueva cita asignada\n\nCliente: {{1}}\nMascota: {{2}}\nServicio: {{3}}\nFecha: {{4}}\nHora: {{5}}\n\nRevisa tu agenda para mas detalles.",
+        "example": { "body_text": [["Miguel Perdomo", "Luna", "Consulta General", "lunes 17 de marzo", "10:00"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### agenda_diaria_vet
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -299,20 +313,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "☀️ *Buenos días, {{1}}*\n\nTu agenda de hoy ({{2}}) tiene {{3}} cita(s):\n\n{{4}}\n\n¡Que tengas un excelente día! 🐾",
+        "text": "Buenos dias, {{1}}\n\nTu agenda de hoy ({{2}}) tiene {{3}} cita(s):\n\n{{4}}\n\nQue tengas un excelente dia!",
         "example": { "body_text": [["Dr. Sánchez", "lunes 17 marzo", "3", "09:00 Consulta - Luna\n10:00 Vacuna - Rocky\n11:30 Control - Max"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### recordatorio_vacuna
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -322,20 +337,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "💉 *Recordatorio de Vacuna — SEVET*\n\nHola {{1}}, te informamos que la vacuna de {{2}} para tu mascota *{{3}}* vence el {{4}}.\n\nTe recomendamos agendar una cita para mantener al día su protección.\n\n📞 Llámanos o agenda por la web.",
+        "text": "Recordatorio de Vacuna\n\nHola {{1}}, te informamos que la vacuna de {{2}} para tu mascota {{3}} vence el {{4}}.\n\nTe recomendamos agendar una cita para mantener al dia su proteccion.\n\nLlamanos o agenda por la web.",
         "example": { "body_text": [["Miguel", "Antirrábica", "Luna", "viernes 28 de marzo"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### recordatorio_control
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -345,20 +361,21 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "🩺 *Control Pendiente — SEVET*\n\nHola {{1}}, te recordamos que tu mascota *{{2}}* tiene un control de {{3}} programado para el {{4}}.\n\nAgenda tu cita para asegurar su bienestar.\n\n📞 Llámanos o agenda por la web.",
+        "text": "Control Pendiente\n\nHola {{1}}, te recordamos que tu mascota {{2}} tiene un control de {{3}} programado para el {{4}}.\n\nAgenda tu cita para asegurar su bienestar.\n\nLlamanos o agenda por la web.",
         "example": { "body_text": [["Miguel", "Luna", "post-cirugía", "viernes 28 de marzo"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
 ```
 
 ### cancelacion_cita
+
 ```bash
-curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates" \
+curl -X POST "https://graph.facebook.com/v22.0/2297459834082260/message_templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -368,12 +385,12 @@ curl -X POST "https://graph.facebook.com/v22.0/229745983408226/message_templates
     "components": [
       {
         "type": "BODY",
-        "text": "❌ *Cita Cancelada — SEVET*\n\nHola {{1}}, te informamos que tu cita de {{2}} del {{3}} a las {{4}} ha sido cancelada.\n\nSi deseas reagendar, puedes hacerlo desde nuestra web o llamando al +56 2 2773 1554.",
+        "text": "Cita Cancelada\n\nHola {{1}}, te informamos que tu cita de {{2}} del {{3}} a las {{4}} ha sido cancelada.\n\nSi deseas reagendar, puedes hacerlo desde nuestra web o llamando al +56 2 2773 1554.",
         "example": { "body_text": [["Miguel", "Consulta General", "lunes 17 de marzo", "10:00"]] }
       },
       {
         "type": "FOOTER",
-        "text": "SEVET – Veterinaria San Alberto"
+        "text": "SEVET - Veterinaria San Alberto"
       }
     ]
   }'
