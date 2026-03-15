@@ -80,7 +80,6 @@ function initApp() {
   initScrollReveal();
   initCounters();
   initComparison();
-  initCarousel();
 }
 
 // ── HUELLITAS FLOTANTES 🐾 ──
@@ -295,26 +294,7 @@ function initComparison() {
 }
 
 // ── CARRUSEL PRODUCTOS ──
-function getVisibleCards() {
-  return getVisibleCardsForWidth(window.innerWidth);
-}
-function updateCarousel() {
-  const track = document.getElementById('carouselTrack');
-  if (!track) return;
-  const cards = track.querySelectorAll('.product-card');
-  if (!cards.length) return;
-  const visible = getVisibleCards();
-  const cardWidth = cards[0].offsetWidth;
-  const gap = 24;
-  carouselIndex = clampCarouselIndex(carouselIndex, cards.length, visible);
-  track.style.transform = `translateX(-${carouselIndex * (cardWidth + gap)}px)`;
-}
-function initCarousel() {
-  updateCarousel();
-}
-window.carouselNext = function() { carouselIndex++; updateCarousel(); };
-window.carouselPrev = function() { carouselIndex--; updateCarousel(); };
-window.addEventListener('resize', updateCarousel);
+// Carrusel reemplazado por Banner estático Vinipets
 
 // ── WIDGET IA (OpenAI via Supabase Edge Function) ──
 const CHAT_AI_URL = import.meta.env.VITE_CHAT_AI_URL || 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/chat-ai';

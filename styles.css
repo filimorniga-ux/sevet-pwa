@@ -110,13 +110,13 @@ button, a, input, select, textarea {
   align-items: center; justify-content: center;
   gap: 2rem;
 }
-.loader-logo {
-  font-family: var(--font-main);
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  font-weight: 900;
-  letter-spacing: 0.15em;
-  color: var(--blue-600);
-  animation: pulse-glow 1.5s ease-in-out infinite;
+.loader-logo-img {
+  width: auto;
+  height: clamp(80px, 15vw, 150px);
+  object-fit: contain;
+  border-radius: 20px;
+  animation: pulse-glow-img 2s ease-in-out infinite;
+  box-shadow: 0 8px 32px rgba(139,45,139,0.2);
 }
 .loader-subtitle {
   font-size: 0.9rem;
@@ -159,6 +159,7 @@ button, a, input, select, textarea {
 }
 @keyframes dog-bounce { from { transform: translateY(-60%) translateX(-100%) scaleY(1); } to { transform: translateY(-80%) translateX(-100%) scaleY(1.1); } }
 @keyframes pulse-glow { 0%,100% { opacity: 1; text-shadow: 0 0 20px rgba(139,45,139,0.3); } 50% { opacity: 0.7; text-shadow: 0 0 40px rgba(139,45,139,0.5); } }
+@keyframes pulse-glow-img { 0%,100% { transform: scale(1); box-shadow: 0 8px 32px rgba(139,45,139,0.2); } 50% { transform: scale(1.05); box-shadow: 0 16px 48px rgba(139,45,139,0.4); } }
 .loader.fade-out { animation: loader-fade 0.6s ease forwards; }
 @keyframes loader-fade { to { opacity: 0; pointer-events: none; } }
 
@@ -203,7 +204,7 @@ button, a, input, select, textarea {
   box-shadow: 0 4px 16px rgba(139,45,139,0.3);
 }
 .nav-logo-img {
-  height: 42px; width: auto; border-radius: 8px;
+  height: 60px; width: auto; border-radius: 8px;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
   transition: var(--transition);
@@ -661,61 +662,34 @@ section { position: relative; z-index: 1; }
 }
 
 /* ─────────────────────────────────────────
-   TIENDA PREMIUM / CARRUSEL
+   TIENDA PREMIUM / VINIPETS
    ───────────────────────────────────────── */
 .shop-section {
-  background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 100%);
+  background: linear-gradient(180deg, var(--white-warm) 0%, var(--white) 100%);
+  padding-bottom: 2rem;
 }
-.carousel-wrapper { position: relative; overflow: hidden; }
-.carousel-track {
-  display: flex; gap: 1.5rem;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
+.vinipets-banner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--white); border-radius: var(--radius-2xl);
+  border: 1px solid var(--gray-200); box-shadow: 0 12px 48px rgba(107,29,115,0.06);
+  overflow: hidden; max-width: 1000px; margin: 0 auto; align-items: center;
 }
-.product-card {
-  min-width: calc(33.333% - 1rem);
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-xl);
-  overflow: hidden; flex-shrink: 0;
-  cursor: pointer; transition: var(--transition);
-  box-shadow: var(--card-shadow);
+.vinipets-content { padding: 4rem; }
+.vinipets-visual {
+  background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+  height: 100%; display: flex; align-items: center; justify-content: center; padding: 3rem;
 }
-.product-card:hover { border-color: var(--blue-300); transform: translateY(-6px); box-shadow: 0 24px 60px rgba(107,29,115,0.12); }
-.product-img {
-  width: 100%; height: 220px;
-  object-fit: cover; display: block;
-  transition: transform 0.5s ease;
+.vinipets-img {
+  max-width: 100%; height: auto; object-fit: contain;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15)); transform: scale(1.1);
+  transition: transform 0.4s ease;
 }
-.product-card:hover .product-img { transform: scale(1.05); }
-.product-info { padding: 1.5rem; }
-.product-tag { font-size: 0.72rem; color: var(--blue-600); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
-.product-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--gray-900); }
-.product-desc { font-size: 0.85rem; color: var(--gray-500); line-height: 1.5; margin-bottom: 1rem; }
-.product-price { font-size: 1.5rem; font-weight: 900; color: var(--blue-600); }
-.product-price small { font-size: 0.85rem; color: var(--gray-400); font-weight: 400; }
-.product-btn {
-  display: block; text-align: center;
-  background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
-  color: var(--white); text-decoration: none;
-  padding: 0.75rem; border-radius: 12px;
-  font-size: 0.9rem; font-weight: 700; font-family: var(--font-main);
-  margin-top: 1rem; transition: var(--transition);
-  border: none; cursor: pointer; width: 100%;
+.vinipets-banner:hover .vinipets-img { transform: scale(1.15) translateY(-5px); }
+@media (max-width: 768px) {
+  .vinipets-banner { grid-template-columns: 1fr; }
+  .vinipets-content { padding: 2.5rem; text-align: center; }
+  .vinipets-visual { height: auto; padding: 2rem; min-height: 250px; }
 }
-.product-btn:hover { background: linear-gradient(135deg, var(--blue-500), var(--blue-400)); box-shadow: 0 4px 20px rgba(139,45,139,0.3); }
-.carousel-nav {
-  display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;
-}
-.carousel-btn {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: var(--white); border: 1px solid var(--gray-200);
-  color: var(--gray-700); font-size: 1.2rem;
-  cursor: pointer; transition: var(--transition);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--card-shadow);
-}
-.carousel-btn:hover { background: var(--blue-50); border-color: var(--blue-300); color: var(--blue-600); }
 
 /* ─────────────────────────────────────────
    ANTES / DESPUÉS SLIDER
