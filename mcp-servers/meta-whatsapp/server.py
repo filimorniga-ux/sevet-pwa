@@ -150,8 +150,11 @@ def create_template(
     url = f"{BASE_URL}/{WABA_ID}/message_templates"
 
     try:
-        response = requests.post(url, headers=_headers(), json=payload)
-        data = response.json()
+        response = requests.post(url, headers=_headers(), json=payload, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if "id" in data:
             return f"✅ Plantilla '{name}' creada con éxito. ID: {data['id']}. Status: {data.get('status', 'PENDING')}"
@@ -190,8 +193,11 @@ def list_templates(
     url = f"{BASE_URL}/{WABA_ID}/message_templates"
 
     try:
-        response = requests.get(url, headers=_headers(), params=params)
-        data = response.json()
+        response = requests.get(url, headers=_headers(), params=params, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if "data" in data:
             templates = data["data"]
@@ -231,8 +237,11 @@ def get_template(template_name: str) -> str:
     params = {"name": template_name}
 
     try:
-        response = requests.get(url, headers=_headers(), params=params)
-        data = response.json()
+        response = requests.get(url, headers=_headers(), params=params, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if "data" in data and data["data"]:
             template = data["data"][0]
@@ -283,8 +292,11 @@ def delete_template(template_name: str) -> str:
     params = {"name": template_name}
 
     try:
-        response = requests.delete(url, headers=_headers(), params=params)
-        data = response.json()
+        response = requests.delete(url, headers=_headers(), params=params, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if data.get("success"):
             return f"🗑️ Plantilla '{template_name}' eliminada correctamente."
@@ -345,8 +357,11 @@ def send_template_message(
     url = f"{BASE_URL}/{PHONE_NUMBER_ID}/messages"
 
     try:
-        response = requests.post(url, headers=_headers(), json=payload)
-        data = response.json()
+        response = requests.post(url, headers=_headers(), json=payload, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if "messages" in data:
             msg_id = data["messages"][0].get("id", "N/A")
@@ -390,8 +405,11 @@ def send_text_message(
     url = f"{BASE_URL}/{PHONE_NUMBER_ID}/messages"
 
     try:
-        response = requests.post(url, headers=_headers(), json=payload)
-        data = response.json()
+        response = requests.post(url, headers=_headers(), json=payload, timeout=10)
+        try:
+            data = response.json()
+        except ValueError:
+            return f"❌ Error: Respuesta de la API no es JSON válido. Status {response.status_code}: {response.text[:100]}"
 
         if "messages" in data:
             msg_id = data["messages"][0].get("id", "N/A")
