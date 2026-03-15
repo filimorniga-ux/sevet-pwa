@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Edge Function: daily-agenda
@@ -182,7 +182,7 @@ Deno.serve(async (req: Request) => {
     for (const apt of todayAppointments) {
       if (!apt.vet_id || !apt.vet_profile) continue;
 
-      const vetProfile = apt.vet_profile as { id: string; full_name: string; phone: string | null; whatsapp: string | null };
+      const vetProfile = apt.vet_profile as unknown as { id: string; full_name: string; phone: string | null; whatsapp: string | null };
       const vetPhone = vetProfile.whatsapp || vetProfile.phone;
       if (!vetPhone) continue;
 
@@ -196,7 +196,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const agenda = vetAgendas.get(apt.vet_id)!;
-      const serviceName = (apt.service as { name: string } | null)?.name || apt.service_type || 'Consulta';
+      const serviceName = (apt.service as unknown as { name: string } | null)?.name || apt.service_type || 'Consulta';
       const clientName = apt.guest_name || 'Cliente';
       const petName = apt.guest_pet_name || '';
 
@@ -210,7 +210,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Enviar agenda a cada profesional
-    for (const [vetId, agenda] of vetAgendas) {
+    for (const [_vetId, agenda] of vetAgendas) {
       try {
         if (agenda.appointments.length === 0) continue;
 

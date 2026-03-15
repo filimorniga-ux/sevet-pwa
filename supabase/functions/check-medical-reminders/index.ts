@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Edge Function: check-medical-reminders
@@ -74,15 +74,7 @@ async function sendWhatsAppTemplate(
   }
 }
 
-function getDynamicOffset(): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Santiago',
-    timeZoneName: 'longOffset'
-  });
-  const parts = formatter.formatToParts(new Date());
-  const tzPart = parts.find(p => p.type === 'timeZoneName');
-  return tzPart?.value?.replace('GMT', '') || '-03:00';
-}
+// getDynamicOffset removed — not needed for date-only comparisons
 
 function getTodayAndFutureDates(): {
   todayStr: string;
@@ -181,7 +173,7 @@ Deno.serve(async (req: Request) => {
 
     for (const vacc of (upcomingVaccines || [])) {
       try {
-        const pet = vacc.pet as {
+        const pet = vacc.pet as unknown as {
           id: string; name: string;
           owner: { full_name: string; phone: string | null; whatsapp: string | null } | null;
         } | null;
@@ -286,7 +278,7 @@ Deno.serve(async (req: Request) => {
 
         const clientName = ctrl.guest_name || 'Cliente';
         const petName = ctrl.guest_pet_name || 'Mascota';
-        const serviceName = (ctrl.service as { name: string } | null)?.name || 'Control';
+        const serviceName = (ctrl.service as unknown as { name: string } | null)?.name || 'Control';
         const controlDate = new Date(ctrl.date_time).toLocaleDateString('es-CL', {
           weekday: 'long', day: 'numeric', month: 'long',
           timeZone: 'America/Santiago'
