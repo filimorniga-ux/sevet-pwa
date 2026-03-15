@@ -205,7 +205,17 @@ export function isProfileComplete(profile) {
 export function checkAndRedirect(profile) {
   if (!profile) return;
   if (!isProfileComplete(profile)) {
-    window.location.href = '/pages/completar-perfil.html';
+    if (sessionStorage.getItem('skipProfile') === 'true') {
+      const config = ROLE_CONFIG[profile.role] || ROLE_CONFIG.client;
+      if (!window.location.pathname.includes(config.home)) {
+        window.location.href = config.home;
+      }
+      return;
+    }
+
+    if (!window.location.pathname.includes('/pages/completar-perfil.html')) {
+      window.location.href = '/pages/completar-perfil.html';
+    }
     return;
   }
   const config = ROLE_CONFIG[profile.role] || ROLE_CONFIG.client;
