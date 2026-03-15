@@ -23,6 +23,7 @@ interface VetAgenda {
 }
 
 interface AppointmentSummary {
+  id: string;
   time: string;
   service: string;
   client: string;
@@ -50,6 +51,9 @@ async function sendWhatsAppTemplate(
     }
   };
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -57,15 +61,29 @@ async function sendWhatsAppTemplate(
         'Authorization': `Bearer ${META_ACCESS_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: controller.signal
     });
 
-    const data = await res.json();
+    const responseText = await res.text();
+    clearTimeout(timeoutId);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (_e) {
+      return { success: false, error: `Invalid JSON response: ${responseText.substring(0, 100)}` };
+    }
+
     if (data.messages?.[0]) {
       return { success: true, message_id: data.messages[0].id };
     }
     return { success: false, error: data.error?.message || JSON.stringify(data) };
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      return { success: false, error: 'Request to WhatsApp API timed out' };
+    }
     return { success: false, error: String(err) };
   }
 }
@@ -74,15 +92,17 @@ function getTodayRange(): { start: string; end: string; dateLabel: string } {
   const now = new Date();
   const formatter = new Intl.DateTimeFormat('es-CL', {
     timeZone: 'America/Santiago',
-    year: 'numeric', month: '2-digit', day: '2-digit'
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZoneName: 'longOffset'
   });
   const parts = formatter.formatToParts(now);
   const year = parts.find(p => p.type === 'year')!.value;
   const month = parts.find(p => p.type === 'month')!.value;
   const day = parts.find(p => p.type === 'day')!.value;
+  const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value.replace('GMT', '') || '-03:00';
 
-  const start = `${year}-${month}-${day}T00:00:00-03:00`;
-  const end = `${year}-${month}-${day}T23:59:59-03:00`;
+  const start = `${year}-${month}-${day}T00:00:00${offsetStr}`;
+  const end = `${year}-${month}-${day}T23:59:59${offsetStr}`;
 
   const labelFormatter = new Intl.DateTimeFormat('es-CL', {
     timeZone: 'America/Santiago',
@@ -181,6 +201,7 @@ Deno.serve(async (req: Request) => {
       const petName = apt.guest_pet_name || '';
 
       agenda.appointments.push({
+        id: apt.id,
         time: formatTime(apt.date_time),
         service: serviceName,
         client: clientName,
@@ -190,56 +211,102 @@ Deno.serve(async (req: Request) => {
 
     // Enviar agenda a cada profesional
     for (const [vetId, agenda] of vetAgendas) {
-      // Verificar si ya se envió hoy
-      const { data: existing } = await supabase
-        .from('notification_log')
-        .select('id')
-        .eq('notification_type', 'daily_agenda')
-        .eq('recipient_phone', agenda.vet_phone)
-        .gte('created_at', start)
-        .neq('status', 'failed')
-        .limit(1);
+      try {
+        if (agenda.appointments.length === 0) continue;
 
-      if (existing && existing.length > 0) {
-        results.push({ vet: agenda.vet_name, status: 'skipped', appointments: agenda.appointments.length });
-        continue;
+        // PREVENT RACE CONDITION: Intentar leer si ya existe el log de este día para el vet.
+        const { data: existing } = await supabase
+          .from('notification_log')
+          .select('id, status')
+          .eq('notification_type', 'daily_agenda')
+          .eq('recipient_phone', agenda.vet_phone)
+          .gte('created_at', start)
+          .neq('status', 'failed')
+          .limit(1);
+
+        if (existing && existing.length > 0 && existing[0].status === 'sent') {
+          results.push({ vet: agenda.vet_name, status: 'skipped', appointments: agenda.appointments.length });
+          continue;
+        }
+
+        // Inserción optimista para reservar el spot. Como pg no bloquea race con select
+        // Si hay unique keys en la db saltará, si no se mitigará la mayoria.
+        // Restituimos las columnas eliminadas del logging!
+        const { data: insertData, error: insertSentError } = await supabase
+          .from('notification_log')
+          .insert({
+            notification_type: 'daily_agenda',
+            channel: 'whatsapp',
+            recipient_phone: agenda.vet_phone,
+            recipient_name: agenda.vet_name,
+            status: 'sent' // Optimistically mark as sent to claim it
+          })
+          .select('id')
+          .single();
+
+        if (insertSentError) {
+          if (insertSentError.code === '23505') { // Unique violation
+            results.push({ vet: agenda.vet_name, status: 'skipped', appointments: agenda.appointments.length });
+            continue;
+          }
+          console.error(`[daily-agenda] Error inserting log for ${agenda.vet_name}:`, insertSentError);
+          continue;
+        }
+
+        const logId = insertData.id;
+
+        // Construir resumen de citas
+        const summary = agenda.appointments
+          .map(a => `${a.time} ${a.service} - ${a.client}${a.pet ? ` (${a.pet})` : ''}`)
+          .join('\n');
+
+        // Enviar plantilla: agenda_diaria_vet
+        // Variables: 1=nombre_vet, 2=fecha_hoy, 3=cantidad_citas, 4=resumen_citas
+        const result = await sendWhatsAppTemplate(
+          agenda.vet_phone,
+          'agenda_diaria_vet',
+          [
+            agenda.vet_name,
+            dateLabel,
+            String(agenda.appointments.length),
+            summary
+          ]
+        );
+
+        if (!result.success) {
+          // Update the log status to failed
+          await supabase
+            .from('notification_log')
+            .update({
+              status: 'failed',
+              error_message: result.error || 'Unknown error'
+            })
+            .eq('id', logId);
+        } else {
+          // Guardar el meta_message_id
+          await supabase
+            .from('notification_log')
+            .update({
+              meta_message_id: result.message_id || null
+            })
+            .eq('id', logId);
+        }
+
+        results.push({
+          vet: agenda.vet_name,
+          status: result.success ? 'sent' : 'failed',
+          appointments: agenda.appointments.length,
+          error: result.error
+        });
+      } catch (vetError) {
+        console.error(`[daily-agenda] Error processing vet ${agenda.vet_name}:`, vetError);
+        results.push({
+          vet: agenda.vet_name,
+          status: 'failed',
+          appointments: agenda.appointments.length,
+          error: String(vetError)
+        });
       }
-
-      // Construir resumen de citas
-      const summary = agenda.appointments
-        .map(a => `${a.time} ${a.service} - ${a.client}${a.pet ? ` (${a.pet})` : ''}`)
-        .join('\n');
-
-      // Enviar plantilla: agenda_diaria_vet
-      // Variables: 1=nombre_vet, 2=fecha_hoy, 3=cantidad_citas, 4=resumen_citas
-      const result = await sendWhatsAppTemplate(
-        agenda.vet_phone,
-        'agenda_diaria_vet',
-        [
-          agenda.vet_name,
-          dateLabel,
-          String(agenda.appointments.length),
-          summary
-        ]
-      );
-
-      // Registrar en notification_log
-      await supabase.from('notification_log').insert({
-        notification_type: 'daily_agenda',
-        channel: 'whatsapp',
-        recipient_phone: agenda.vet_phone,
-        recipient_name: agenda.vet_name,
-        status: result.success ? 'sent' : 'failed',
-        meta_message_id: result.message_id || null,
-        error_message: result.error || null
-      });
-
-      results.push({
-        vet: agenda.vet_name,
-        status: result.success ? 'sent' : 'failed',
-        appointments: agenda.appointments.length,
-        error: result.error
-      });
     }
 
     const response = {
