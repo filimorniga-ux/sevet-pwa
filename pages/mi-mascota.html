@@ -176,6 +176,8 @@
 
       selectedPetId = selectedPetId || pets[0].id;
       await renderPetDashboard();
+      // Doble check: asegurar que emptyState NO se muestra si hay mascotas
+      document.getElementById('emptyState').classList.add('hidden');
     }
 
     // ── SELECT PET ──
