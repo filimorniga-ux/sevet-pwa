@@ -231,30 +231,101 @@ function updateNavbarForRole(profile, user = null) {
   // ── Ocultar botón de login estático ──
   if (loginItem) loginItem.style.display = 'none';
 
-  // ── Session Pill — reemplaza el CTA de llamada ──
+  // ── Session Pill con Dropdown ──
   const pill = document.createElement('li');
   pill.id = 'sessionPill';
   pill.className = 'nav-role-item session-pill-wrapper';
+
+  // Build dropdown menu items based on role
+  const menuItems = [];
+
+  // Common: perfil
+  menuItems.push({ href: '/pages/completar-perfil.html', icon: '👤', label: 'Mi Perfil' });
+
+  // Client-specific
+  if (profile.role === 'client') {
+    menuItems.push({ href: '/pages/mi-mascota.html', icon: '🐾', label: 'Mis Mascotas' });
+    menuItems.push({ href: '/pages/agendar.html', icon: '📅', label: 'Agendar Cita' });
+    menuItems.push({ href: '/pages/historial.html', icon: '📋', label: 'Historial de Citas' });
+    menuItems.push({ href: '/pages/ficha-clinica.html', icon: '📄', label: 'Fichas Clínicas' });
+  }
+
+  // Staff-specific
+  if (['vet', 'groomer', 'owner', 'admin', 'receptionist'].includes(profile.role)) {
+    menuItems.push({ href: config.home, icon: '🏠', label: 'Mi Panel' });
+    menuItems.push({ href: '/pages/mi-agenda.html', icon: '📅', label: 'Mi Agenda' });
+    menuItems.push({ href: '/pages/gestion-citas.html', icon: '📋', label: 'Gestión Citas' });
+  }
+
+  // Admin/Owner
+  if (['owner', 'admin'].includes(profile.role)) {
+    menuItems.push({ href: '/pages/admin.html', icon: '⚙️', label: 'Dashboard' });
+  }
+
+  const menuHTML = menuItems.map(item =>
+    `<a href="${escapeHtml(item.href)}" class="sp-dd-item">
+      <span class="sp-dd-icon">${item.icon}</span>
+      <span>${escapeHtml(item.label)}</span>
+    </a>`
+  ).join('');
+
+  const fullName = escapeHtml(profile.full_name || 'Usuario');
+
   pill.innerHTML = `
-    <div class="session-pill" data-role="${role}" style="--role-color:${escapeHtml(config.color)}">
+    <div class="session-pill" data-role="${role}" style="--role-color:${escapeHtml(config.color)}" id="sessionPillTrigger">
       <span class="sp-avatar">${safeIcon}</span>
       <div class="sp-info">
         <span class="sp-name">${firstName}</span>
         <span class="sp-role">${safeLabel}</span>
       </div>
-      <a href="${safeHome}" class="sp-panel-btn" title="Ir a mi panel">Panel</a>
-      <button class="sp-logout-btn" onclick="signOutUser(event)" title="Cerrar sesión" aria-label="Cerrar sesión">
-        &#x2715;
+      <span class="sp-chevron">▼</span>
+    </div>
+    <div class="sp-dropdown" id="sessionDropdown">
+      <div class="sp-dd-header" style="--role-color:${escapeHtml(config.color)}">
+        <div class="sp-dd-avatar">${safeIcon}</div>
+        <div class="sp-dd-info">
+          <div class="sp-dd-name">${fullName}</div>
+          <div class="sp-dd-role-badge">${safeIcon} ${safeLabel}</div>
+        </div>
+      </div>
+      ${menuHTML}
+      <div class="sp-dd-sep"></div>
+      <div class="sp-dd-session-status">
+        <span class="sp-dd-session-dot"></span>
+        Sesión activa
+      </div>
+      <button class="sp-dd-item sp-dd-logout" onclick="signOutUser(event)">
+        <span class="sp-dd-icon">🚪</span>
+        <span>Cerrar Sesión</span>
       </button>
     </div>
   `;
 
   if (ctaItem) {
     navLinks.insertBefore(pill, ctaItem);
-    ctaItem.style.display = 'none'; // ocultar el botón "Llamar Ahora" cuando hay sesión
+    ctaItem.style.display = 'none';
   } else {
     navLinks.appendChild(pill);
   }
+
+  // Toggle dropdown on click
+  const trigger = pill.querySelector('#sessionPillTrigger');
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    pill.classList.toggle('open');
+  });
+
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    if (!pill.contains(e.target)) {
+      pill.classList.remove('open');
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') pill.classList.remove('open');
+  });
 }
 
 // ── Profile completeness ──
