@@ -436,6 +436,7 @@ async function confirmBooking() {
 
     let petId = null;
     let profileId = null;
+    let profile = null;
     const notes = document.getElementById('guestNotes')?.value || '';
     const guestName = (document.getElementById('guestName')?.value || '').trim();
     const guestPhone = (document.getElementById('guestPhone')?.value || '').trim();
@@ -444,11 +445,12 @@ async function confirmBooking() {
 
     if (session) {
       // Get user's profile
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, whatsapp')
         .eq('user_id', session.user.id)
         .single();
+      profile = profileData;
 
       profileId = profile?.id || null;
 
