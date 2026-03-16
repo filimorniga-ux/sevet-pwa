@@ -20,6 +20,18 @@ const ROLE_CONFIG = {
   owner:        { label: 'Director/a',      home: '/pages/admin.html',        icon: '🏥', color: '#6b1d73' },
 };
 
+
+// ── Escape HTML para prevenir XSS ──
+function escapeHtml(value) {
+  if (!value) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ── Inicializar Auth ──
 export async function initAuth() {
   if (initialized) return;
@@ -46,7 +58,8 @@ export async function initAuth() {
 
   // 2) Escuchar cambios dinámicos (login/logout en vivo)
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.user) {
+      if (event === 'INITIAL_SESSION' && currentUser?.id === session.user.id) return;
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
       updateNavbarForRole(currentProfile);
@@ -93,35 +106,48 @@ export async function signInWithGoogle() {
 
 // ── Cerrar sesión (limpia todo) ──
 export async function signOut() {
-  try { await supabase.auth.signOut(); } catch (err) { console.warn('signOut:', err); }
-  _cleanStorage();
+  try { await supabase.auth.signOut(); } catch (err) { console.warn('signOut:', err); } finally { _cleanStorage(); }
 }
 
 function _cleanStorage() {
   try {
-    Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
-    Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-') || k === 'skipProfile') sessionStorage.removeItem(k); });
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-')) localStorage.removeItem(k);
+    }
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k && (k.startsWith('sb-') || k === 'skipProfile')) sessionStorage.removeItem(k);
+    }
   } catch (err) {}
 }
 
 // ── Logout global (llamable desde HTML inline) ──
 window.signOutUser = async function(e) {
   if (e) e.preventDefault();
-  await signOut();
-  window.location.replace('/');
+  try {
+    await signOut();
+  } finally {
+    window.location.replace('/');
+  }
 };
 
 // ── Obtener perfil ──
 async function fetchProfile(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-  if (error && error.code !== 'PGRST116' && error.name !== 'AbortError') {
-    console.warn('[auth] Perfil no encontrado:', error.message);
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    if (error && error.code !== 'PGRST116' && error.name !== 'AbortError') {
+      console.warn('[auth] Perfil no encontrado:', error.message);
+    }
+    return data || null;
+  } catch (err) {
+    console.warn('[auth] Error de red al obtener perfil:', err.message);
+    return null;
   }
-  return data || null;
 }
 
 // ── Page Guard ──
@@ -166,7 +192,7 @@ function updateNavbarForRole(profile) {
 
   const role = profile.role;
   const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
-  const firstName = (profile.full_name || '').split(' ')[0] || 'Usuario';
+  const firstName = escapeHtml((profile.full_name || '').split(' ')[0] || 'Usuario');
 
   // ── Inyectar links de rol en el menú ──
   const roleLinks = [];

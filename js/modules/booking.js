@@ -3,6 +3,7 @@
  * Multi-step appointment booking connected to Supabase
  */
 import { supabase } from '/js/supabase.js';
+import { initAuth } from '/js/auth.js';
 import { buildCombinedBookingNotes, validateGuestBookingInput } from '/js/modules/booking-utils.js';
 
 // ── State ──
@@ -20,6 +21,7 @@ const state = {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
+  await initAuth(); // Esperar a que se resuelva la sesión antes de hacer fetch
   await loadServices();
   setupSpecialtyTabs();
   setupCalendar();
@@ -81,7 +83,7 @@ function renderServices(specialty) {
     return;
   }
 
-  grid.innerHTML = filtered.map(s => `
+  grid.innerHTML = (filtered || []).map(s => `
     <div class="service-card-v2 ${state.selectedService?.id === s.id ? 'selected' : ''}" 
          data-id="${s.id}" onclick="selectService('${s.id}')">
       <div class="svc-icon">${s.icon || '🩺'}</div>

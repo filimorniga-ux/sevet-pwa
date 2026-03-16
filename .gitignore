@@ -8,3 +8,5 @@ supabase/.temp/
 __pycache__/
 venv/
 .venv/
+playwright-report/
+test-results/
