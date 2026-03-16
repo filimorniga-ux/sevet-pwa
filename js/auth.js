@@ -243,12 +243,8 @@ function updateNavbarForRole(profile, user = null) {
   menuItems.push({ href: '/pages/completar-perfil.html?edit=true', icon: '👤', label: 'Mi Perfil' });
   menuItems.push({ href: '/pages/mi-mascota.html', icon: '🐾', label: 'Mis Mascotas' });
   menuItems.push({ href: '/pages/agendar.html', icon: '📅', label: 'Agendar Cita' });
-
-  // Client-specific: historial y fichas
-  if (profile.role === 'client') {
-    menuItems.push({ href: '/pages/historial.html', icon: '📋', label: 'Historial de Citas' });
-    menuItems.push({ href: '/pages/ficha-clinica.html', icon: '📄', label: 'Fichas Clínicas' });
-  }
+  menuItems.push({ href: '/pages/historial.html', icon: '📋', label: 'Historial de Citas' });
+  menuItems.push({ href: '/pages/ficha-clinica.html', icon: '📄', label: 'Fichas Clínicas' });
 
   // Staff-specific
   if (['vet', 'groomer', 'owner', 'admin', 'receptionist'].includes(profile.role)) {
