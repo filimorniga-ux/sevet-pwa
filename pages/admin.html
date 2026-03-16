@@ -58,7 +58,7 @@
           <div class="kpi-value" id="kpiWeekAppts">-</div>
           <div class="kpi-label">Citas Semana</div>
         </div>
-        <div class="kpi-card kpi-clickable" data-kpi="revenue" title="Ver detalle de ingresos">
+        <div class="kpi-card kpi-clickable" data-kpi="revenue" title="Ver ingresos del mes">
           <div class="kpi-icon">💰</div>
           <div class="kpi-value" id="kpiRevenue">-</div>
           <div class="kpi-label">Ingresos Mes</div>
@@ -250,6 +250,23 @@
         .replace(/'/g, '&#039;');
     };
 
+    const getDynamicOffset = () => {
+      const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: 'longOffset' }).formatToParts(new Date());
+      const tz = parts.find(p => p.type === 'timeZoneName')?.value;
+      if (tz && tz.startsWith('GMT')) {
+        const offset = tz.replace('GMT', '');
+        return offset === '' ? '+00:00' : offset;
+      }
+      return '-03:00';
+    };
+
+    const getLocalDateStr = (d = new Date()) => {
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${yr}-${mo}-${da}`;
+    };
+
     let adminProfile = null;
 
     async function initAdmin() {
@@ -297,13 +314,14 @@
       body.innerHTML = '<div class="loading-spinner">Cargando...</div>';
       modal.classList.remove('hidden');
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateStr(new Date());
+      const offset = getDynamicOffset();
 
       try {
         if (type === 'today' || type === 'completed' || type === 'pending') {
           let q = supabase.from('appointments')
             .select('id, date_time, service_type, status, guest_name, guest_pet_name, guest_phone, profiles!appointments_vet_id_fkey(full_name)')
-            .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`)
+            .gte('date_time', `${today}T00:00:00${offset}`).lte('date_time', `${today}T23:59:59${offset}`)
             .order('date_time');
 
           if (type === 'completed') q = q.eq('status', 'completada');
@@ -330,10 +348,12 @@
 
         } else if (type === 'week') {
           title.textContent = '📆 Citas de la Semana';
-          const weekEnd = new Date(Date.now() + 7*86400000).toISOString();
+          const weekEndD = new Date();
+          weekEndD.setDate(weekEndD.getDate() + 7);
+          const weekEnd = getLocalDateStr(weekEndD) + `T23:59:59${offset}`;
           const { data } = await supabase.from('appointments')
             .select('id, date_time, service_type, status, guest_name, guest_pet_name, profiles!appointments_vet_id_fkey(full_name)')
-            .gte('date_time', `${today}T00:00:00`).lte('date_time', weekEnd)
+            .gte('date_time', `${today}T00:00:00${offset}`).lte('date_time', weekEnd)
             .order('date_time');
 
           if (!data?.length) { body.innerHTML = '<div class="kpi-detail-empty">No hay citas esta semana</div>'; return; }
@@ -375,7 +395,9 @@
 
           body.innerHTML = data.map(p => {
             const speciesIcon = {perro:'🐕',gato:'🐈',ave:'🐦',conejo:'🐇',hamster:'🐹'}[p.species?.toLowerCase()] || '🐾';
-            const age = p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) + ' años' : '';
+            const parsedDate = p.birth_date ? new Date(p.birth_date) : null;
+            const ageNum = parsedDate && !isNaN(parsedDate.getTime()) ? Math.floor((Date.now() - parsedDate) / 31557600000) : NaN;
+            const age = !isNaN(ageNum) ? ageNum + ' años' : '';
             return `<div class="kpi-detail-row">
               <span style="font-size:1.5rem">${speciesIcon}</span>
               <div class="kpi-detail-info">
@@ -391,7 +413,7 @@
           const monthStart = today.slice(0,7) + '-01';
           const { data } = await supabase.from('appointments')
             .select('id, date_time, service_type, service_id, status, services(name, price)')
-            .gte('date_time', `${monthStart}T00:00:00`)
+            .gte('date_time', `${monthStart}T00:00:00${offset}`)
             .eq('status', 'completada')
             .order('date_time', { ascending: false });
 
@@ -464,18 +486,27 @@
 
     // ── OVERVIEW ──
     async function loadOverview() {
-      const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      const today = getLocalDateStr(new Date());
+      const offset = getDynamicOffset();
+
+      const weekAgoD = new Date();
+      weekAgoD.setDate(weekAgoD.getDate() - 7);
+      const weekAgo = getLocalDateStr(weekAgoD);
+
       const monthStart = today.slice(0, 7) + '-01';
+
+      const weekEndD = new Date();
+      weekEndD.setDate(weekEndD.getDate() + 7);
+      const weekEnd = getLocalDateStr(weekEndD) + `T23:59:59${offset}`;
 
       // KPIs
       const [todayRes, weekRes, monthRes, petsRes, servicesRes] = await Promise.all([
         supabase.from('appointments').select('id, status, service_type', { count: 'exact' })
-          .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`),
+          .gte('date_time', `${today}T00:00:00${offset}`).lte('date_time', `${today}T23:59:59${offset}`),
         supabase.from('appointments').select('id', { count: 'exact' })
-          .gte('date_time', `${today}T00:00:00`).lte('date_time', new Date(Date.now() + 7*86400000).toISOString()),
+          .gte('date_time', `${today}T00:00:00${offset}`).lte('date_time', weekEnd),
         supabase.from('appointments').select('id, service_type, service_id, status')
-          .gte('date_time', `${monthStart}T00:00:00`).eq('status', 'completada'),
+          .gte('date_time', `${monthStart}T00:00:00${offset}`).eq('status', 'completada'),
         supabase.from('pets').select('id', { count: 'exact' }),
         supabase.from('services').select('id, category, specialty, price'),
       ]);
@@ -501,8 +532,9 @@
     }
 
     async function renderWeeklyChart(startDate) {
+      const offset = getDynamicOffset();
       const { data } = await supabase.from('appointments').select('date_time')
-        .gte('date_time', `${startDate}T00:00:00`).order('date_time');
+        .gte('date_time', `${startDate}T00:00:00${offset}`).order('date_time');
 
       const days = {};
       const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -530,8 +562,9 @@
     }
 
     async function renderServicesChart(monthStart) {
+      const offset = getDynamicOffset();
       const { data } = await supabase.from('appointments').select('service_type')
-        .gte('date_time', `${monthStart}T00:00:00`);
+        .gte('date_time', `${monthStart}T00:00:00${offset}`);
 
       const counts = {};
       (data || []).forEach(a => { counts[a.service_type] = (counts[a.service_type] || 0) + 1; });

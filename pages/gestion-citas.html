@@ -213,7 +213,9 @@
         title.textContent = '✏️ Editar Cita';
         document.getElementById('editApptId').value = editData.id;
         const dt = new Date(editData.date_time);
-        document.getElementById('apptDateTime').value = dt.toISOString().slice(0, 16);
+        const pad = n => String(n).padStart(2, '0');
+        const dtStr = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        document.getElementById('apptDateTime').value = dtStr;
         document.getElementById('apptService').value = editData.service_id || '';
         document.getElementById('apptVet').value = editData.vet_id || '';
         document.getElementById('apptPetName').value = editData.guest_pet_name || editData.pets?.name || '';
@@ -227,7 +229,9 @@
         document.getElementById('editApptId').value = '';
         const now = new Date();
         now.setMinutes(now.getMinutes() + 30 - (now.getMinutes() % 30));
-        document.getElementById('apptDateTime').value = now.toISOString().slice(0, 16);
+        const pad = n => String(n).padStart(2, '0');
+        const nowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        document.getElementById('apptDateTime').value = nowStr;
         ['apptPetName','apptGuestName','apptGuestPhone','apptGuestEmail','apptNotes'].forEach(id => {
           document.getElementById(id).value = '';
         });
@@ -390,7 +394,12 @@
         btn.classList.add('active');
       }
 
-      const fmt = (d) => d.toISOString().split('T')[0];
+      const fmt = (d) => {
+        const yr = d.getFullYear();
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        const da = String(d.getDate()).padStart(2, '0');
+        return `${yr}-${mo}-${da}`;
+      };
 
       if (range === 'today') {
         fromEl.value = fmt(today);
