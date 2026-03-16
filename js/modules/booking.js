@@ -460,8 +460,9 @@ async function confirmBooking() {
         .limit(1);
       petId = pets?.[0]?.id || null;
 
+      // Si no tiene mascotas, permitir agendar igual (se puede agregar después)
       if (!petId) {
-        throw new Error('Debes registrar al menos una mascota antes de agendar.');
+        console.warn('[booking] Usuario sin mascotas registradas, agendando sin pet_id');
       }
     } else {
       const guestValidationError = validateGuestBookingInput({ guestName, guestPhone, guestPetName });
