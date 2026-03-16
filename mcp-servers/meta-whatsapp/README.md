@@ -5,7 +5,7 @@ Servidor MCP para gestionar WhatsApp Business API de Meta desde Antigravity.
 ## Herramientas Disponibles
 
 | Herramienta | Descripción |
-|-------------|-------------|
+| --- | --- |
 | `create_template` | Crear plantillas de mensaje |
 | `list_templates` | Listar plantillas existentes |
 | `get_template` | Ver detalles de una plantilla |
@@ -24,24 +24,24 @@ pip install fastmcp requests python-dotenv
 
 1. Copia `.env.example` como `.env`:
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
 2. Edita `.env` con tus credenciales de Meta.
 
 3. Agrega el server en tu configuración de Antigravity MCP:
 
-```json
-{
-  "mcpServers": {
-    "meta-whatsapp": {
-      "command": "python3",
-      "args": ["/Users/miguelperdomoserrato/sevet-pwa/mcp-servers/meta-whatsapp/server.py"]
-    }
-  }
-}
-```
+   ```json
+   {
+     "mcpServers": {
+       "meta-whatsapp": {
+         "command": "python3",
+         "args": ["/Users/miguelperdomoserrato/sevet-pwa/mcp-servers/meta-whatsapp/server.py"]
+       }
+     }
+   }
+   ```
 
 ## Prueba Manual
 

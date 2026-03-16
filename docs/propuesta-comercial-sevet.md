@@ -1,8 +1,8 @@
 # 🏥 SEVET — Ecosistema Pet-Tech 360 · Propuesta Comercial
 
 > **Versión:** 1.0 · **Fecha:** Marzo 2026
-> **Elaborado por:** [Tu Nombre / NombreEmpresa]
-> **Contacto:** [tu@email.com] · [+56 9 XXXX XXXX]
+> **Elaborado por:** Miguel Alfonso Perdomo Serrato
+> **Contacto:** `filimorniga@gmail.com`
 
 ---
 
@@ -474,6 +474,88 @@ Cada día su clínica pierde tiempo y dinero en tareas que podrían ser automát
 
 ---
 
+## 10. Recursos requeridos del cliente
+
+> **Objetivo:** Que el cliente entregue una sola vez toda la información necesaria para que nosotros configuremos la plataforma completa. Ellos no tocan ningún sistema — solo nos dan los datos y nosotros lo dejamos listo.
+
+### 📋 Lista de entrega — Lo que necesitamos antes de comenzar
+
+#### 1. Servicios y Precios
+
+Necesitamos el **listado completo de todos los servicios** que ofrece la clínica, con el siguiente detalle por cada uno:
+
+| Campo | Ejemplo | Notas |
+| --- | --- | --- |
+| Nombre del servicio | "Consulta General" | Tal como se mostrará al cliente |
+| Categoría | General / Cirugía / Laboratorio / Peluquería / Urgencia | Para el filtro en la web |
+| Descripción corta | "Evaluación médica integral de tu mascota" | 1-2 líneas |
+| Precio (CLP) | $15.000 | Si varía por tamaño/especie, indicarlo |
+| Duración estimada | 30 minutos | Para bloquear agenda correctamente |
+| ¿Requiere veterinario? | Sí / No | Para asignación automática |
+
+> **Formato aceptado:** Excel, Google Sheets, lista en WhatsApp, o simplemente en papel escaneado. Nosotros hacemos el ingreso al sistema.
+
+---
+
+#### 2. Equipo profesional
+
+Para cada **persona que aparecerá en la web o tendrá acceso al sistema**, necesitamos:
+
+| Campo | Ejemplo | Notas |
+| --- | --- | --- |
+| Nombre completo | "Dra. María González" | Como aparecerá en la web |
+| Cargo / especialidad | "Cirugía Canina y Felina" | Para la sección "Nuestro Equipo" |
+| Rol en el sistema | veterinario / peluquero / recepcionista / administrador / dueño | Define los permisos de acceso |
+| Correo electrónico | `maria@clinicasevet.cl` | Para creación de cuenta de acceso |
+| Teléfono / WhatsApp | +56 9 XXXX XXXX | Opcional, solo si se publicará |
+| Foto profesional | Archivo JPG/PNG | Opcional — si no hay, usamos avatar genérico |
+| Breve bio | "10 años de experiencia en..." | Opcional, para sección del equipo |
+
+---
+
+#### 3. Información general de la clínica
+
+| Campo | Ejemplo |
+| --- | --- |
+| Nombre oficial | "Clínica Veterinaria San Alberto" |
+| RUT de la empresa | 76.XXX.XXX-X |
+| Dirección | "Av. San Alberto 1234, Las Condes, Santiago" |
+| Teléfono fijo / celular | +56 22 XXX XXXX |
+| Correo de contacto web | `contacto@clinicasevet.cl` |
+| Horarios de atención | Lun-Vie 9:00-00:00 / Sáb 10:00-20:00 / Dom... |
+| Instagram / Facebook | @clinicasevet |
+| Logo (alta resolución) | PNG con fondo transparente, mínimo 400px |
+| Fotos de la clínica | 3-5 fotos del local, equipo o instalaciones |
+
+---
+
+#### 4. Chatbot y comunicaciones
+
+Para que el asistente virtual responda con información 100% exacta:
+
+- [ ] **Preguntas frecuentes** que les hacen por WhatsApp/teléfono diariamente
+- [ ] **Políticas de cancelación** (¿con cuántas horas de anticipación pueden cancelar?)
+- [ ] **Prepagos o depósitos** (¿se pide algo al agendar consultas de emergencia?)
+- [ ] **Especies que atienden** (perros y gatos únicamente, u otras?)
+- [ ] **Razas o casos que NO atienden** (si aplica)
+- [ ] **Nombre del/la director/a médico/a** para el chatbot mencionarlo en respuestas formales
+
+---
+
+### ⏱ Tiempo estimado para completar esta información
+
+| Sección | Tiempo estimado |
+| --- | --- |
+| Servicios y precios | 30-60 minutos |
+| Datos del equipo | 15-20 minutos |
+| Información general | 10-15 minutos |
+| Chatbot / FAQ | 20-30 minutos |
+| **Total** | **~1.5 horas** (puede ser en partes) |
+
+> Una vez recibida esta información, la plataforma queda configurada en **3-5 días hábiles** sin que el cliente tenga que tocar nada más.
+
+---
+
 ### Próximos pasos
 
 1. ✅ Revisión de esta propuesta
@@ -488,6 +570,7 @@ Cada día su clínica pierde tiempo y dinero en tareas que podrían ser automát
 
 ---
 
-**[Tu Nombre / NombreEmpresa]**
-📧 [tu@email.com] · 📱 [+56 9 XXXX XXXX]
-🌐 [tudominio.cl]
+**Miguel Alfonso Perdomo Serrato**
+Desarrollador Full Stack
+📧 `filimorniga@gmail.com`
+📍 Brasil 941 Local 15 · RUT 26.250.816-1
