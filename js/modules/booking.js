@@ -446,7 +446,7 @@ async function confirmBooking() {
       // Get user's profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email, full_name, phone, whatsapp')
         .eq('user_id', session.user.id)
         .single();
 
@@ -531,9 +531,9 @@ async function confirmBooking() {
           time: state.selectedTime,
           duration: state.selectedService?.duration_min || 30,
           price: state.selectedService?.price || 0,
-          guest_name: guestName || session?.user?.user_metadata?.full_name || '',
-          guest_email: guestEmail || session?.user?.email || '',
-          guest_phone: guestPhone || '',
+          guest_name: guestName || profile?.full_name || session?.user?.user_metadata?.full_name || '',
+          guest_email: guestEmail || profile?.email || session?.user?.email || '',
+          guest_phone: guestPhone || profile?.whatsapp || profile?.phone || '',
           guest_pet_name: guestPetName || '',
           source: 'web',
         }),
