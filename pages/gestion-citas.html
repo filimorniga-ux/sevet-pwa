@@ -35,9 +35,22 @@
       <p class="section-sub">Administra todas las citas de la clínica</p>
     </div>
 
+    <!-- Date Range Quick Filters -->
+    <div class="date-range-bar">
+      <button class="date-range-btn active" data-range="today" onclick="setDateRange('today', this)">📅 Hoy</button>
+      <button class="date-range-btn" data-range="week" onclick="setDateRange('week', this)">📆 Esta Semana</button>
+      <button class="date-range-btn" data-range="month" onclick="setDateRange('month', this)">🗓️ Este Mes</button>
+      <button class="date-range-btn" data-range="custom" onclick="setDateRange('custom', this)">🔧 Personalizado</button>
+    </div>
+
     <!-- Filters -->
     <div class="filters-bar">
-      <input type="date" id="filterDate" class="filter-input" />
+      <div class="filter-dates" id="filterDatesContainer">
+        <label style="font-size:0.8rem;color:var(--gray-500);font-weight:600">Desde</label>
+        <input type="date" id="filterDateFrom" class="filter-input" />
+        <label style="font-size:0.8rem;color:var(--gray-500);font-weight:600">Hasta</label>
+        <input type="date" id="filterDateTo" class="filter-input" />
+      </div>
       <select id="filterStatus" class="filter-input">
         <option value="">Todos los estados</option>
         <option value="pendiente">Pendiente</option>
@@ -143,8 +156,8 @@
           window.location.href = '/'; return;
         }
 
-        // Set today's date
-        document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+        // Set today's date range
+        setDateRange('today');
 
         // Load vet filter options + form selects
         const { data: vets } = await supabase.from('profiles')
@@ -277,7 +290,8 @@
       const body = document.getElementById('appointmentsBody');
       body.innerHTML = '<tr><td colspan="7" class="loading-spinner">Cargando...</td></tr>';
 
-      const date = document.getElementById('filterDate').value;
+      const dateFrom = document.getElementById('filterDateFrom').value;
+      const dateTo = document.getElementById('filterDateTo').value;
       const status = document.getElementById('filterStatus').value;
       const vetId = document.getElementById('filterVet').value;
 
@@ -285,8 +299,11 @@
         .select('*, services(name, icon), pets(name, species), profiles!appointments_vet_id_fkey(full_name)')
         .order('date_time');
 
-      if (date) {
-        query = query.gte('date_time', `${date}T00:00:00`).lte('date_time', `${date}T23:59:59`);
+      if (dateFrom) {
+        query = query.gte('date_time', `${dateFrom}T00:00:00`);
+      }
+      if (dateTo) {
+        query = query.lte('date_time', `${dateTo}T23:59:59`);
       }
       if (status) query = query.eq('status', status);
       if (vetId) query = query.eq('vet_id', vetId);
@@ -359,12 +376,70 @@
       await supabase.from('appointments').update({ status }).eq('id', id);
       loadAllAppointments();
     };
+
+    // Date range quick filters
+    window.setDateRange = function(range, btn) {
+      const today = new Date();
+      const fromEl = document.getElementById('filterDateFrom');
+      const toEl = document.getElementById('filterDateTo');
+      const container = document.getElementById('filterDatesContainer');
+
+      // Update active button
+      if (btn) {
+        document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      const fmt = (d) => d.toISOString().split('T')[0];
+
+      if (range === 'today') {
+        fromEl.value = fmt(today);
+        toEl.value = fmt(today);
+        container.style.display = 'none';
+      } else if (range === 'week') {
+        const dayOfWeek = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        fromEl.value = fmt(monday);
+        toEl.value = fmt(sunday);
+        container.style.display = 'none';
+      } else if (range === 'month') {
+        fromEl.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`;
+        const lastDay = new Date(today.getFullYear(), today.getMonth()+1, 0);
+        toEl.value = fmt(lastDay);
+        container.style.display = 'none';
+      } else if (range === 'custom') {
+        container.style.display = 'flex';
+        return; // Don't auto-load on custom
+      }
+
+      loadAllAppointments();
+    };
   </script>
 
   <style>
     .filters-bar {
       display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;
       margin-bottom: 1.5rem; padding: 0 1rem;
+    }
+    .date-range-bar {
+      display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem;
+      flex-wrap: wrap; padding: 0 1rem;
+    }
+    .date-range-btn {
+      padding: 0.5rem 1rem; border: 2px solid var(--gray-200); border-radius: var(--radius-lg);
+      background: var(--white); cursor: pointer; font-family: inherit; font-size: 0.85rem;
+      font-weight: 600; color: var(--gray-600); transition: var(--transition);
+    }
+    .date-range-btn:hover { border-color: var(--purple-400); color: var(--purple-600); }
+    .date-range-btn.active {
+      background: var(--purple-600, #8b2d8b); border-color: var(--purple-600, #8b2d8b);
+      color: white;
+    }
+    .filter-dates {
+      display: none; gap: 0.5rem; align-items: center; flex-wrap: wrap;
     }
     .filter-input {
       padding: 0.5rem 0.75rem; border: 1px solid var(--gray-200); border-radius: var(--radius-md);

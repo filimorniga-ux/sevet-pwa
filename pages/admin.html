@@ -48,35 +48,49 @@
     <div class="admin-panel active" id="panelOverview">
       <!-- KPI Cards -->
       <div class="kpi-grid">
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="today" title="Ver citas de hoy">
           <div class="kpi-icon">📅</div>
           <div class="kpi-value" id="kpiTodayAppts">-</div>
           <div class="kpi-label">Citas Hoy</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="week" title="Ver citas de la semana">
           <div class="kpi-icon">📆</div>
           <div class="kpi-value" id="kpiWeekAppts">-</div>
           <div class="kpi-label">Citas Semana</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="revenue" title="Ver detalle de ingresos">
           <div class="kpi-icon">💰</div>
           <div class="kpi-value" id="kpiRevenue">-</div>
           <div class="kpi-label">Ingresos Mes</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="patients" title="Ver pacientes">
           <div class="kpi-icon">🐾</div>
           <div class="kpi-value" id="kpiPatients">-</div>
           <div class="kpi-label">Pacientes</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="completed" title="Ver completadas hoy">
           <div class="kpi-icon">✅</div>
           <div class="kpi-value" id="kpiCompleted">-</div>
           <div class="kpi-label">Completadas Hoy</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card kpi-clickable" data-kpi="pending" title="Ver pendientes">
           <div class="kpi-icon">⏳</div>
           <div class="kpi-value" id="kpiPending">-</div>
           <div class="kpi-label">Pendientes</div>
+        </div>
+      </div>
+
+      <!-- KPI Drill-down Modal -->
+      <div id="kpiModal" class="kpi-modal-overlay hidden">
+        <div class="kpi-modal">
+          <div class="kpi-modal-header">
+            <h3 id="kpiModalTitle">Detalle</h3>
+            <button onclick="closeKpiModal()" class="kpi-modal-close">✕</button>
+          </div>
+          <div id="kpiModalBody" class="kpi-modal-body"></div>
+          <div class="kpi-modal-footer">
+            <button onclick="closeKpiModal()" class="btn-back">Cerrar</button>
+          </div>
         </div>
       </div>
 
@@ -261,6 +275,155 @@
       loadOverview();
     }
     initAdmin();
+
+    // ── KPI CLICK HANDLERS ──
+    const statusColors = { pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6', completada: '#16a34a', cancelada: '#ef4444' };
+
+    document.querySelectorAll('.kpi-clickable').forEach(card => {
+      card.addEventListener('click', () => openKpiDetail(card.dataset.kpi));
+    });
+
+    window.closeKpiModal = function() {
+      document.getElementById('kpiModal').classList.add('hidden');
+    };
+    document.getElementById('kpiModal')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeKpiModal();
+    });
+
+    async function openKpiDetail(type) {
+      const modal = document.getElementById('kpiModal');
+      const title = document.getElementById('kpiModalTitle');
+      const body = document.getElementById('kpiModalBody');
+      body.innerHTML = '<div class="loading-spinner">Cargando...</div>';
+      modal.classList.remove('hidden');
+
+      const today = new Date().toISOString().split('T')[0];
+
+      try {
+        if (type === 'today' || type === 'completed' || type === 'pending') {
+          let q = supabase.from('appointments')
+            .select('id, date_time, service_type, status, guest_name, guest_pet_name, guest_phone, profiles!appointments_vet_id_fkey(full_name)')
+            .gte('date_time', `${today}T00:00:00`).lte('date_time', `${today}T23:59:59`)
+            .order('date_time');
+
+          if (type === 'completed') q = q.eq('status', 'completada');
+          if (type === 'pending') q = q.eq('status', 'pendiente');
+
+          const labels = { today: '📅 Citas de Hoy', completed: '✅ Completadas Hoy', pending: '⏳ Pendientes Hoy' };
+          title.textContent = labels[type];
+
+          const { data } = await q;
+          if (!data?.length) { body.innerHTML = '<div class="kpi-detail-empty">No hay citas para mostrar</div>'; return; }
+
+          body.innerHTML = data.map(a => {
+            const t = new Date(a.date_time).toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
+            return `<div class="kpi-detail-row">
+              <span class="kpi-detail-time">${t}</span>
+              <div class="kpi-detail-info">
+                <div class="kpi-detail-name">🩺 ${escapeHtml(a.service_type || 'Servicio')}</div>
+                <div class="kpi-detail-sub">${escapeHtml(a.guest_pet_name || '')}${a.guest_name ? ' · '+ escapeHtml(a.guest_name) : ''} ${a.guest_phone ? '· '+ escapeHtml(a.guest_phone) : ''}</div>
+                <div class="kpi-detail-sub">👩‍⚕️ ${escapeHtml(a.profiles?.full_name || 'Sin asignar')}</div>
+              </div>
+              <span class="kpi-detail-badge" style="background:${statusColors[a.status]}20;color:${statusColors[a.status]}">${escapeHtml(a.status)}</span>
+            </div>`;
+          }).join('');
+
+        } else if (type === 'week') {
+          title.textContent = '📆 Citas de la Semana';
+          const weekEnd = new Date(Date.now() + 7*86400000).toISOString();
+          const { data } = await supabase.from('appointments')
+            .select('id, date_time, service_type, status, guest_name, guest_pet_name, profiles!appointments_vet_id_fkey(full_name)')
+            .gte('date_time', `${today}T00:00:00`).lte('date_time', weekEnd)
+            .order('date_time');
+
+          if (!data?.length) { body.innerHTML = '<div class="kpi-detail-empty">No hay citas esta semana</div>'; return; }
+
+          const grouped = {};
+          data.forEach(a => {
+            const d = new Date(a.date_time);
+            const dayKey = d.toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'long'});
+            if (!grouped[dayKey]) grouped[dayKey] = [];
+            grouped[dayKey].push(a);
+          });
+
+          body.innerHTML = Object.entries(grouped).map(([day, appts]) => `
+            <div style="margin-bottom:1rem">
+              <div style="font-weight:700;color:var(--purple-700);font-size:0.9rem;margin-bottom:0.5rem;text-transform:capitalize;padding:0.5rem;background:var(--gray-50);border-radius:var(--radius-md)">
+                📅 ${escapeHtml(day)} <span style="font-weight:400;color:var(--gray-500)">(${appts.length} citas)</span>
+              </div>
+              ${appts.map(a => {
+                const t = new Date(a.date_time).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+                return `<div class="kpi-detail-row">
+                  <span class="kpi-detail-time">${t}</span>
+                  <div class="kpi-detail-info">
+                    <div class="kpi-detail-name">🩺 ${escapeHtml(a.service_type)}</div>
+                    <div class="kpi-detail-sub">${escapeHtml(a.guest_pet_name || '')}${a.guest_name ? ' · '+ escapeHtml(a.guest_name) : ''}</div>
+                  </div>
+                  <span class="kpi-detail-badge" style="background:${statusColors[a.status]}20;color:${statusColors[a.status]}">${escapeHtml(a.status)}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          `).join('');
+
+        } else if (type === 'patients') {
+          title.textContent = '🐾 Pacientes Registrados';
+          const { data } = await supabase.from('pets')
+            .select('id, name, species, breed, birth_date, profiles(full_name, phone)')
+            .order('name');
+
+          if (!data?.length) { body.innerHTML = '<div class="kpi-detail-empty">No hay pacientes</div>'; return; }
+
+          body.innerHTML = data.map(p => {
+            const speciesIcon = {perro:'🐕',gato:'🐈',ave:'🐦',conejo:'🐇',hamster:'🐹'}[p.species?.toLowerCase()] || '🐾';
+            const age = p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date)) / 31557600000) + ' años' : '';
+            return `<div class="kpi-detail-row">
+              <span style="font-size:1.5rem">${speciesIcon}</span>
+              <div class="kpi-detail-info">
+                <div class="kpi-detail-name">${escapeHtml(p.name)}</div>
+                <div class="kpi-detail-sub">${escapeHtml(p.species || '')} ${p.breed ? '· '+ escapeHtml(p.breed) : ''} ${age ? '· '+ age : ''}</div>
+                <div class="kpi-detail-sub">👤 ${escapeHtml(p.profiles?.full_name || 'Sin tutor')} ${p.profiles?.phone ? '· '+ escapeHtml(p.profiles.phone) : ''}</div>
+              </div>
+            </div>`;
+          }).join('');
+
+        } else if (type === 'revenue') {
+          title.textContent = '💰 Ingresos del Mes';
+          const monthStart = today.slice(0,7) + '-01';
+          const { data } = await supabase.from('appointments')
+            .select('id, date_time, service_type, service_id, status, services(name, price)')
+            .gte('date_time', `${monthStart}T00:00:00`)
+            .eq('status', 'completada')
+            .order('date_time', { ascending: false });
+
+          if (!data?.length) { body.innerHTML = '<div class="kpi-detail-empty">No hay citas completadas este mes</div>'; return; }
+
+          let total = 0;
+          const rows = data.map(a => {
+            const price = a.services?.price || 0;
+            total += price;
+            const d = new Date(a.date_time).toLocaleDateString('es-CL');
+            return `<div class="kpi-detail-row">
+              <span class="kpi-detail-time">${d}</span>
+              <div class="kpi-detail-info">
+                <div class="kpi-detail-name">🩺 ${escapeHtml(a.services?.name || a.service_type)}</div>
+              </div>
+              <span style="font-weight:700;color:var(--green-600,#16a34a)">$${price.toLocaleString('es-CL')}</span>
+            </div>`;
+          });
+
+          body.innerHTML = `
+            <div style="background:linear-gradient(135deg,#16a34a10,#16a34a05);padding:1rem;border-radius:var(--radius-lg);margin-bottom:1rem;text-align:center">
+              <div style="font-size:0.8rem;color:var(--gray-500)">TOTAL INGRESOS MES</div>
+              <div style="font-size:2rem;font-weight:800;color:#16a34a">$${total.toLocaleString('es-CL')}</div>
+              <div style="font-size:0.78rem;color:var(--gray-400)">${data.length} citas completadas</div>
+            </div>
+            ${rows.join('')}
+          `;
+        }
+      } catch(err) {
+        body.innerHTML = `<div class="kpi-detail-empty">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
 
     // Logout
     document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
@@ -797,10 +960,60 @@
       text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--gray-100);
       transition: var(--transition);
     }
+    .kpi-clickable { cursor: pointer; position: relative; }
+    .kpi-clickable::after {
+      content: '→'; position: absolute; top: 0.5rem; right: 0.75rem;
+      font-size: 0.85rem; color: var(--gray-300); transition: var(--transition);
+    }
+    .kpi-clickable:hover::after { color: var(--purple-600); transform: translateX(3px); }
     .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); }
     .kpi-icon { font-size: 2rem; margin-bottom: 0.5rem; }
     .kpi-value { font-size: 2rem; font-weight: 800; color: var(--blue-700); }
     .kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+
+    /* KPI Modal */
+    .kpi-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      backdrop-filter: blur(4px); animation: fadeIn 0.2s ease;
+    }
+    .kpi-modal-overlay.hidden { display: none; }
+    .kpi-modal {
+      background: var(--white); border-radius: var(--radius-xl); width: 100%;
+      max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: slideUp 0.3s ease;
+    }
+    .kpi-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-100);
+    }
+    .kpi-modal-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--blue-800); margin: 0; }
+    .kpi-modal-close {
+      border: none; background: var(--gray-100); width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex;
+      align-items: center; justify-content: center; transition: var(--transition);
+    }
+    .kpi-modal-close:hover { background: var(--gray-200); }
+    .kpi-modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+    .kpi-modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--gray-100); text-align: right; }
+
+    .kpi-detail-row {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+      border-bottom: 1px solid var(--gray-50); transition: var(--transition);
+    }
+    .kpi-detail-row:hover { background: var(--blue-50); border-radius: var(--radius-md); }
+    .kpi-detail-time { font-weight: 700; color: var(--blue-600); min-width: 50px; font-size: 0.88rem; }
+    .kpi-detail-info { flex: 1; }
+    .kpi-detail-name { font-weight: 600; color: var(--gray-800); font-size: 0.9rem; }
+    .kpi-detail-sub { font-size: 0.78rem; color: var(--gray-500); }
+    .kpi-detail-badge {
+      font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-md); text-transform: uppercase;
+    }
+    .kpi-detail-empty {
+      text-align: center; padding: 2rem; color: var(--gray-400); font-size: 0.9rem;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     .charts-row {
       display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;
