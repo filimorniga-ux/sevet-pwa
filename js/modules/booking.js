@@ -518,9 +518,16 @@ async function confirmBooking() {
       successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Show registration invite for guests
-    if (!session) {
-      document.getElementById('registerInvite')?.classList.remove('hidden');
+    // Show/hide registration invite based on session
+    const regInvite = document.getElementById('registerInvite');
+    if (regInvite) {
+      if (!session) {
+        regInvite.classList.remove('hidden');
+        regInvite.style.display = 'block';
+      } else {
+        regInvite.classList.add('hidden');
+        regInvite.style.display = 'none';
+      }
     }
 
     // Fire webhook to Make.com for notifications (non-blocking, AFTER success shown)
