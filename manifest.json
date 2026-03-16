@@ -8,8 +8,9 @@
   "theme_color": "#8b2d8b",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/assets/images/logo.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/assets/images/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/assets/images/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/images/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/images/pwa-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "categories": ["health", "medical", "lifestyle"],
   "lang": "es-CL",
@@ -20,14 +21,14 @@
       "short_name": "Agendar",
       "description": "Agenda una cita veterinaria",
       "url": "/pages/agendar.html",
-      "icons": [{ "src": "/assets/images/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/images/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Mi Mascota",
       "short_name": "Mascota",
       "description": "Ver ficha de mi mascota",
       "url": "/pages/mi-mascota.html",
-      "icons": [{ "src": "/assets/images/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/assets/images/pwa-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
