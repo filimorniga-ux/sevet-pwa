@@ -284,8 +284,9 @@
       if (profile?.rut) document.getElementById('rutInput').value = profile.rut;
       if (profile?.address) document.getElementById('addressInput').value = profile.address;
 
-      // If profile is already complete, redirect
-      if (isProfileComplete(profile)) {
+      // If profile is already complete and not explicitly editing, redirect
+      const isEditing = new URLSearchParams(window.location.search).has('edit');
+      if (isProfileComplete(profile) && !isEditing) {
         const role = profile?.role || 'client';
         const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
         window.location.href = config.home;

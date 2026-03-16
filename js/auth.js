@@ -240,7 +240,7 @@ function updateNavbarForRole(profile, user = null) {
   const menuItems = [];
 
   // Common: perfil
-  menuItems.push({ href: '/pages/completar-perfil.html', icon: '👤', label: 'Mi Perfil' });
+  menuItems.push({ href: '/pages/completar-perfil.html?edit=true', icon: '👤', label: 'Mi Perfil' });
 
   // Client-specific
   if (profile.role === 'client') {
