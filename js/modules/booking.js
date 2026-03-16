@@ -506,8 +506,17 @@ async function confirmBooking() {
     if (error) throw error;
 
     // Show success FIRST (before webhook)
-    document.querySelector('.confirmation-card').classList.add('hidden');
-    document.getElementById('bookingSuccess').classList.remove('hidden');
+    const confCard = document.querySelector('.confirmation-card');
+    if (confCard) {
+      confCard.classList.add('hidden');
+      confCard.style.display = 'none';
+    }
+    const successEl = document.getElementById('bookingSuccess');
+    if (successEl) {
+      successEl.classList.remove('hidden');
+      successEl.style.display = 'block';
+      successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     // Show registration invite for guests
     if (!session) {
