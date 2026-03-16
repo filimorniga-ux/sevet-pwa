@@ -10,6 +10,16 @@ let currentUser = null;
 let currentProfile = null;
 let initialized = false;
 
+function escapeHtml(unsafe) {
+  if (unsafe == null) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // ── Role config ──
 const ROLE_CONFIG = {
   client:       { label: 'Dueño/a',        home: '/pages/mi-mascota.html',   icon: '🐕', color: '#3b82f6' },
@@ -19,18 +29,6 @@ const ROLE_CONFIG = {
   admin:        { label: 'Administrador/a', home: '/pages/admin.html',        icon: '⚙️', color: '#1e293b' },
   owner:        { label: 'Director/a',      home: '/pages/admin.html',        icon: '🏥', color: '#6b1d73' },
 };
-
-
-// ── Escape HTML para prevenir XSS ──
-function escapeHtml(value) {
-  if (!value) return '';
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 // ── Inicializar Auth ──
 export async function initAuth() {
@@ -44,7 +42,7 @@ export async function initAuth() {
     if (session?.user) {
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
-      updateNavbarForRole(currentProfile);
+      updateNavbarForRole(currentProfile, currentUser);
       document.dispatchEvent(new CustomEvent('auth:ready', {
         detail: { user: currentUser, profile: currentProfile }
       }));
@@ -58,11 +56,11 @@ export async function initAuth() {
 
   // 2) Escuchar cambios dinámicos (login/logout en vivo)
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.user) {
-      if (event === 'INITIAL_SESSION' && currentUser?.id === session.user.id) return;
+    if (['INITIAL_SESSION', 'SIGNED_IN', 'PASSWORD_RECOVERY'].includes(event) && session?.user) {
+      if (currentUser?.id === session.user.id && event === 'INITIAL_SESSION') return;
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
-      updateNavbarForRole(currentProfile);
+      updateNavbarForRole(currentProfile, currentUser);
       document.dispatchEvent(new CustomEvent('auth:login', {
         detail: { user: currentUser, profile: currentProfile }
       }));
@@ -145,7 +143,7 @@ async function fetchProfile(userId) {
     }
     return data || null;
   } catch (err) {
-    console.warn('[auth] Error de red al obtener perfil:', err.message);
+    console.warn('[auth] Error de red al obtener perfil:', err.message ?? err);
     return null;
   }
 }
@@ -173,7 +171,7 @@ export function redirectByRole(role) {
 }
 
 // ── Dynamic Navbar Update + Session Pill ──
-function updateNavbarForRole(profile) {
+function updateNavbarForRole(profile, user = null) {
   const navLinks = document.getElementById('navLinks');
   if (!navLinks) return;
 
@@ -183,16 +181,25 @@ function updateNavbarForRole(profile) {
   // Limpiar session pill previa
   document.getElementById('sessionPill')?.remove();
 
-  if (!profile) {
+  if (!profile && !user) {
     // Sin sesión: asegurarse de que el botón de login es visible
     const loginBtn = navLinks.querySelector('.nav-login-btn');
     if (loginBtn) loginBtn.style.display = '';
+    const ctaBtn = navLinks.querySelector('.nav-cta');
+    if (ctaBtn && ctaBtn.parentElement) ctaBtn.parentElement.style.display = '';
     return;
   }
 
-  const role = profile.role;
-  const config = ROLE_CONFIG[role] || ROLE_CONFIG.client;
+  if (!profile && user) {
+    profile = { role: 'client', full_name: user.email };
+  }
+
+  const role = escapeHtml(profile.role);
+  const config = ROLE_CONFIG[profile.role] || ROLE_CONFIG.client;
   const firstName = escapeHtml((profile.full_name || '').split(' ')[0] || 'Usuario');
+  const safeHome = escapeHtml(config.home);
+  const safeIcon = escapeHtml(config.icon);
+  const safeLabel = escapeHtml(config.label);
 
   // ── Inyectar links de rol en el menú ──
   const roleLinks = [];
@@ -229,13 +236,13 @@ function updateNavbarForRole(profile) {
   pill.id = 'sessionPill';
   pill.className = 'nav-role-item session-pill-wrapper';
   pill.innerHTML = `
-    <div class="session-pill" data-role="${role}" style="--role-color:${config.color}">
-      <span class="sp-avatar">${config.icon}</span>
+    <div class="session-pill" data-role="${role}" style="--role-color:${escapeHtml(config.color)}">
+      <span class="sp-avatar">${safeIcon}</span>
       <div class="sp-info">
         <span class="sp-name">${firstName}</span>
-        <span class="sp-role">${config.label}</span>
+        <span class="sp-role">${safeLabel}</span>
       </div>
-      <a href="${config.home}" class="sp-panel-btn" title="Ir a mi panel">Panel</a>
+      <a href="${safeHome}" class="sp-panel-btn" title="Ir a mi panel">Panel</a>
       <button class="sp-logout-btn" onclick="signOutUser(event)" title="Cerrar sesión" aria-label="Cerrar sesión">
         &#x2715;
       </button>

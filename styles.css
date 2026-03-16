@@ -254,7 +254,9 @@ button, a, input, select, textarea {
 .session-pill {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.3rem 0.5rem 0.3rem 0.4rem;
+  background: var(--blue-50);
   background: color-mix(in srgb, var(--role-color, #6b1d73) 12%, white);
+  border: 1.5px solid var(--blue-200);
   border: 1.5px solid color-mix(in srgb, var(--role-color, #6b1d73) 30%, transparent);
   border-radius: 99px;
   animation: pillFadeIn 0.35s ease;
@@ -262,6 +264,7 @@ button, a, input, select, textarea {
 @keyframes pillFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
 .sp-avatar {
   font-size: 1.35rem; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue-100);
   background: color-mix(in srgb, var(--role-color, #6b1d73) 18%, white);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -280,6 +283,7 @@ button, a, input, select, textarea {
   transition: opacity 0.2s;
 }
 .sp-panel-btn:hover { opacity: 0.85; }
+.sp-panel-btn:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 2px; }
 .sp-logout-btn {
   background: none; border: none; cursor: pointer;
   font-size: 0.8rem; color: #9ca3af; padding: 0.2rem 0.3rem;
@@ -287,6 +291,7 @@ button, a, input, select, textarea {
   line-height: 1;
 }
 .sp-logout-btn:hover { color: #ef4444; background: #fee2e2; }
+.sp-logout-btn:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
 
 /* Mobile: session pill compacta */
 @media (max-width: 768px) {
