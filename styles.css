@@ -755,13 +755,15 @@ section { position: relative; z-index: 1; }
 }
 .comparison-before, .comparison-after {
   position: absolute; inset: 0;
-  background-size: cover; background-position: center;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
 }
-.comparison-before { background-image: url('assets/images/before-after.png'); background-position: left center; }
+.comparison-before { z-index: 1; }
 .comparison-after {
-  background-image: url('assets/images/before-after.png');
-  background-position: right center;
-  clip-path: inset(0 50% 0 0);
+  z-index: 2;
+  clip-path: inset(0 0 0 50%);
   transition: clip-path 0.05s;
 }
 .comparison-divider {

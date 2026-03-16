@@ -281,7 +281,10 @@ function initComparison() {
   function updatePosition(x) {
     const rect = container.getBoundingClientRect();
     let pct = Math.max(5, Math.min(95, ((x - rect.left) / rect.width) * 100));
-    after.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    // inset(top right bottom left): clip desde la izquierda = revelar desde la derecha
+    // slider a la derecha (pct alto) → más ANTES visible, menos DESPUÉS
+    // slider a la izquierda (pct bajo) → más DESPUÉS visible, menos ANTES
+    after.style.clipPath = `inset(0 0 0 ${pct}%)`;
     divider.style.left = pct + '%';
     handle.style.left = pct + '%';
   }
