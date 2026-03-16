@@ -104,19 +104,18 @@ export async function signInWithGoogle() {
 
 // ── Cerrar sesión (limpia todo) ──
 export async function signOut() {
-  try { await supabase.auth.signOut(); } catch (err) { console.warn('signOut:', err); }
-  _cleanStorage();
+  try { await supabase.auth.signOut(); } catch (err) { console.warn('signOut:', err); } finally { _cleanStorage(); }
 }
 
 function _cleanStorage() {
   try {
-    const lKeys = Object.keys(localStorage);
-    for (let i = lKeys.length - 1; i >= 0; i--) {
-      if (lKeys[i].startsWith('sb-')) localStorage.removeItem(lKeys[i]);
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-')) localStorage.removeItem(k);
     }
-    const sKeys = Object.keys(sessionStorage);
-    for (let i = sKeys.length - 1; i >= 0; i--) {
-      if (sKeys[i].startsWith('sb-') || sKeys[i] === 'skipProfile') sessionStorage.removeItem(sKeys[i]);
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k && (k.startsWith('sb-') || k === 'skipProfile')) sessionStorage.removeItem(k);
     }
   } catch (err) {}
 }
@@ -144,7 +143,7 @@ async function fetchProfile(userId) {
     }
     return data || null;
   } catch (err) {
-    console.warn('[auth] Error de red obteniendo perfil:', err);
+    console.warn('[auth] Error de red al obtener perfil:', err.message ?? err);
     return null;
   }
 }
