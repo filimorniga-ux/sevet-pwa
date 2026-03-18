@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "@supabase/supabase-js";
 
 // ── Environment Variables ──────────────────────────────────────
 const SUPABASE_URL             = Deno.env.get('SUPABASE_URL') || '';
@@ -11,7 +11,6 @@ const CLINIC_EMAIL             = Deno.env.get('CLINIC_EMAIL') || 'sanalberto2807
 const RECEPTIONIST_PHONE       = Deno.env.get('RECEPTIONIST_PHONE') || '56965911058';
 const RECEPTIONIST_NAME        = Deno.env.get('RECEPTIONIST_NAME') || 'Recepción SEVET';
 const WHATSAPP_TEMPLATE_NAME   = 'confirmacion_cita_sevet';
-const TIMEZONE                 = 'America/Santiago';
 
 // ── CORS Headers ───────────────────────────────────────────────
 const corsHeaders = {
@@ -216,7 +215,8 @@ async function sendWhatsApp(opts: {
 
 // ── Log notification result ───────────────────────────────────
 async function logNotification(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   opts: { type: string; status: string; error?: string; meta?: Record<string, unknown> }
 ) {
   try {
@@ -243,7 +243,7 @@ Deno.serve(async (req: Request) => {
     console.log(`[webhook-appointment] Event: ${eventType}`, JSON.stringify(payload));
 
     // ── Enrich payload from Supabase ─────────────────────────
-    let p = { ...payload };
+    const p: Record<string, string> = { ...payload };
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
