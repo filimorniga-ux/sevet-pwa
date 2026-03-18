@@ -184,7 +184,7 @@ async function sendWhatsApp(opts: {
   // Ensure Chilean format: starts with 56
   const phone = rawPhone.startsWith('56') ? rawPhone : `56${rawPhone}`;
 
-  const res = await fetch(`https://graph.facebook.com/v18.0/${META_PHONE_ID}/messages`, {
+  const res = await fetch(`https://graph.facebook.com/v20.0/${META_PHONE_ID}/messages`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${META_WHATSAPP_TOKEN}`,

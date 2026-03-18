@@ -5,7 +5,7 @@ import { formatInTimeZone } from "https://esm.sh/date-fns-tz@3.0.0";
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const META_WHATSAPP_TOKEN = Deno.env.get('META_WHATSAPP_TOKEN') || '';
+const META_WHATSAPP_TOKEN = Deno.env.get('META_ACCESS_TOKEN') || Deno.env.get('META_WHATSAPP_TOKEN') || '';
 const META_PHONE_ID = Deno.env.get('META_PHONE_ID') || '';
 const TIMEZONE = 'America/Santiago';
 
