@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // ── Environment Variables ──────────────────────────────────────
 const SUPABASE_URL             = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const META_WHATSAPP_TOKEN      = Deno.env.get('META_WHATSAPP_TOKEN') || '';
+const META_WHATSAPP_TOKEN      = Deno.env.get('META_ACCESS_TOKEN') || Deno.env.get('META_WHATSAPP_TOKEN') || '';
 const META_PHONE_ID            = Deno.env.get('META_PHONE_ID') || '';
 const RESEND_API_KEY           = Deno.env.get('RESEND_API_KEY') || '';
 const CLINIC_EMAIL             = Deno.env.get('CLINIC_EMAIL') || 'sanalberto2807@gmail.com';
@@ -154,7 +154,7 @@ async function sendEmail(opts: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: opts.from || 'SEVET Veterinaria <notificaciones@sevet.cl>',
+      from: opts.from || 'SEVET Veterinaria <onboarding@resend.dev>',
       to: [opts.to],
       subject: opts.subject,
       html: opts.html,
