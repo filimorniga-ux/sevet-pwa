@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Configuración de integraciones y preferencias de la clínica."/>
+  <title>Configuración – SEVET Veterinaria</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <style>
+    /* ── Config Page Styles ── */
+    .config-grid {
+      display: grid;
+      gap: 1.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .config-card {
+      background: var(--card-bg, rgba(255,255,255,0.06));
+      border: 1px solid rgba(139,45,139,0.25);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .config-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(139,45,139,0.12);
+      border-bottom: 1px solid rgba(139,45,139,0.2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .config-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main, #fff);
+    }
+    .config-card-header .icon { font-size: 1.4rem; }
+    .config-card-header .chevron {
+      margin-left: auto;
+      transition: transform .3s;
+      color: rgba(255,255,255,.5);
+      font-size: 0.9rem;
+    }
+    .config-card.open .chevron { transform: rotate(180deg); }
+    .config-card-body {
+      display: none;
+      padding: 1.5rem;
+    }
+    .config-card.open .config-card-body { display: block; }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: rgba(255,255,255,.6);
+      margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(139,45,139,0.35);
+      border-radius: 10px;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color .2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #8b2d8b;
+      background: rgba(139,45,139,0.1);
+    }
+    .form-group textarea { min-height: 110px; resize: vertical; }
+    .form-group select option { background: #1a0a2e; }
+    .form-group .input-wrap {
+      position: relative;
+    }
+    .form-group .input-wrap input { padding-right: 2.8rem; }
+    .form-group .toggle-visibility {
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+    }
+    .form-hint {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,.4);
+      margin-top: 0.3rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #8b2d8b, #6b1d8b);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 0.7rem 1.6rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-test {
+      background: rgba(139,45,139,0.15);
+      color: #c084c8;
+      border: 1px solid rgba(139,45,139,0.4);
+      border-radius: 50px;
+      padding: 0.7rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-test:hover { background: rgba(139,45,139,0.3); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .badge-ok { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .badge-warn { background: rgba(234,179,8,.12); color: #facc15; border: 1px solid rgba(234,179,8,.3); }
+    .badge-err { background: rgba(239,68,68,.12); color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+
+    /* Rules table */
+    .rules-list { display: grid; gap: 0.75rem; }
+    .rule-item {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(139,45,139,.2);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .rule-item .rule-info { flex: 1; }
+    .rule-item .rule-name { font-weight: 700; font-size: 0.9rem; }
+    .rule-item .rule-meta { font-size: 0.78rem; color: rgba(255,255,255,.5); margin-top: 2px; }
+    .toggle-switch {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-switch .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: rgba(255,255,255,.2);
+      border-radius: 24px;
+      transition: .3s;
+    }
+    .toggle-switch input:checked + .slider { background: #8b2d8b; }
+    .toggle-switch .slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    .toggle-switch input:checked + .slider::before { transform: translateX(18px); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1a0a2e;
+      border: 1px solid rgba(139,45,139,.5);
+      border-radius: 12px;
+      padding: 0.9rem 1.2rem;
+      color: #fff;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(34,197,94,.4); }
+    .toast.error { border-color: rgba(239,68,68,.4); }
+  </style>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <img class="nav-logo-img" src="/assets/images/logo-transparente.png" alt="SEVET San Alberto" />
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/admin.html">Dashboard</a></li>
+      <li><a href="/pages/configuracion.html" class="active">⚙️ Configuración</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header">
+      <p class="section-tag">Administración</p>
+      <h1 class="section-title">⚙️ Configuración <span class="grad">SEVET</span></h1>
+      <p class="section-sub">Personaliza las integraciones de tu clínica sin tocar código.</p>
+    </div>
+
+    <!-- ACCESS CHECK -->
+    <div id="accessDenied" style="display:none;text-align:center;padding:3rem;">
+      <div style="font-size:3rem">🔒</div>
+      <h2>Acceso Restringido</h2>
+      <p style="color:rgba(255,255,255,.6)">Solo el propietario y administradores pueden ver esta configuración.</p>
+    </div>
+
+    <div id="configContent" style="display:none">
+      <div class="config-grid">
+
+        <!-- ── BRANDING ── -->
+        <div class="config-card open" id="cardBranding">
+          <div class="config-card-header" onclick="toggleCard('cardBranding')">
+            <span class="icon">🏥</span>
+            <h3>Datos de la Clínica</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre de la Clínica</label>
+                <input type="text" id="clinic_name" placeholder="Veterinaria San Alberto"/>
+              </div>
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="clinic_phone" placeholder="+56 9 1234 5678"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Dirección</label>
+              <input type="text" id="clinic_address" placeholder="Av. Principal 123, Santiago"/>
+            </div>
+            <div class="btn-group">
+              <button class="btn-save" onclick="saveBranding()">💾 Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── EMAIL ── -->
+        <div class="config-card" id="cardEmail">
+          <div class="config-card-header" onclick="toggleCard('cardEmail')">
+            <span class="icon">📧</span>
+            <h3>Email de Notificaciones</h3>
+            <span id="emailStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ Sin configurar</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email de la Clínica</label>
+                <input type="email" id="clinic_email" placeholder="recepcion@miclínica.cl"/>
+                <p class="form-hint">Las notificaciones de nuevas citas llegarán aquí.</p>
+              </div>
+              <div class="form-group">
+                <label>Nombre del Remitente</label>
+                <input type="text" id="email_from_name" placeholder="SEVET Veterinaria"/>
+                <p class="form-hint">Nombre que verá el cliente en el correo.</p>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn-save" onclick="saveEmail()">💾 Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WHATSAPP ── -->
+        <div class="config-card" id="cardWhatsapp">
+          <div class="config-card-header" onclick="toggleCard('cardWhatsapp')">
+            <span class="icon">📱</span>
+            <h3>WhatsApp Business</h3>
+            <span id="waStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ Sin configurar</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <div class="form-group">
+              <label>Phone Number ID</label>
+              <div class="input-wrap">
+                <input type="password" id="wa_phone_number_id" placeholder="123456789012345"/>
+                <button class="toggle-visibility" onclick="toggleVisible('wa_phone_number_id', this)">👁️</button>
+              </div>
+              <p class="form-hint">Encuéntralo en Meta for Developers → WhatsApp → API Setup → "Phone Number ID".</p>
+            </div>
+            <div class="form-group">
+              <label>Access Token</label>
+              <div class="input-wrap">
+                <input type="password" id="wa_access_token_enc" placeholder="EAAXf8h..."/>
+                <button class="toggle-visibility" onclick="toggleVisible('wa_access_token_enc', this)">👁️</button>
+              </div>
+              <p class="form-hint">Token permanente desde Meta Business → Usuarios del Sistema.</p>
+            </div>
+            <div class="form-group">
+              <label>Mensaje de Bienvenida</label>
+              <textarea id="wa_welcome_message" placeholder="🐾 ¡Hola! Bienvenido a {{clinic_name}}. ¿En qué podemos ayudar?"></textarea>
+              <p class="form-hint">Usa {{clinic_name}} para insertar el nombre de la clínica.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Mensaje de Derivación</label>
+                <input type="text" id="wa_fallback_message" placeholder="Te conectamos con recepción 👩‍⚕️"/>
+              </div>
+              <div class="form-group">
+                <label>Teléfono de Recepción (fallback)</label>
+                <input type="tel" id="wa_fallback_phone" placeholder="56912345678"/>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn-save" onclick="saveWhatsapp()">💾 Guardar</button>
+              <button class="btn-test" onclick="testWhatsapp()">🧪 Probar conexión</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── IA ── -->
+        <div class="config-card" id="cardIA">
+          <div class="config-card-header" onclick="toggleCard('cardIA')">
+            <span class="icon">🤖</span>
+            <h3>Inteligencia Artificial (Chatbot)</h3>
+            <span id="iaStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ Desactivada</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Proveedor de IA</label>
+                <select id="ai_provider" onchange="onProviderChange()">
+                  <option value="none">Sin IA (solo palabras clave)</option>
+                  <option value="openai">OpenAI (GPT-4o mini)</option>
+                  <option value="gemini">Google Gemini Flash</option>
+                  <option value="deepseek">DeepSeek (más económico)</option>
+                </select>
+              </div>
+              <div class="form-group" id="aiModelGroup">
+                <label>Modelo</label>
+                <input type="text" id="ai_model" placeholder="gpt-4o-mini"/>
+              </div>
+            </div>
+            <div class="form-group" id="aiKeyGroup">
+              <label>API Key</label>
+              <div class="input-wrap">
+                <input type="password" id="ai_api_key_enc" placeholder="sk-..."/>
+                <button class="toggle-visibility" onclick="toggleVisible('ai_api_key_enc', this)">👁️</button>
+              </div>
+              <p class="form-hint" id="aiKeyHint">Obtenla desde platform.openai.com → API Keys.</p>
+            </div>
+            <div class="form-group">
+              <label>System Prompt (instrucciones para la IA)</label>
+              <textarea id="ai_system_prompt" placeholder="Eres el asistente de {{clinic_name}}. Ayudas a agendar citas y resolver dudas sobre mascotas..."></textarea>
+              <p class="form-hint">Define cómo se comporta el chatbot. Usa {{clinic_name}} para el nombre dinámico.</p>
+            </div>
+            <div class="btn-group">
+              <button class="btn-save" onclick="saveIA()">💾 Guardar</button>
+              <button class="btn-test" onclick="testIA()" id="btnTestIA">🧪 Probar IA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── REGLAS DEL BOT ── -->
+        <div class="config-card" id="cardRules">
+          <div class="config-card-header" onclick="toggleCard('cardRules')">
+            <span class="icon">🗂️</span>
+            <h3>Reglas del Bot (Respuestas Automáticas)</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:1rem;">
+              Define palabras clave y las respuestas que enviará el bot automáticamente. Tienen prioridad sobre la IA.
+            </p>
+            <div class="rules-list" id="rulesList">
+              <div style="text-align:center;padding:2rem;color:rgba(255,255,255,.4)">
+                ⏳ Cargando reglas...
+              </div>
+            </div>
+            <div class="btn-group" style="margin-top:1rem">
+              <button class="btn-save" onclick="openNewRuleModal()">+ Agregar Regla</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── GOOGLE CALENDAR ── -->
+        <div class="config-card" id="cardGCal">
+          <div class="config-card-header" onclick="toggleCard('cardGCal')">
+            <span class="icon">🗓️</span>
+            <h3>Google Calendar</h3>
+            <span id="gcalStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ No conectado</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="config-card-body">
+            <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:1.5rem;">
+              Conecta tu Google Calendar para sincronizar citas automáticamente. Cada miembro del equipo puede conectar el suyo desde su perfil.
+            </p>
+            <div id="gcalConnected" style="display:none">
+              <div class="badge-ok" style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:8px;margin-bottom:1rem">
+                ✅ <span id="gcalEmail">Conectado</span>
+              </div>
+              <br/>
+              <button class="btn-test" onclick="disconnectGCal()">🔌 Desconectar</button>
+            </div>
+            <div id="gcalDisconnected">
+              <button class="btn-save" onclick="connectGCal()">🗓️ Conectar Google Calendar</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /config-grid -->
+    </div><!-- /configContent -->
+  </section>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from '/js/supabase.js';
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._sb = sb;
+
+    // ── Auth guard ────────────────────────────────────────────
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { location.href = '/pages/auth.html'; }
+
+    const { data: profile } = await sb.from('profiles').select('role').eq('id', user.id).single();
+    if (!profile || !['owner','admin'].includes(profile.role)) {
+      document.getElementById('accessDenied').style.display = 'block';
+    } else {
+      document.getElementById('configContent').style.display = 'block';
+      loadSettings();
+      loadRules();
+    }
+
+    // ── Load settings ─────────────────────────────────────────
+    async function loadSettings() {
+      const { data } = await sb.from('clinic_settings').select('*').limit(1).single();
+      if (!data) return;
+      window._settingsId = data.id;
+
+      set('clinic_name', data.clinic_name);
+      set('clinic_phone', data.clinic_phone);
+      set('clinic_address', data.clinic_address);
+      set('clinic_email', data.clinic_email);
+      set('email_from_name', data.email_from_name);
+      // Tokens: mostrar placeholder si tiene valor
+      if (data.wa_phone_number_id) { document.getElementById('wa_phone_number_id').placeholder = '••••••• (configurado)'; }
+      if (data.wa_access_token_enc) { document.getElementById('wa_access_token_enc').placeholder = '••••••• (configurado)'; }
+      set('wa_welcome_message', data.wa_welcome_message);
+      set('wa_fallback_message', data.wa_fallback_message);
+      set('wa_fallback_phone', data.wa_fallback_phone);
+      set('ai_provider', data.ai_provider || 'none');
+      set('ai_model', data.ai_model);
+      if (data.ai_api_key_enc) { document.getElementById('ai_api_key_enc').placeholder = '••••••• (configurado)'; }
+      set('ai_system_prompt', data.ai_system_prompt);
+
+      // Status badges
+      if (data.clinic_email) setBadge('emailStatus', 'ok', '✅ Configurado');
+      if (data.wa_phone_number_id && data.wa_access_token_enc) setBadge('waStatus', 'ok', '✅ Configurado');
+      if (data.ai_provider && data.ai_provider !== 'none' && data.ai_api_key_enc) setBadge('iaStatus', 'ok', `✅ ${data.ai_provider}`);
+
+      onProviderChange();
+    }
+
+    // ── Load rules ────────────────────────────────────────────
+    async function loadRules() {
+      const { data } = await sb.from('automation_rules').select('*').order('priority', { ascending: false });
+      const list = document.getElementById('rulesList');
+      if (!data || data.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.4)">Sin reglas configuradas</div>';
+        return;
+      }
+      list.innerHTML = data.map(r => `
+        <div class="rule-item">
+          <div class="rule-info">
+            <div class="rule-name">${r.rule_name || 'Sin nombre'}</div>
+            <div class="rule-meta">
+              Trigger: <strong>"${r.trigger_value || r.trigger_type}"</strong>
+              → Respuesta: <strong>${r.response_type}</strong>
+              · Prioridad: ${r.priority}
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" ${r.is_active ? 'checked' : ''} onchange="toggleRule('${r.id}', this.checked)"/>
+            <span class="slider"></span>
+          </label>
+        </div>
+      `).join('');
+    }
+    window.loadRules = loadRules;
+
+    // ── Helpers ───────────────────────────────────────────────
+    function set(id, val) {
+      const el = document.getElementById(id);
+      if (!el || val == null) return;
+      if (el.tagName === 'SELECT') el.value = val;
+      else el.value = val;
+    }
+    function setBadge(id, type, text) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = `status-badge badge-${type}`;
+      el.textContent = text;
+    }
+
+    async function upsertSettings(patch) {
+      const id = window._settingsId;
+      let res;
+      if (id) {
+        res = await sb.from('clinic_settings').update(patch).eq('id', id);
+      } else {
+        res = await sb.from('clinic_settings').insert(patch).select().single();
+        if (res.data) window._settingsId = res.data.id;
+      }
+      return !res.error;
+    }
+
+    // ── Save handlers ─────────────────────────────────────────
+    window.saveBranding = async () => {
+      const ok = await upsertSettings({
+        clinic_name: val('clinic_name'),
+        clinic_phone: val('clinic_phone'),
+        clinic_address: val('clinic_address'),
+      });
+      toast(ok ? '✅ Datos guardados' : '❌ Error al guardar', ok ? 'success' : 'error');
+    };
+
+    window.saveEmail = async () => {
+      const ok = await upsertSettings({
+        clinic_email: val('clinic_email'),
+        email_from_name: val('email_from_name'),
+      });
+      if (ok) setBadge('emailStatus', 'ok', '✅ Configurado');
+      toast(ok ? '✅ Email guardado' : '❌ Error al guardar', ok ? 'success' : 'error');
+    };
+
+    window.saveWhatsapp = async () => {
+      const patch = {
+        wa_welcome_message: val('wa_welcome_message'),
+        wa_fallback_message: val('wa_fallback_message'),
+        wa_fallback_phone: val('wa_fallback_phone'),
+      };
+      // Solo actualizar tokens si el usuario ingresó valores nuevos
+      const pid = val('wa_phone_number_id');
+      const tok = val('wa_access_token_enc');
+      if (pid && !pid.startsWith('•')) patch.wa_phone_number_id = pid;
+      if (tok && !tok.startsWith('•')) patch.wa_access_token_enc = tok;
+      const ok = await upsertSettings(patch);
+      if (ok) setBadge('waStatus', 'ok', '✅ Configurado');
+      toast(ok ? '✅ WhatsApp guardado' : '❌ Error al guardar', ok ? 'success' : 'error');
+    };
+
+    window.saveIA = async () => {
+      const patch = {
+        ai_provider: val('ai_provider'),
+        ai_model: val('ai_model'),
+        ai_system_prompt: val('ai_system_prompt'),
+      };
+      const key = val('ai_api_key_enc');
+      if (key && !key.startsWith('•')) patch.ai_api_key_enc = key;
+      const ok = await upsertSettings(patch);
+      if (ok) {
+        const prov = val('ai_provider');
+        setBadge('iaStatus', prov === 'none' ? 'warn' : 'ok',
+          prov === 'none' ? '⏳ Desactivada' : `✅ ${prov}`);
+      }
+      toast(ok ? '✅ IA guardada' : '❌ Error al guardar', ok ? 'success' : 'error');
+    };
+
+    // ── Test handlers ─────────────────────────────────────────
+    window.testWhatsapp = async () => {
+      toast('🔄 Probando conexión WhatsApp...', '');
+      const { data: s } = await sb.from('clinic_settings').select('wa_phone_number_id,wa_access_token_enc').limit(1).single();
+      if (!s?.wa_phone_number_id || !s?.wa_access_token_enc) {
+        toast('❌ Completa el Phone ID y Token primero', 'error'); return;
+      }
+      try {
+        const res = await fetch(`https://graph.facebook.com/v20.0/${s.wa_phone_number_id}`, {
+          headers: { Authorization: `Bearer ${s.wa_access_token_enc}` }
+        });
+        const d = await res.json();
+        if (d.id) toast(`✅ Número: ${d.display_phone_number || d.id}`, 'success');
+        else toast(`❌ ${d.error?.message || 'Token inválido'}`, 'error');
+      } catch { toast('❌ Error de red', 'error'); }
+    };
+
+    window.testIA = async () => {
+      const provider = val('ai_provider');
+      if (provider === 'none') { toast('⚠️ Selecciona un proveedor de IA', 'error'); return; }
+      toast('🔄 Probando IA...', '');
+      const { data: s } = await sb.from('clinic_settings').select('ai_api_key_enc,ai_provider,ai_model').limit(1).single();
+      if (!s?.ai_api_key_enc) { toast('❌ Guarda la API Key primero', 'error'); return; }
+      toast('✅ API Key guardada. La IA se activará en el próximo mensaje.', 'success');
+    };
+
+    // ── Toggle rule ───────────────────────────────────────────
+    window.toggleRule = async (id, active) => {
+      await sb.from('automation_rules').update({ is_active: active }).eq('id', id);
+      toast(active ? '✅ Regla activada' : '⏸️ Regla desactivada', 'success');
+    };
+
+    // ── New rule modal (sencillo) ──────────────────────────────
+    window.openNewRuleModal = () => {
+      const name = prompt('Nombre de la regla:');
+      if (!name) return;
+      const triggerType = prompt('Tipo de trigger:\n1. keyword\n2. button_reply\n3. any_message', '1');
+      const triggerMap = { '1': 'keyword', '2': 'button_reply', '3': 'any_message' };
+      const trigger_type = triggerMap[triggerType] || 'keyword';
+      const trigger_value = trigger_type !== 'any_message' ? prompt('Valor del trigger (ej: "hola", "btn_cita"):') : null;
+      const responseType = prompt('Tipo de respuesta:\n1. text\n2. buttons\n3. list\n4. handoff', '1');
+      const responseMap = { '1': 'text', '2': 'buttons', '3': 'list', '4': 'handoff' };
+      const response_type = responseMap[responseType] || 'text';
+      const responseText = prompt('Texto de la respuesta:');
+      sb.from('automation_rules').insert({
+        rule_name: name,
+        trigger_type,
+        trigger_value,
+        response_type,
+        response_body: { text: responseText },
+        priority: 50,
+      }).then(({ error }) => {
+        if (error) toast('❌ ' + error.message, 'error');
+        else { toast('✅ Regla creada', 'success'); loadRules(); }
+      });
+    };
+
+    // ── Google Calendar ───────────────────────────────────────
+    window.connectGCal = () => {
+      toast('🗓️ Google Calendar — Próximamente (Fase 4)', '');
+    };
+    window.disconnectGCal = async () => {
+      await sb.from('profiles').update({ google_refresh_token_enc: null, google_calendar_id: null }).eq('id', user.id);
+      document.getElementById('gcalConnected').style.display = 'none';
+      document.getElementById('gcalDisconnected').style.display = 'block';
+      setBadge('gcalStatus', 'warn', '⏳ No conectado');
+      toast('🔌 Google Calendar desconectado', 'success');
+    };
+
+    // ── UI helpers ────────────────────────────────────────────
+    function val(id) { return document.getElementById(id)?.value || ''; }
+
+    window.onProviderChange = () => {
+      const p = document.getElementById('ai_provider').value;
+      const hints = {
+        openai: 'Obtenla en platform.openai.com → API Keys.',
+        gemini: 'Obtenla en aistudio.google.com → Get API Key.',
+        deepseek: 'Obtenla en platform.deepseek.com → API Keys.',
+        none: '',
+      };
+      const models = { openai: 'gpt-4o-mini', gemini: 'gemini-1.5-flash', deepseek: 'deepseek-chat', none: '' };
+      document.getElementById('aiKeyGroup').style.display = p === 'none' ? 'none' : 'block';
+      document.getElementById('aiModelGroup').style.display = p === 'none' ? 'none' : 'block';
+      document.getElementById('aiKeyHint').textContent = hints[p] || '';
+      if (models[p]) document.getElementById('ai_model').value = models[p];
+    };
+    onProviderChange();
+  </script>
+
+  <script>
+    // ── Toast ─────────────────────────────────────────────────
+    window.toast = (msg, type = '') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    };
+
+    // ── Accordion ─────────────────────────────────────────────
+    window.toggleCard = (id) => {
+      document.getElementById(id).classList.toggle('open');
+    };
+
+    // ── Toggle visibility ─────────────────────────────────────
+    window.toggleVisible = (id, btn) => {
+      const input = document.getElementById(id);
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      btn.textContent = isPass ? '🙈' : '👁️';
+    };
+
+    // ── Navbar ────────────────────────────────────────────────
+    window.toggleNav = () => document.getElementById('navLinks').classList.toggle('active');
+
+    // ── Particles (reutiliza el canvas del sistema) ───────────
+    const canvas = document.getElementById('particles-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+      resize();
+      window.addEventListener('resize', resize);
+      const pts = Array.from({length: 40}, () => ({
+        x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+        vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
+        r: Math.random()*2+1, a: Math.random()*.5+.1
+      }));
+      (function loop() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pts.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          ctx.fillStyle = `rgba(139,45,139,${p.a})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(loop);
+      })();
+    }
+  </script>
+</body>
+</html>
