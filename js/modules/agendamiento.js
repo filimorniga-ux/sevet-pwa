@@ -231,7 +231,7 @@ window._confirmBooking = async function() {
     const dateStr = selectedDate.toISOString().split('T')[0];
     const dateTime = `${dateStr}T${selectedTime}:00-03:00`;
 
-    const { error } = await supabase.from('appointments').insert({
+    const { data: inserted, error } = await supabase.from('appointments').insert({
       pet_id: null,
       vet_id: selectedVet || null,
       service_type: selectedService,
@@ -239,7 +239,7 @@ window._confirmBooking = async function() {
       status: 'pendiente',
       triage_level: SERVICES[selectedService]?.triage || 'normal',
       notes: `Reserva online - ${SERVICES[selectedService]?.label}`,
-    });
+    }).select('id').single();
 
     if (error) throw error;
 
@@ -248,16 +248,21 @@ window._confirmBooking = async function() {
       confirmBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
     }
 
-    // Webhook a Make.com para notificaciones
+    // Webhook para notificaciones + sync Google Calendar
     try {
+      const svc = SERVICES[selectedService];
       await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'new_appointment',
-          service: SERVICES[selectedService]?.label,
+          appointment_id: inserted?.id || null,
+          vet_id: selectedVet || null,
+          service: svc?.label,
           date: dateStr,
           time: selectedTime,
+          start_time: dateTime,                      // ISO 8601 con TZ
+          duration_min: svc?.duration || 30,
           userEmail: user.email,
         }),
       });
