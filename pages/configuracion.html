@@ -433,22 +433,51 @@
           <div class="config-card-header" onclick="toggleCard('cardGCal')">
             <span class="icon">🗓️</span>
             <h3>Google Calendar</h3>
-            <span id="gcalStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ No conectado</span>
+            <span id="gcalStatus" class="status-badge badge-warn" style="margin-right:.5rem">⏳ No configurado</span>
             <span class="chevron">▼</span>
           </div>
           <div class="config-card-body">
-            <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:1.5rem;">
-              Conecta tu Google Calendar para sincronizar citas automáticamente. Cada miembro del equipo puede conectar el suyo desde su perfil.
+            <p style="color:rgba(255,255,255,.6);font-size:.88rem;margin-bottom:1.5rem">
+              Ingresa las credenciales OAuth de Google Cloud Console. Cada usuario conecta su calendario personal desde su perfil.
             </p>
-            <div id="gcalConnected" style="display:none">
-              <div class="badge-ok" style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:8px;margin-bottom:1rem">
-                ✅ <span id="gcalEmail">Conectado</span>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Client ID de Google</label>
+                <div class="input-wrap">
+                  <input type="password" id="google_client_id" placeholder="123456789-abc...apps.googleusercontent.com"/>
+                  <button class="toggle-visibility" onclick="toggleVisible('google_client_id', this)">👁️</button>
+                </div>
+                <p class="form-hint">Google Cloud Console → APIs → Credenciales → OAuth 2.0 → Client ID</p>
               </div>
-              <br/>
-              <button class="btn-test" onclick="disconnectGCal()">🔌 Desconectar</button>
+              <div class="form-group">
+                <label>Client Secret de Google</label>
+                <div class="input-wrap">
+                  <input type="password" id="google_client_secret" placeholder="GOCSPX-..."/>
+                  <button class="toggle-visibility" onclick="toggleVisible('google_client_secret', this)">👁️</button>
+                </div>
+                <p class="form-hint">Mismo lugar que el Client ID → Client Secret</p>
+              </div>
             </div>
-            <div id="gcalDisconnected">
-              <button class="btn-save" onclick="connectGCal()">🗓️ Conectar Google Calendar</button>
+
+            <p class="form-hint" style="margin-bottom:1.5rem">
+              🔗 URI de redirección que debes registrar en Google Cloud:<br/>
+              <code style="background:rgba(255,255,255,.08);padding:.2rem .5rem;border-radius:6px;font-size:.8rem">
+                https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/google-oauth-callback
+              </code>
+            </p>
+
+            <div class="btn-group">
+              <button class="btn-save" onclick="saveGCal()">💾 Guardar Credenciales</button>
+              <button class="btn-test" onclick="connectGCal()">🗓️ Conectar Mi Calendario</button>
+            </div>
+
+            <div id="gcalConnected" style="display:none;margin-top:1rem">
+              <div class="badge-ok" style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:8px;">
+                ✅ Conectado: <span id="gcalEmail">primary</span>
+              </div>
+              <br/><br/>
+              <button class="btn-test" onclick="disconnectGCal()">🔌 Desconectar mi calendario</button>
             </div>
           </div>
         </div>
@@ -508,6 +537,25 @@
       if (data.ai_provider && data.ai_provider !== 'none' && data.ai_api_key_enc) setBadge('iaStatus', 'ok', `✅ ${data.ai_provider}`);
 
       onProviderChange();
+
+      // Google Calendar: cargar credenciales y estado
+      if (data.google_client_id) {
+        document.getElementById('google_client_id').placeholder = '••••••• (configurado)';
+        setBadge('gcalStatus', 'ok', '✅ Credenciales guardadas');
+      }
+      if (data.google_client_secret) {
+        document.getElementById('google_client_secret').placeholder = '••••••• (configurado)';
+      }
+
+      // Verificar si el usuario actual tiene GCal conectado
+      const { data: me } = await sb.from('profiles')
+        .select('google_calendar_id,google_refresh_token_enc')
+        .eq('id', user.id).single();
+      if (me?.google_refresh_token_enc) {
+        document.getElementById('gcalConnected').style.display = 'block';
+        document.getElementById('gcalEmail').textContent = me.google_calendar_id || 'primary';
+        setBadge('gcalStatus', 'ok', '✅ Mi calendario conectado');
+      }
     }
 
     // ── Load rules ────────────────────────────────────────────
@@ -673,14 +721,38 @@
     };
 
     // ── Google Calendar ───────────────────────────────────────
-    window.connectGCal = () => {
-      toast('🗓️ Google Calendar — Próximamente (Fase 4)', '');
+    window.saveGCal = async () => {
+      const cid = val('google_client_id');
+      const csecret = val('google_client_secret');
+      if (!cid && !csecret) { toast('⚠️ Ingresa al menos el Client ID', 'error'); return; }
+      const patch = {};
+      if (cid && !cid.startsWith('•')) patch.google_client_id = cid;
+      if (csecret && !csecret.startsWith('•')) patch.google_client_secret = csecret;
+      const ok = await upsertSettings(patch);
+      if (ok) setBadge('gcalStatus', 'ok', '✅ Credenciales guardadas');
+      toast(ok ? '✅ Credenciales de Google guardadas' : '❌ Error al guardar', ok ? 'success' : 'error');
     };
+
+    window.connectGCal = async () => {
+      toast('🔄 Redirigiendo a Google...', '');
+      const { data: { session: s } } = await sb.auth.getSession();
+      const res = await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/google-oauth-start', {
+        headers: { Authorization: `Bearer ${s.access_token}` },
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        toast(`❌ ${e.error || 'Error al iniciar OAuth'}`, 'error');
+        return;
+      }
+      const { url } = await res.json();
+      if (url) location.href = url;
+      else toast('❌ No se pudo obtener la URL de Google', 'error');
+    };
+
     window.disconnectGCal = async () => {
       await sb.from('profiles').update({ google_refresh_token_enc: null, google_calendar_id: null }).eq('id', user.id);
       document.getElementById('gcalConnected').style.display = 'none';
-      document.getElementById('gcalDisconnected').style.display = 'block';
-      setBadge('gcalStatus', 'warn', '⏳ No conectado');
+      setBadge('gcalStatus', 'warn', '⏳ No configurado');
       toast('🔌 Google Calendar desconectado', 'success');
     };
 

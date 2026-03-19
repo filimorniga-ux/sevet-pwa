@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Mi Perfil. Gestiona tus datos y conecta tu Google Calendar."/>
+  <title>Mi Perfil – SEVET</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <style>
+    .profile-grid {
+      display: grid;
+      gap: 1.5rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .profile-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(139,45,139,.25);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .profile-card-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(139,45,139,.1);
+      border-bottom: 1px solid rgba(139,45,139,.2);
+    }
+    .profile-card-header h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .profile-card-body { padding: 1.5rem; }
+
+    .avatar-large {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg,#8b2d8b,#6b1d8b);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: #fff;
+      margin: 0 auto 1rem;
+    }
+    .profile-name {
+      text-align: center;
+      font-size: 1.2rem; font-weight: 700;
+      margin-bottom: .25rem;
+    }
+    .profile-role {
+      text-align: center;
+      font-size: .8rem;
+      color: rgba(255,255,255,.5);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: .8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: rgba(255,255,255,.55);
+      margin-bottom: .35rem;
+    }
+    .form-group input {
+      width: 100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(139,45,139,.3);
+      border-radius: 10px;
+      color: #fff;
+      padding: .7rem 1rem;
+      font-size: .9rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .form-group input:focus { border-color: #8b2d8b; }
+
+    .btn-primary {
+      background: linear-gradient(135deg,#8b2d8b,#6b1d8b);
+      color: #fff; border: none; border-radius: 50px;
+      padding: .7rem 1.6rem; font-weight: 700; font-size: .9rem;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-secondary {
+      background: rgba(139,45,139,.15);
+      color: #c084c8;
+      border: 1px solid rgba(139,45,139,.35);
+      border-radius: 50px;
+      padding: .7rem 1.4rem; font-weight: 600; font-size: .9rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-secondary:hover { background: rgba(139,45,139,.3); }
+    .btn-danger {
+      background: rgba(239,68,68,.12);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 50px;
+      padding: .7rem 1.4rem; font-weight: 600; font-size: .9rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,.25); }
+
+    /* Google Calendar section */
+    .gcal-box {
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .gcal-box.connected { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25); }
+    .gcal-box.disconnected { background: rgba(255,255,255,.04); border: 1px solid rgba(139,45,139,.2); }
+    .gcal-icon { font-size: 2rem; flex-shrink: 0; }
+    .gcal-info { flex: 1; }
+    .gcal-info strong { display: block; font-size: .95rem; }
+    .gcal-info small { color: rgba(255,255,255,.5); font-size: .8rem; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .25rem .75rem; border-radius: 50px;
+      font-size: .75rem; font-weight: 700;
+    }
+    .pill-ok { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .pill-warn { background: rgba(234,179,8,.1); color: #facc15; border: 1px solid rgba(234,179,8,.3); }
+
+    .btn-group { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #1a0a2e; border: 1px solid rgba(139,45,139,.5);
+      border-radius: 12px; padding: .9rem 1.2rem;
+      color: #fff; font-size: .9rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      z-index: 9999; transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      transform: translateY(100px); opacity: 0; max-width: 300px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <img class="nav-logo-img" src="/assets/images/logo-transparente.png" alt="SEVET"/>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><button class="nav-close-btn" onclick="toggleNav()">✕</button></li>
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/mi-agenda.html">Mi Agenda</a></li>
+      <li><a href="/pages/perfil.html" class="active">👤 Mi Perfil</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Salir</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <section class="section-pad" style="margin-top:80px">
+    <div class="section-header">
+      <p class="section-tag">Cuenta</p>
+      <h1 class="section-title">👤 Mi <span class="grad">Perfil</span></h1>
+    </div>
+
+    <div class="profile-grid">
+
+      <!-- Información personal -->
+      <div class="profile-card">
+        <div class="profile-card-header">
+          <span>🐾</span>
+          <h3>Información Personal</h3>
+        </div>
+        <div class="profile-card-body">
+          <div class="avatar-large" id="avatarInitials">?</div>
+          <div class="profile-name" id="profileName">Cargando...</div>
+          <div class="profile-role" id="profileRole">—</div>
+          <br/>
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="full_name" placeholder="Tu nombre"/>
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="tel" id="phone" placeholder="+56 9 1234 5678"/>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="tu@email.com" readonly style="opacity:.6"/>
+          </div>
+          <div class="btn-group">
+            <button class="btn-primary" onclick="saveProfile()">💾 Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Google Calendar -->
+      <div class="profile-card">
+        <div class="profile-card-header">
+          <span>🗓️</span>
+          <h3>Google Calendar — Sincronización de Citas</h3>
+        </div>
+        <div class="profile-card-body">
+          <p style="color:rgba(255,255,255,.6);font-size:.88rem;margin-bottom:1.25rem">
+            Conecta tu Google Calendar personal para que todas tus citas aparezcan automáticamente.
+            Cada miembro del equipo conecta el suyo de forma independiente.
+          </p>
+
+          <!-- Estado: Conectado -->
+          <div id="gcalConnected" style="display:none">
+            <div class="gcal-box connected">
+              <div class="gcal-icon">🗓️</div>
+              <div class="gcal-info">
+                <strong>Google Calendar conectado</strong>
+                <small id="gcalCalendarId">primary</small>
+              </div>
+              <span class="status-pill pill-ok">✅ Activo</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn-danger" onclick="disconnectGCal()">🔌 Desconectar</button>
+            </div>
+          </div>
+
+          <!-- Estado: Desconectado -->
+          <div id="gcalDisconnected">
+            <div class="gcal-box disconnected">
+              <div class="gcal-icon">📅</div>
+              <div class="gcal-info">
+                <strong>Sin Google Calendar</strong>
+                <small>Las citas no se sincronizarán hasta que lo conectes.</small>
+              </div>
+              <span class="status-pill pill-warn">⚠️ Sin conectar</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn-primary" onclick="connectGCal()" id="btnConnectGCal">
+                🗓️ Conectar Google Calendar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /profile-grid -->
+  </section>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from '/js/supabase.js';
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._sb = sb;
+
+    // ── Auth ──────────────────────────────────────────────────
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = '/pages/auth.html'; }
+    window._session = session;
+
+    // ── Load profile ──────────────────────────────────────────
+    const { data: profile } = await sb.from('profiles')
+      .select('full_name,phone,role,google_calendar_id,google_refresh_token_enc')
+      .eq('id', session.user.id).single();
+
+    if (profile) {
+      document.getElementById('full_name').value = profile.full_name || '';
+      document.getElementById('phone').value = profile.phone || '';
+      document.getElementById('email').value = session.user.email || '';
+
+      const initials = (profile.full_name || session.user.email || '?').slice(0,2).toUpperCase();
+      document.getElementById('avatarInitials').textContent = initials;
+      document.getElementById('profileName').textContent = profile.full_name || session.user.email || '—';
+      document.getElementById('profileRole').textContent = roleLabel(profile.role);
+
+      // Google Calendar status
+      if (profile.google_refresh_token_enc) {
+        document.getElementById('gcalConnected').style.display = 'block';
+        document.getElementById('gcalDisconnected').style.display = 'none';
+        document.getElementById('gcalCalendarId').textContent = profile.google_calendar_id || 'primary';
+      }
+    }
+
+    // ── Handle gcal= query param (after OAuth redirect) ───────
+    const urlParams = new URLSearchParams(location.search);
+    const gcalResult = urlParams.get('gcal');
+    if (gcalResult === 'success') {
+      toast('🗓️ ¡Google Calendar conectado exitosamente!', 'success');
+      // Refresh profile
+      const { data: refreshed } = await sb.from('profiles').select('google_calendar_id,google_refresh_token_enc').eq('id', session.user.id).single();
+      if (refreshed?.google_refresh_token_enc) {
+        document.getElementById('gcalConnected').style.display = 'block';
+        document.getElementById('gcalDisconnected').style.display = 'none';
+        document.getElementById('gcalCalendarId').textContent = refreshed.google_calendar_id || 'primary';
+      }
+      history.replaceState({}, '', '/pages/perfil.html');
+    } else if (gcalResult === 'error') {
+      const reason = urlParams.get('reason') || 'unknown';
+      toast(`❌ Error al conectar Google Calendar: ${reason}`, 'error');
+      history.replaceState({}, '', '/pages/perfil.html');
+    }
+
+    // ── Save profile ──────────────────────────────────────────
+    window.saveProfile = async () => {
+      const { error } = await sb.from('profiles').update({
+        full_name: document.getElementById('full_name').value.trim(),
+        phone:     document.getElementById('phone').value.trim(),
+      }).eq('id', session.user.id);
+      toast(error ? '❌ Error al guardar' : '✅ Perfil guardado', error ? 'error' : 'success');
+    };
+
+    // ── Connect Google Calendar ───────────────────────────────
+    window.connectGCal = async () => {
+      const btn = document.getElementById('btnConnectGCal');
+      btn.disabled = true;
+      btn.textContent = '⏳ Redirigiendo...';
+
+      const { data: { session: s } } = await sb.auth.getSession();
+      const res = await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/google-oauth-start', {
+        headers: { Authorization: `Bearer ${s.access_token}` },
+      });
+
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        const msg = e.error || 'Error desconocido';
+        toast(`❌ ${msg}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '🗓️ Conectar Google Calendar';
+        return;
+      }
+
+      const { url } = await res.json();
+      if (url) {
+        location.href = url; // Redirige a Google OAuth
+      } else {
+        toast('❌ No se pudo obtener la URL de Google', 'error');
+        btn.disabled = false;
+        btn.textContent = '🗓️ Conectar Google Calendar';
+      }
+    };
+
+    // ── Disconnect Google Calendar ────────────────────────────
+    window.disconnectGCal = async () => {
+      if (!confirm('¿Desconectar Google Calendar? Las citas futuras no se sincronizarán.')) return;
+      const { error } = await sb.from('profiles').update({
+        google_refresh_token_enc: null,
+        google_calendar_id:       null,
+      }).eq('id', session.user.id);
+
+      if (!error) {
+        document.getElementById('gcalConnected').style.display = 'none';
+        document.getElementById('gcalDisconnected').style.display = 'block';
+        toast('🔌 Google Calendar desconectado', 'success');
+      } else {
+        toast('❌ Error al desconectar', 'error');
+      }
+    };
+
+    // ── Helpers ───────────────────────────────────────────────
+    function roleLabel(r) {
+      return { owner:'Propietario', admin:'Administrador', veterinario:'Veterinario', recepcionista:'Recepcionista', auxiliar:'Auxiliar', peluquero:'Peluquero' }[r] || r || 'Usuario';
+    }
+
+    window.toast = (msg, type = '') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.borderColor = type === 'error' ? 'rgba(239,68,68,.4)' : type === 'success' ? 'rgba(34,197,94,.4)' : 'rgba(139,45,139,.5)';
+      t.className = 'show';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.className = '', 3500);
+    };
+
+    // Logout
+    document.getElementById('logoutBtn').onclick = async () => {
+      await sb.auth.signOut();
+      location.href = '/';
+    };
+  </script>
+
+  <script>
+    window.toggleNav = () => document.getElementById('navLinks').classList.toggle('active');
+
+    // Particles
+    const cv = document.getElementById('particles-canvas');
+    if (cv) {
+      const cx = cv.getContext('2d');
+      const rs = () => { cv.width = innerWidth; cv.height = innerHeight; };
+      rs(); window.addEventListener('resize', rs);
+      const pts = Array.from({length:25}, () => ({
+        x:Math.random()*innerWidth, y:Math.random()*innerHeight,
+        vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2,
+        r:Math.random()*1.5+.5, a:Math.random()*.25+.05
+      }));
+      (function lp() {
+        cx.clearRect(0,0,cv.width,cv.height);
+        pts.forEach(p=>{
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0)p.x=cv.width; if(p.x>cv.width)p.x=0;
+          if(p.y<0)p.y=cv.height; if(p.y>cv.height)p.y=0;
+          cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          cx.fillStyle=`rgba(139,45,139,${p.a})`; cx.fill();
+        });
+        requestAnimationFrame(lp);
+      })();
+    }
+  </script>
+</body>
+</html>
