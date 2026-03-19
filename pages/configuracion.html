@@ -17,10 +17,11 @@
       margin: 0 auto;
     }
     .config-card {
-      background: var(--card-bg, rgba(255,255,255,0.06));
-      border: 1px solid rgba(139,45,139,0.25);
+      background: rgba(15,5,35,0.75) !important;
+      border: 1px solid rgba(139,45,139,0.35);
       border-radius: 16px;
       overflow: hidden;
+      backdrop-filter: blur(8px);
     }
     .config-card-header {
       display: flex;
@@ -36,7 +37,7 @@
       margin: 0;
       font-size: 1rem;
       font-weight: 700;
-      color: var(--text-main, #fff);
+      color: #e8c5e8;
     }
     .config-card-header .icon { font-size: 1.4rem; }
     .config-card-header .chevron {
@@ -61,7 +62,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .05em;
-      color: rgba(255,255,255,.6);
+      color: rgba(255,255,255,.75);
       margin-bottom: 0.4rem;
     }
     .form-group input,
@@ -105,7 +106,7 @@
     }
     .form-hint {
       font-size: 0.78rem;
-      color: rgba(255,255,255,.4);
+      color: rgba(255,255,255,.55);
       margin-top: 0.3rem;
     }
     .form-row {
