@@ -736,17 +736,12 @@
 
     window.connectGCal = async () => {
       toast('🔄 Redirigiendo a Google...', '');
-      const { data: { session: s } } = await sb.auth.getSession();
-      const res = await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/google-oauth-start', {
-        headers: { Authorization: `Bearer ${s.access_token}` },
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        toast(`❌ ${e.error || 'Error al iniciar OAuth'}`, 'error');
+      const { data, error } = await sb.functions.invoke('google-oauth-start');
+      if (error) {
+        toast(`❌ ${error.message || 'Error al iniciar OAuth'}`, 'error');
         return;
       }
-      const { url } = await res.json();
-      if (url) location.href = url;
+      if (data?.url) location.href = data.url;
       else toast('❌ No se pudo obtener la URL de Google', 'error');
     };
 
