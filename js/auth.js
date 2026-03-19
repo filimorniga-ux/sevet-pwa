@@ -240,7 +240,7 @@ function updateNavbarForRole(profile, user = null) {
   const menuItems = [];
 
   // Common: perfil + mascotas + agendar (TODOS los usuarios tienen mascotas)
-  menuItems.push({ href: '/pages/completar-perfil.html?edit=true', icon: '👤', label: 'Mi Perfil' });
+  menuItems.push({ href: '/pages/perfil.html', icon: '👤', label: 'Mi Perfil' });
   menuItems.push({ href: '/pages/mi-mascota.html', icon: '🐾', label: 'Mis Mascotas' });
   menuItems.push({ href: '/pages/agendar.html', icon: '📅', label: 'Agendar Cita' });
   menuItems.push({ href: '/pages/historial.html', icon: '📋', label: 'Historial de Citas' });
@@ -253,9 +253,10 @@ function updateNavbarForRole(profile, user = null) {
     menuItems.push({ href: '/pages/gestion-citas.html', icon: '📋', label: 'Gestión Citas' });
   }
 
-  // Admin/Owner
   if (['owner', 'admin'].includes(profile.role)) {
-    menuItems.push({ href: '/pages/admin.html', icon: '⚙️', label: 'Dashboard' });
+    menuItems.push({ href: '/pages/admin.html', icon: '📊', label: 'Dashboard' });
+    menuItems.push({ href: '/pages/configuracion.html', icon: '⚙️', label: 'Configuración' });
+    menuItems.push({ href: '/pages/inbox.html', icon: '💬', label: 'Inbox WhatsApp' });
   }
 
   const menuHTML = menuItems.map(item =>

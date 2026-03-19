@@ -550,7 +550,7 @@
       // Verificar si el usuario actual tiene GCal conectado
       const { data: me } = await sb.from('profiles')
         .select('google_calendar_id,google_refresh_token_enc')
-        .eq('id', user.id).single();
+        .eq('user_id', user.id).single();
       if (me?.google_refresh_token_enc) {
         document.getElementById('gcalConnected').style.display = 'block';
         document.getElementById('gcalEmail').textContent = me.google_calendar_id || 'primary';
