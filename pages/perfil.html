@@ -248,6 +248,16 @@
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
     import { SUPABASE_URL, SUPABASE_ANON_KEY } from '/js/supabase.js';
 
+    // ── Toast (debe definirse antes de cualquier await) ───────
+    window.toast = (msg, type = '') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.borderColor = type === 'error' ? 'rgba(239,68,68,.4)' : type === 'success' ? 'rgba(34,197,94,.4)' : 'rgba(139,45,139,.5)';
+      t.className = 'show';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.className = '', 3500);
+    };
+
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window._sb = sb;
 
@@ -259,7 +269,7 @@
     // ── Load profile ──────────────────────────────────────────
     const { data: profile } = await sb.from('profiles')
       .select('full_name,phone,role,google_calendar_id,google_refresh_token_enc')
-      .eq('id', session.user.id).single();
+      .eq('user_id', session.user.id).single();
 
     if (profile) {
       document.getElementById('full_name').value = profile.full_name || '';
@@ -285,7 +295,7 @@
     if (gcalResult === 'success') {
       toast('🗓️ ¡Google Calendar conectado exitosamente!', 'success');
       // Refresh profile
-      const { data: refreshed } = await sb.from('profiles').select('google_calendar_id,google_refresh_token_enc').eq('id', session.user.id).single();
+      const { data: refreshed } = await sb.from('profiles').select('google_calendar_id,google_refresh_token_enc').eq('user_id', session.user.id).single();
       if (refreshed?.google_refresh_token_enc) {
         document.getElementById('gcalConnected').style.display = 'block';
         document.getElementById('gcalDisconnected').style.display = 'none';
@@ -303,7 +313,7 @@
       const { error } = await sb.from('profiles').update({
         full_name: document.getElementById('full_name').value.trim(),
         phone:     document.getElementById('phone').value.trim(),
-      }).eq('id', session.user.id);
+      }).eq('user_id', session.user.id);
       toast(error ? '❌ Error al guardar' : '✅ Perfil guardado', error ? 'error' : 'success');
     };
 
@@ -343,7 +353,7 @@
       const { error } = await sb.from('profiles').update({
         google_refresh_token_enc: null,
         google_calendar_id:       null,
-      }).eq('id', session.user.id);
+      }).eq('user_id', session.user.id);
 
       if (!error) {
         document.getElementById('gcalConnected').style.display = 'none';
@@ -359,14 +369,7 @@
       return { owner:'Propietario', admin:'Administrador', veterinario:'Veterinario', recepcionista:'Recepcionista', auxiliar:'Auxiliar', peluquero:'Peluquero' }[r] || r || 'Usuario';
     }
 
-    window.toast = (msg, type = '') => {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.style.borderColor = type === 'error' ? 'rgba(239,68,68,.4)' : type === 'success' ? 'rgba(34,197,94,.4)' : 'rgba(139,45,139,.5)';
-      t.className = 'show';
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => t.className = '', 3500);
-    };
+    // (toast already defined at top of script)
 
     // Logout
     document.getElementById('logoutBtn').onclick = async () => {
