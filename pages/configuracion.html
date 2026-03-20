@@ -201,6 +201,40 @@
     }
     .toggle-switch input:checked + .slider::before { transform: translateX(18px); }
 
+    /* ── Modal regla ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      z-index: 9000; display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #1a0a2e;
+      border: 1px solid rgba(139,45,139,.4);
+      border-radius: 16px;
+      padding: 1.75rem;
+      width: 100%; max-width: 500px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+    }
+    .modal-box h3 { margin: 0 0 1.25rem; font-size: 1.05rem; }
+    .modal-box .form-group { margin-bottom: 1rem; }
+    .modal-box label { display: block; font-size: .8rem; color: rgba(255,255,255,.6); margin-bottom: .4rem; }
+    .modal-box select, .modal-box input, .modal-box textarea {
+      width: 100%; background: rgba(255,255,255,.07);
+      border: 1px solid rgba(139,45,139,.3); border-radius: 8px;
+      color: #fff; padding: .6rem .9rem; font-size: .88rem; font-family: inherit;
+      box-sizing: border-box; outline: none;
+    }
+    .modal-box select { cursor: pointer; }
+    .modal-box textarea { resize: vertical; min-height: 80px; }
+    .modal-box .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
+    .btn-cancel { background: rgba(255,255,255,.08); border: none; color: rgba(255,255,255,.7);
+      border-radius: 8px; padding: .55rem 1.2rem; font-size: .88rem; cursor: pointer; }
+    .rule-delete { background: transparent; border: none; color: rgba(255,100,100,.6);
+      font-size: 1rem; cursor: pointer; padding: .25rem .5rem; border-radius: 6px;
+      transition: all .2s; flex-shrink: 0; }
+    .rule-delete:hover { background: rgba(255,100,100,.15); color: #f87171; }
+
     /* Toast */
     .toast {
       position: fixed;
@@ -567,22 +601,25 @@
         list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.4)">Sin reglas configuradas</div>';
         return;
       }
-      list.innerHTML = data.map(r => `
-        <div class="rule-item">
+      list.innerHTML = data.map(r => {
+        const typeIcon = { keyword:'🔑', button_reply:'🔘', list_reply:'📋', any_message:'📩' }[r.trigger_type] || '⚡';
+        const respIcon = { text:'💬', buttons:'🔘', list:'📋', handoff:'👩‍⚕️' }[r.response_type] || '💬';
+        return `<div class="rule-item">
           <div class="rule-info">
-            <div class="rule-name">${r.rule_name || 'Sin nombre'}</div>
+            <div class="rule-name">${typeIcon} ${r.rule_name || 'Sin nombre'}</div>
             <div class="rule-meta">
               Trigger: <strong>"${r.trigger_value || r.trigger_type}"</strong>
-              → Respuesta: <strong>${r.response_type}</strong>
-              · Prioridad: ${r.priority}
+              → ${respIcon} <strong>${r.response_type}</strong>
+              · P${r.priority}
             </div>
           </div>
           <label class="toggle-switch">
             <input type="checkbox" ${r.is_active ? 'checked' : ''} onchange="toggleRule('${r.id}', this.checked)"/>
             <span class="slider"></span>
           </label>
-        </div>
-      `).join('');
+          <button class="rule-delete" onclick="deleteRule('${r.id}')" title="Eliminar">🗑️</button>
+        </div>`;
+      }).join('');
     }
     window.loadRules = loadRules;
 
@@ -696,29 +733,50 @@
       toast(active ? '✅ Regla activada' : '⏸️ Regla desactivada', 'success');
     };
 
-    // ── New rule modal (sencillo) ──────────────────────────────
+    // ── New rule modal ───────────────────────────────────────
     window.openNewRuleModal = () => {
-      const name = prompt('Nombre de la regla:');
-      if (!name) return;
-      const triggerType = prompt('Tipo de trigger:\n1. keyword\n2. button_reply\n3. any_message', '1');
-      const triggerMap = { '1': 'keyword', '2': 'button_reply', '3': 'any_message' };
-      const trigger_type = triggerMap[triggerType] || 'keyword';
-      const trigger_value = trigger_type !== 'any_message' ? prompt('Valor del trigger (ej: "hola", "btn_cita"):') : null;
-      const responseType = prompt('Tipo de respuesta:\n1. text\n2. buttons\n3. list\n4. handoff', '1');
-      const responseMap = { '1': 'text', '2': 'buttons', '3': 'list', '4': 'handoff' };
-      const response_type = responseMap[responseType] || 'text';
-      const responseText = prompt('Texto de la respuesta:');
-      sb.from('automation_rules').insert({
-        rule_name: name,
-        trigger_type,
-        trigger_value,
-        response_type,
-        response_body: { text: responseText },
-        priority: 50,
-      }).then(({ error }) => {
-        if (error) toast('❌ ' + error.message, 'error');
-        else { toast('✅ Regla creada', 'success'); loadRules(); }
+      document.getElementById('ruleModal').classList.add('open');
+      ['mRuleName','mTriggerValue','mResponseText'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.value = '';
       });
+      document.getElementById('mTriggerType').value = 'keyword';
+      document.getElementById('mResponseType').value = 'text';
+      document.getElementById('mPriority').value = '50';
+    };
+
+    window.closeRuleModal = () => {
+      document.getElementById('ruleModal').classList.remove('open');
+    };
+
+    window.saveNewRule = async () => {
+      const name          = document.getElementById('mRuleName').value.trim();
+      const trigger_type  = document.getElementById('mTriggerType').value;
+      const trigger_value = document.getElementById('mTriggerValue').value.trim() || null;
+      const response_type = document.getElementById('mResponseType').value;
+      const responseText  = document.getElementById('mResponseText').value.trim();
+      const priority      = parseInt(document.getElementById('mPriority').value || '50', 10);
+
+      if (!name) { toast('⚠️ El nombre es obligatorio', 'error'); return; }
+      if (trigger_type !== 'any_message' && !trigger_value) {
+        toast('⚠️ Ingresa el valor del trigger', 'error'); return;
+      }
+
+      const { error } = await sb.from('automation_rules').insert({
+        rule_name: name, trigger_type, trigger_value,
+        response_type, response_body: { text: responseText }, priority, is_active: true
+      });
+      if (error) { toast('❌ ' + error.message, 'error'); return; }
+      toast('✅ Regla creada', 'success');
+      closeRuleModal();
+      loadRules();
+    };
+
+    // ── Delete rule ───────────────────────────────────────────
+    window.deleteRule = async (id) => {
+      if (!confirm('¿Eliminar esta regla?')) return;
+      const { error } = await sb.from('automation_rules').delete().eq('id', id);
+      if (error) toast('❌ ' + error.message, 'error');
+      else { toast('🗑️ Regla eliminada', 'success'); loadRules(); }
     };
 
     // ── Google Calendar ───────────────────────────────────────
@@ -827,6 +885,52 @@
       })();
     }
   </script>
+
+  <!-- Modal: Nueva Regla del Bot -->
+  <div class="modal-overlay" id="ruleModal" onclick="if(event.target===this)closeRuleModal()">
+    <div class="modal-box">
+      <h3>🤖 Nueva Regla del Bot</h3>
+      <div class="form-group">
+        <label>Nombre de la regla</label>
+        <input id="mRuleName" type="text" placeholder="Ej: Bienvenida, Precios..."/>
+      </div>
+      <div class="form-group">
+        <label>Tipo de trigger</label>
+        <select id="mTriggerType">
+          <option value="keyword">🔑 Palabra clave (keyword)</option>
+          <option value="button_reply">🔘 Botón presionado (button_reply)</option>
+          <option value="list_reply">📋 Lista seleccionada (list_reply)</option>
+          <option value="any_message">📩 Cualquier mensaje (any_message)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor del trigger <small style="color:rgba(255,255,255,.4)">(vacío si es any_message)</small></label>
+        <input id="mTriggerValue" type="text" placeholder="hola  /  btn_cita  /  svc_consulta"/>
+      </div>
+      <div class="form-group">
+        <label>Tipo de respuesta</label>
+        <select id="mResponseType">
+          <option value="text">💬 Texto simple</option>
+          <option value="buttons">🔘 Botones interactivos</option>
+          <option value="list">📋 Lista desplegable</option>
+          <option value="handoff">👩‍⚕️ Derivar a recepción</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Texto de la respuesta</label>
+        <textarea id="mResponseText" placeholder="Mensaje que verá el cliente..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Prioridad (mayor = primero)</label>
+        <input id="mPriority" type="number" value="50" min="0" max="200"/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeRuleModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveNewRule()">💾 Crear Regla</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
 
