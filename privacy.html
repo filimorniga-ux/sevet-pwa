@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidad – SEVET Veterinaria</title>
+  <meta name="description" content="Política de privacidad de SEVET Veterinaria. Cómo recopilamos, usamos y protegemos tus datos personales." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* NAV */
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo svg { width: 32px; height: 32px; }
+    .nav-brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0ea5e9;
+      letter-spacing: -0.3px;
+    }
+    .nav-sub {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 400;
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+      padding: 56px 24px 64px;
+      text-align: center;
+      color: white;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .hero p {
+      font-size: 16px;
+      opacity: 0.85;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* MAIN */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* UPDATE DATE */
+    .update-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+      font-size: 14px;
+      color: #1e40af;
+    }
+    .update-banner span { font-weight: 600; }
+
+    /* SECTIONS */
+    section {
+      margin-bottom: 40px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .icon-blue   { background: #eff6ff; }
+    .icon-teal   { background: #f0fdfa; }
+    .icon-purple { background: #faf5ff; }
+    .icon-orange { background: #fff7ed; }
+    .icon-green  { background: #f0fdf4; }
+    .icon-red    { background: #fef2f2; }
+
+    h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.2px;
+    }
+
+    p, li {
+      color: #334155;
+      font-size: 15px;
+    }
+    ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+    li { margin-bottom: 6px; }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card p + p { margin-top: 12px; }
+
+    /* THIRD PARTY TABLE */
+    .third-party-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .third-party-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .tp-icon {
+      font-size: 22px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .tp-name { font-weight: 600; font-size: 15px; color: #0f172a; }
+    .tp-desc { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .tp-link { font-size: 12px; color: #0ea5e9; text-decoration: none; display: inline-block; margin-top: 4px; }
+    .tp-link:hover { text-decoration: underline; }
+
+    /* RIGHTS */
+    .rights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .right-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .right-item .emoji { font-size: 24px; display: block; margin-bottom: 8px; }
+    .right-item .right-name { font-weight: 600; font-size: 13px; color: #0f172a; }
+    .right-item .right-desc { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+    /* CONTACT */
+    .contact-card {
+      background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+      border-radius: 16px;
+      padding: 28px;
+      color: white;
+      text-align: center;
+    }
+    .contact-card h2 { color: white; margin-bottom: 8px; }
+    .contact-card p { color: rgba(255,255,255,0.85); font-size: 14px; margin-bottom: 16px; }
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: #0ea5e9;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .contact-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    /* DIVIDER */
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 40px 0; }
+
+    /* FOOTER */
+    footer {
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    footer a { color: #0ea5e9; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .rights-grid { grid-template-columns: 1fr 1fr; }
+      .hero { padding: 40px 16px 48px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#0ea5e9"/>
+      <path d="M16 7C11.03 7 7 11.03 7 16s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 4a3 3 0 110 6 3 3 0 010-6zm0 13c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08A7.12 7.12 0 0116 24z" fill="white"/>
+    </svg>
+    <div>
+      <div class="nav-brand">SEVET</div>
+      <div class="nav-sub">Veterinaria</div>
+    </div>
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">📋 Documento legal</div>
+  <h1>Política de Privacidad</h1>
+  <p>Nos tomamos en serio la privacidad de tus datos. Aquí te explicamos qué recopilamos, para qué y cómo lo protegemos.</p>
+</div>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <div class="update-banner">
+    <span>📅 Última actualización:</span> 20 de marzo de 2026
+  </div>
+
+  <!-- 1. Quiénes somos -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-blue">🏥</div>
+      <h2>¿Quiénes somos?</h2>
+    </div>
+    <div class="card">
+      <p><strong>SEVET Veterinaria</strong> es un sistema de gestión de clínicas veterinarias que permite agendar citas, gestionar historiales clínicos de mascotas, administrar inventario y automatizar la comunicación con clientes.</p>
+      <p>El software es operado por el equipo de SEVET. Para consultas sobre privacidad, puedes contactarnos en <a href="mailto:contacto@sevet.cl" style="color:#0ea5e9;">contacto@sevet.cl</a>.</p>
+    </div>
+  </section>
+
+  <!-- 2. Datos que recopilamos -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-teal">📊</div>
+      <h2>Datos que recopilamos</h2>
+    </div>
+    <div class="card">
+      <p>Recopilamos solo los datos necesarios para que el sistema funcione correctamente:</p>
+      <ul>
+        <li><strong>Datos de clientes y mascotas:</strong> nombre, teléfono, correo electrónico, especie, raza y ficha clínica.</li>
+        <li><strong>Datos de citas:</strong> fecha, hora, servicio solicitado y estado de la atención.</li>
+        <li><strong>Datos de cuenta:</strong> nombre, correo y foto de perfil del veterinario o administrador.</li>
+        <li><strong>Tokens de Google Calendar:</strong> tokens de acceso y refresco para sincronizar eventos con tu calendario personal (solo si conectas tu cuenta de Google).</li>
+        <li><strong>Datos de uso:</strong> logs de actividad internos para auditoría y detección de errores.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. Cómo usamos los datos -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-purple">⚙️</div>
+      <h2>Cómo usamos tus datos</h2>
+    </div>
+    <div class="card">
+      <ul>
+        <li>Mostrar y gestionar citas, fichas clínicas e inventario dentro del sistema.</li>
+        <li>Enviar recordatorios de citas y vacunas a los clientes vía WhatsApp (solo si el servicio está habilitado).</li>
+        <li>Sincronizar citas con Google Calendar del veterinario (solo si autorizas la integración).</li>
+        <li>Generar estadísticas internas sobre el rendimiento de la clínica.</li>
+        <li>Detectar y corregir errores técnicos en la plataforma.</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>No vendemos, arrendamos ni compartimos tus datos con terceros con fines comerciales o publicitarios.</strong></p>
+    </div>
+  </section>
+
+  <!-- 4. Servicios de terceros -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-orange">🔗</div>
+      <h2>Servicios de terceros</h2>
+    </div>
+    <div class="third-party-grid">
+      <div class="third-party-item">
+        <div class="tp-icon">🗄️</div>
+        <div>
+          <div class="tp-name">Supabase</div>
+          <div class="tp-desc">Base de datos PostgreSQL y autenticación. Todos los datos de la clínica se almacenan aquí con cifrado en reposo.</div>
+          <a href="https://supabase.com/privacy" target="_blank" class="tp-link">Política de Supabase →</a>
+        </div>
+      </div>
+      <div class="third-party-item">
+        <div class="tp-icon">📅</div>
+        <div>
+          <div class="tp-name">Google Calendar API</div>
+          <div class="tp-desc">Usamos la API de Google Calendar para crear y eliminar eventos de citas veterinarias en el calendario del veterinario. Solo accedemos si tú autorizas explícitamente la integración OAuth.</div>
+          <a href="https://policies.google.com/privacy" target="_blank" class="tp-link">Política de Google →</a>
+        </div>
+      </div>
+      <div class="third-party-item">
+        <div class="tp-icon">💬</div>
+        <div>
+          <div class="tp-name">WhatsApp Business API (Meta)</div>
+          <div class="tp-desc">Enviamos mensajes automáticos de confirmación de citas y recordatorios a los clientes. Los números de teléfono se utilizan exclusivamente para este fin.</div>
+          <a href="https://www.whatsapp.com/legal/privacy-policy" target="_blank" class="tp-link">Política de WhatsApp →</a>
+        </div>
+      </div>
+      <div class="third-party-item">
+        <div class="tp-icon">🚀</div>
+        <div>
+          <div class="tp-name">Vercel</div>
+          <div class="tp-desc">Plataforma de alojamiento web donde se ejecuta la aplicación. Los servidores están ubicados en regiones de AWS con altos estándares de seguridad.</div>
+          <a href="https://vercel.com/legal/privacy-policy" target="_blank" class="tp-link">Política de Vercel →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Google API Disclosure -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-blue">🔐</div>
+      <h2>Uso de Google APIs</h2>
+    </div>
+    <div class="card">
+      <p>El uso que SEVET hace de la información recibida de las APIs de Google, incluyendo la API de Google Calendar, cumple con la <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" style="color:#0ea5e9;">Política de Datos de Usuario de los Servicios de Google API</a>, incluidos los requisitos de uso limitado.</p>
+      <p style="margin-top:12px;">En particular:</p>
+      <ul>
+        <li>Solo solicitamos acceso a Google Calendar cuando el usuario lo autoriza explícitamente.</li>
+        <li>Usamos los datos del calendario exclusivamente para crear y eliminar eventos de citas veterinarias.</li>
+        <li>No transferimos ni compartimos los datos de Google con terceros, salvo para la operación del servicio.</li>
+        <li>No usamos los datos de Google para mostrar publicidad.</li>
+        <li>Los tokens de acceso se almacenan cifrados y pueden ser revocados en cualquier momento desde tu cuenta de Google.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6. Retención -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-teal">🗓️</div>
+      <h2>Retención y eliminación de datos</h2>
+    </div>
+    <div class="card">
+      <p>Los datos se conservan mientras la cuenta esté activa. Si deseas eliminar tu información, puedes escribirnos y procesaremos la solicitud en un plazo máximo de <strong>30 días hábiles</strong>.</p>
+      <p style="margin-top:12px;">Los tokens de Google Calendar pueden revocarse en cualquier momento desde <a href="https://myaccount.google.com/permissions" target="_blank" style="color:#0ea5e9;">myaccount.google.com/permissions</a>, lo que desconectará inmediatamente la integración.</p>
+    </div>
+  </section>
+
+  <!-- 7. Derechos -->
+  <section>
+    <div class="section-header">
+      <div class="section-icon icon-green">⚖️</div>
+      <h2>Tus derechos</h2>
+    </div>
+    <div class="rights-grid">
+      <div class="right-item">
+        <span class="emoji">👁️</span>
+        <div class="right-name">Acceso</div>
+        <div class="right-desc">Conocer qué datos tenemos sobre ti</div>
+      </div>
+      <div class="right-item">
+        <span class="emoji">✏️</span>
+        <div class="right-name">Rectificación</div>
+        <div class="right-desc">Corregir datos inexactos</div>
+      </div>
+      <div class="right-item">
+        <span class="emoji">🗑️</span>
+        <div class="right-name">Eliminación</div>
+        <div class="right-desc">Solicitar borrado de tus datos</div>
+      </div>
+      <div class="right-item">
+        <span class="emoji">📦</span>
+        <div class="right-name">Portabilidad</div>
+        <div class="right-desc">Recibir tus datos en formato estructurado</div>
+      </div>
+      <div class="right-item">
+        <span class="emoji">🚫</span>
+        <div class="right-name">Oposición</div>
+        <div class="right-desc">Oponerte al tratamiento de tus datos</div>
+      </div>
+      <div class="right-item">
+        <span class="emoji">🔒</span>
+        <div class="right-name">Limitación</div>
+        <div class="right-desc">Solicitar que limitemos el uso de tus datos</div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- CONTACT -->
+  <div class="contact-card">
+    <h2>¿Tienes preguntas?</h2>
+    <p>Estamos disponibles para resolver cualquier duda sobre el manejo de tus datos personales.</p>
+    <a href="mailto:contacto@sevet.cl" class="contact-btn">
+      ✉️ contacto@sevet.cl
+    </a>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 SEVET Veterinaria · <a href="/">Inicio</a> · <a href="/privacy.html">Política de Privacidad</a></p>
+  <p style="margin-top:6px;">Conforme a la Ley N° 19.628 sobre Protección de la Vida Privada (Chile)</p>
+</footer>
+
+</body>
+</html>
