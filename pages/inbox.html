@@ -71,6 +71,34 @@
       outline: none;
       box-sizing: border-box;
     }
+    /* ── Filtros ── */
+    .filter-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(139,45,139,0.15);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .filter-tab {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,.45);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 50px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+    .filter-tab.active {
+      background: rgba(139,45,139,0.25);
+      color: #c084c8;
+    }
+    .filter-tab:hover:not(.active) { color: rgba(255,255,255,.7); }
+
     .conv-list {
       flex: 1;
       overflow-y: auto;
@@ -348,7 +376,13 @@
         <span class="badge-count" id="totalUnread" style="display:none">0</span>
       </div>
       <div class="sidebar-search">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar conversación..." oninput="filterConvs(this.value)"/>
+        <input type="text" id="searchInput" placeholder="🔍 Buscar conversación..." oninput="applyFilters()"/>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">Todos</button>
+        <button class="filter-tab" data-filter="open" onclick="setFilter('open')">🟢 Abiertos</button>
+        <button class="filter-tab" data-filter="waiting" onclick="setFilter('waiting')">🟡 Esp.</button>
+        <button class="filter-tab" data-filter="resolved" onclick="setFilter('resolved')">✅ Resuelt.</button>
       </div>
       <div class="conv-list" id="convList">
         <div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3)">⏳ Cargando...</div>
@@ -407,7 +441,7 @@
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.href = '/pages/auth.html'; }
 
-    const { data: profile } = await sb.from('profiles').select('role,full_name').eq('id', session.user.id).single();
+    const { data: profile } = await sb.from('profiles').select('role,full_name').eq('user_id', session.user.id).single();
     if (!profile || !['owner','admin','recepcionista'].includes(profile.role)) {
       document.body.innerHTML = '<div style="text-align:center;padding:4rem"><h2>🔒 Sin acceso</h2></div>';
       throw new Error('forbidden');
@@ -420,6 +454,7 @@
     let conversations  = [];
     let activeConvId   = null;
     let realtimeSub    = null;
+    let activeFilter   = 'all';
 
     // ── Load conversations ─────────────────────────────────────
     async function loadConversations() {
@@ -471,10 +506,20 @@
     }
 
     // ── Filter conversations ───────────────────────────────────
-    window.filterConvs = (q) => {
-      if (!q) { renderConvList(conversations); return; }
-      const filtered = conversations.filter(c =>
-        (c.contact_name||'').toLowerCase().includes(q.toLowerCase()) ||
+    window.setFilter = (f) => {
+      activeFilter = f;
+      document.querySelectorAll('.filter-tab').forEach(t =>
+        t.classList.toggle('active', t.dataset.filter === f)
+      );
+      applyFilters();
+    };
+
+    window.applyFilters = () => {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      let filtered = conversations;
+      if (activeFilter !== 'all') filtered = filtered.filter(c => c.status === activeFilter);
+      if (q) filtered = filtered.filter(c =>
+        (c.contact_name||'').toLowerCase().includes(q) ||
         (c.contact_phone||'').includes(q)
       );
       renderConvList(filtered);
