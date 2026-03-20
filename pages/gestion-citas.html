@@ -58,6 +58,7 @@
         <option value="en_curso">En curso</option>
         <option value="completada">Completada</option>
         <option value="cancelada">Cancelada</option>
+        <option value="no_show">⚠️ No se presentó</option>
       </select>
       <select id="filterVet" class="filter-input" style="min-height: 44px;">
         <option value="">Todos los profesionales</option>
@@ -326,7 +327,11 @@
 
       const statusColors = {
         pendiente: '#f59e0b', confirmada: '#3b82f6', en_curso: '#8b5cf6',
-        completada: '#16a34a', cancelada: '#ef4444'
+        completada: '#16a34a', cancelada: '#ef4444', no_show: '#dc2626'
+      };
+      const statusLabels = {
+        pendiente: 'Pendiente', confirmada: 'Confirmada', en_curso: 'En Curso',
+        completada: 'Completada', cancelada: 'Cancelada', no_show: '⚠️ No se presentó'
       };
 
       const escapeHtml = (str) => {
@@ -334,8 +339,13 @@
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
       };
 
+      // skill: timezone-santiago — todos los timestamps en America/Santiago
+      const fmtTime = (ts) => ts
+        ? new Date(ts).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })
+        : null;
+
       body.innerHTML = data.map(a => {
-        const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(a.date_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' });
         const safePetName = escapeHtml(a.pets?.name || a.guest_pet_name || 'N/A');
         const safePetSpecies = escapeHtml(a.pets?.species || '');
         const safeGuestName = escapeHtml(a.guest_name || '');
@@ -346,13 +356,32 @@
         const safeServiceName = escapeHtml(a.services?.name || a.service_type);
         const safeVetName = escapeHtml(a.profiles?.full_name || 'Sin asignar');
         const safeNotes = escapeHtml(a.notes || '');
+
+        // Mostrar tiempos de asistencia si existen
+        let attendanceBadge = '';
+        if (a.check_in_at) {
+          const checkIn = fmtTime(a.check_in_at);
+          const start = fmtTime(a.consultation_start_at);
+          const end = fmtTime(a.consultation_end_at);
+          const waitMins = (a.consultation_start_at && a.check_in_at)
+            ? Math.round((new Date(a.consultation_start_at) - new Date(a.check_in_at)) / 60000)
+            : null;
+          attendanceBadge = `<div style="font-size:0.72rem;color:var(--gray-500);margin-top:2px;line-height:1.4">`;
+          attendanceBadge += `🕐 Llegó: <strong>${checkIn}</strong>`;
+          if (start) attendanceBadge += ` · ▶ ${start}`;
+          if (end) attendanceBadge += ` · ⏹ ${end}`;
+          if (waitMins !== null) attendanceBadge += ` · ⏳ ${waitMins}min espera`;
+          if (a.was_client_late) attendanceBadge += ` · <span style="color:#dc2626">⚠️ Tardó ${a.client_delay_minutes || '?'}min</span>`;
+          attendanceBadge += '</div>';
+        }
+
         return `
           <tr>
-            <td>${time}</td>
+            <td>${time}${attendanceBadge}</td>
             <td>${safeIcon} ${safeServiceName}</td>
             <td>${petLabel}</td>
             <td>${safeVetName}</td>
-            <td><span style="color:${statusColors[a.status]};font-weight:700">${escapeHtml(a.status)}</span></td>
+            <td><span style="color:${statusColors[a.status]||'#64748b'};font-weight:700">${statusLabels[a.status]||escapeHtml(a.status)}</span></td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
               <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
@@ -362,7 +391,9 @@
                   <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>
                   <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
                   <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+                  <option value="no_show" ${a.status === 'no_show' ? 'selected' : ''}>⚠️ No se presentó</option>
                 </select>
+                <button onclick="openAttendanceModal('${escapeHtml(a.id)}')" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0.3rem 0.5rem;cursor:pointer;background:none;min-height:40px" title="Registrar asistencia">📋</button>
                 <button onclick="editAppointment('${escapeHtml(a.id)}')" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0.3rem 0.5rem;cursor:pointer;background:none;min-height:40px" title="Editar">✏️</button>
               </div>
             </td>
@@ -377,10 +408,17 @@
     };
 
     window.changeStatus = async function(id, status) {
-      await supabase.from('appointments').update({ status }).eq('id', id);
+      // Timestamps automáticos según transición de estado (skill: timezone-santiago → UTC internamente)
+      const extraFields = {};
+      const now = new Date().toISOString(); // UTC — se convierte en UI con timeZone:'America/Santiago'
+      if (status === 'en_curso' ) extraFields.consultation_start_at = now;
+      if (status === 'completada') extraFields.consultation_end_at   = now;
+      if (status === 'no_show'  ) extraFields.was_client_late        = false; // se fija en modal si aplica
 
-      // Si se cancela → eliminar evento de Google Calendar
-      if (status === 'cancelada') {
+      await supabase.from('appointments').update({ status, ...extraFields }).eq('id', id);
+
+      // Si se cancela o no-show → eliminar evento de Google Calendar
+      if (status === 'cancelada' || status === 'no_show') {
         try {
           const { data: appt } = await supabase
             .from('appointments')
@@ -403,13 +441,99 @@
                 google_event_id: appt.google_event_id,
               }),
             });
-            console.log('[changeStatus] GCal event deletion requested for', appt.google_event_id);
           }
         } catch (err) {
           console.warn('[changeStatus] GCal delete failed (non-blocking):', err);
         }
       }
 
+      loadAllAppointments();
+    };
+
+    // ─── Modal de Asistencia ──────────────────────────────────────────────────
+    let attendanceApptId = null;
+
+    window.openAttendanceModal = function(id) {
+      attendanceApptId = id;
+      const appt = allAppointments.find(a => a.id === id);
+      if (!appt) return;
+
+      // Pre-llenar con datos existentes (skill: timezone-santiago → convertir UTC → input local)
+      const toLocalInput = (ts) => {
+        if (!ts) return '';
+        const d = new Date(ts);
+        // Ajustar a America/Santiago para el input datetime-local
+        const cl = new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'America/Santiago',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit'
+        }).format(d);
+        return cl.replace(' ', 'T');
+      };
+
+      document.getElementById('attCheckIn').value       = toLocalInput(appt.check_in_at);
+      document.getElementById('attConsultStart').value  = toLocalInput(appt.consultation_start_at);
+      document.getElementById('attConsultEnd').value    = toLocalInput(appt.consultation_end_at);
+      document.getElementById('attClientLate').checked  = appt.was_client_late || false;
+      document.getElementById('attDelayMins').value     = appt.client_delay_minutes || '';
+      document.getElementById('attLateReason').value    = appt.late_reason || '';
+      document.getElementById('attRescheduleReason').value = appt.reschedule_reason || '';
+      document.getElementById('attDelayGroup').style.display = appt.was_client_late ? 'block' : 'none';
+
+      document.getElementById('attendanceModal').style.display = 'flex';
+    };
+
+    window.closeAttendanceModal = function() {
+      document.getElementById('attendanceModal').style.display = 'none';
+      attendanceApptId = null;
+    };
+
+    window.saveAttendance = async function() {
+      if (!attendanceApptId) return;
+
+      // Convertir datetime-local (hora Santiago) → UTC antes de guardar (skill: timezone-santiago)
+      const toUTC = (localStr) => {
+        if (!localStr) return null;
+        // El input datetime-local interpreta como hora local del browser
+        // Usamos la zona horaria explícita de Santiago
+        const [datePart, timePart] = localStr.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, min] = timePart.split(':').map(Number);
+        // Crear objeto con Intl para obtener el offset real de Santiago en esa fecha
+        const localDate = new Date(year, month - 1, day, hour, min);
+        const santiagoDiff = (() => {
+          const santiagoParts = new Intl.DateTimeFormat('en', {
+            timeZone: 'America/Santiago', hour: 'numeric', minute: 'numeric',
+            hour12: false, year: 'numeric', month: '2-digit', day: '2-digit'
+          }).formatToParts(localDate);
+          const santiagoDt = {
+            year:  parseInt(santiagoParts.find(p=>p.type==='year').value),
+            month: parseInt(santiagoParts.find(p=>p.type==='month').value) - 1,
+            day:   parseInt(santiagoParts.find(p=>p.type==='day').value),
+            hour:  parseInt(santiagoParts.find(p=>p.type==='hour').value),
+            minute:parseInt(santiagoParts.find(p=>p.type==='minute').value),
+          };
+          const santiagoDtObj = new Date(Date.UTC(santiagoDt.year, santiagoDt.month, santiagoDt.day, santiagoDt.hour, santiagoDt.minute));
+          return localDate.getTime() - santiagoDtObj.getTime();
+        })();
+        return new Date(localDate.getTime() - santiagoDiff).toISOString();
+      };
+
+      const isLate = document.getElementById('attClientLate').checked;
+      const updates = {
+        check_in_at:           toUTC(document.getElementById('attCheckIn').value),
+        consultation_start_at: toUTC(document.getElementById('attConsultStart').value),
+        consultation_end_at:   toUTC(document.getElementById('attConsultEnd').value),
+        was_client_late:       isLate,
+        client_delay_minutes:  isLate ? (parseInt(document.getElementById('attDelayMins').value) || null) : null,
+        late_reason:           isLate ? (document.getElementById('attLateReason').value.trim() || null) : null,
+        reschedule_reason:     document.getElementById('attRescheduleReason').value || null,
+      };
+
+      const { error } = await supabase.from('appointments').update(updates).eq('id', attendanceApptId);
+      if (error) { alert('Error al guardar: ' + error.message); return; }
+
+      closeAttendanceModal();
       loadAllAppointments();
     };
 
@@ -527,5 +651,77 @@
       .appointment-status-select { min-width: 0; }
     }
   </style>
+
+  <!-- ══════════ Modal de Asistencia ══════════ -->
+  <div id="attendanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:#fff;border-radius:20px;padding:1.5rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+        <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#0f172a">📋 Registro de Asistencia</h3>
+        <button onclick="closeAttendanceModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748b;line-height:1">✕</button>
+      </div>
+
+      <!-- Tiempos de atención -->
+      <div style="background:#f8fafc;border-radius:12px;padding:1rem;margin-bottom:1rem">
+        <p style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.75rem">⏱ Tiempos de atención</p>
+        <div style="display:grid;gap:0.6rem">
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;color:#334155;display:block;margin-bottom:3px">🕐 Llegada del cliente</label>
+            <input type="datetime-local" id="attCheckIn" style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px" />
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;color:#334155;display:block;margin-bottom:3px">▶️ Inicio de consulta</label>
+            <input type="datetime-local" id="attConsultStart" style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px" />
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;color:#334155;display:block;margin-bottom:3px">⏹️ Fin de consulta</label>
+            <input type="datetime-local" id="attConsultEnd" style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Retraso del cliente -->
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:1rem;margin-bottom:1rem">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:600;color:#9a3412;font-size:0.88rem">
+          <input type="checkbox" id="attClientLate" onchange="document.getElementById('attDelayGroup').style.display=this.checked?'block':'none'" style="width:18px;height:18px" />
+          ⚠️ El cliente llegó tarde (por su responsabilidad)
+        </label>
+        <div id="attDelayGroup" style="display:none;margin-top:0.75rem;display:grid;gap:0.5rem">
+          <div>
+            <label style="font-size:0.78rem;font-weight:600;color:#334155;display:block;margin-bottom:3px">Minutos de retraso</label>
+            <input type="number" id="attDelayMins" min="1" max="180" placeholder="ej: 20" style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:600;color:#334155;display:block;margin-bottom:3px">Motivo (opcional)</label>
+            <input type="text" id="attLateReason" placeholder="ej: Tráfico, confundió hora..." style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Motivo reagendamiento -->
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1.2rem">
+        <label style="font-size:0.78rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">🔄 Motivo de reagendamiento (si aplica)</label>
+        <select id="attRescheduleReason" style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.88rem;min-height:44px;background:#fff">
+          <option value="">— No aplica —</option>
+          <option value="cliente_tarde">Cliente llegó tarde y no alcanzó</option>
+          <option value="no_show">No se presentó</option>
+          <option value="cancelacion_cliente">Cancelación del cliente</option>
+          <option value="emergencia_clinica">Emergencia en la clínica</option>
+          <option value="vet_ausente">Veterinario no disponible</option>
+          <option value="otro">Otro motivo</option>
+        </select>
+      </div>
+
+      <!-- Acciones -->
+      <div style="display:flex;gap:0.6rem">
+        <button onclick="saveAttendance()" style="flex:1;background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:#fff;border:none;border-radius:12px;padding:0.75rem 1rem;font-weight:700;font-size:0.95rem;cursor:pointer;min-height:48px">
+          💾 Guardar registro
+        </button>
+        <button onclick="closeAttendanceModal()" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:0.75rem 1rem;font-weight:600;font-size:0.9rem;cursor:pointer;color:#64748b;min-height:48px">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
