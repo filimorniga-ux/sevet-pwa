@@ -251,6 +251,8 @@ window._confirmBooking = async function() {
     // Webhook para notificaciones + sync Google Calendar
     try {
       const svc = SERVICES[selectedService];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

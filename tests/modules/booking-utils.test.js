@@ -10,9 +10,9 @@ describe('booking-utils', () => {
       .toContain('nombre');
     expect(validateGuestBookingInput({ guestName: 'Ana', guestPhone: '', guestPetName: 'Luna' }))
       .toContain('teléfono');
-    expect(validateGuestBookingInput({ guestName: 'Ana', guestPhone: '123', guestPetName: '' }))
+    expect(validateGuestBookingInput({ guestName: 'Ana', guestPhone: '98765432' }))
       .toContain('mascota');
-    expect(validateGuestBookingInput({ guestName: 'Ana', guestPhone: '123', guestPetName: 'Luna' }))
+    expect(validateGuestBookingInput({ guestName: 'Ana', guestPhone: '98765432', guestPetName: 'Luna' }))
       .toBeNull();
   });
 

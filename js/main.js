@@ -349,11 +349,15 @@ window.aiSend = async function() {
   messages.scrollTop = messages.scrollHeight;
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(CHAT_AI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, history: chatHistory }),
+      body: JSON.stringify({ message: text }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     typingEl.remove();
 
