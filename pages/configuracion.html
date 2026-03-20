@@ -804,7 +804,7 @@
     };
 
     window.disconnectGCal = async () => {
-      await sb.from('profiles').update({ google_refresh_token_enc: null, google_calendar_id: null }).eq('id', user.id);
+      await sb.from('profiles').update({ google_refresh_token_enc: null, google_calendar_id: null }).eq('user_id', user.id);
       document.getElementById('gcalConnected').style.display = 'none';
       setBadge('gcalStatus', 'warn', '⏳ No configurado');
       toast('🔌 Google Calendar desconectado', 'success');

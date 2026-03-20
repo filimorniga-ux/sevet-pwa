@@ -417,7 +417,11 @@ async function renderConfirmation() {
 }
 
 function setupConfirmButton() {
-  document.getElementById('confirmBookingBtn')?.addEventListener('click', confirmBooking);
+  const btn = document.getElementById('confirmBookingBtn');
+  if (btn) {
+    btn.removeEventListener('click', confirmBooking);
+    btn.addEventListener('click', confirmBooking);
+  }
 }
 
 async function confirmBooking() {
@@ -537,6 +541,8 @@ async function confirmBooking() {
       const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
       const friendlyDate = `${days[dateTime.getDay()]} ${dateTime.getDate()} de ${months[dateTime.getMonth()]} ${dateTime.getFullYear()}`;
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

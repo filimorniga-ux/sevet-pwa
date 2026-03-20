@@ -253,7 +253,7 @@ Deno.serve(async (req: Request) => {
         const { data: vetProfile } = await supabase
           .from('profiles')
           .select('full_name, phone, whatsapp, email')
-          .eq('id', p.vet_id)
+          .eq('user_id', p.vet_id)
           .single();
         if (vetProfile) {
           p.vet_phone = vetProfile.whatsapp || vetProfile.phone || '';
