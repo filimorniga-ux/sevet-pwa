@@ -150,7 +150,7 @@
             <input type="hidden" id="svcEditId" />
             <div class="soap-compose-grid">
               <div class="auth-field"><label>Nombre *</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
-              <div class="auth-field"><label>Categoría *</label><select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select></div>
+              <div class="auth-field"><label>Categoría *</label><select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;"></select></div>
               <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
               <div class="auth-field"><label>Precio ($CLP) *</label><input type="number" id="svcPrice" placeholder="25000"/></div>
               <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
@@ -177,7 +177,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <h3>👥 Gestión de Personal</h3>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-            <select id="staffRoleFilter" onchange="loadStaff()" style="padding:0.5rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.85rem">
+            <select id="staffRoleFilter" onchange="loadStaff()" style="padding:0.5rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.85rem;min-height:44px;">
               <option value="">Todos los roles</option>
               <option value="vet">Veterinarios</option>
               <option value="groomer">Peluqueros</option>
@@ -204,7 +204,7 @@
               <div class="auth-field"><label>Fecha Nacimiento</label><input type="date" id="staffBirthDate" /></div>
               <div class="auth-field">
                 <label>Rol *</label>
-                <select id="staffRole" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+                <select id="staffRole" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;">
                   <option value="vet">🩺 Veterinario</option>
                   <option value="groomer">✂️ Peluquero/a</option>
                   <option value="receptionist">📋 Recepcionista</option>

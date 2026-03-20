@@ -51,7 +51,7 @@
         <label style="font-size:0.8rem;color:var(--gray-500);font-weight:600">Hasta</label>
         <input type="date" id="filterDateTo" class="filter-input" />
       </div>
-      <select id="filterStatus" class="filter-input">
+      <select id="filterStatus" class="filter-input" style="min-height: 44px;">
         <option value="">Todos los estados</option>
         <option value="pendiente">Pendiente</option>
         <option value="confirmada">Confirmada</option>
@@ -59,7 +59,7 @@
         <option value="completada">Completada</option>
         <option value="cancelada">Cancelada</option>
       </select>
-      <select id="filterVet" class="filter-input">
+      <select id="filterVet" class="filter-input" style="min-height: 44px;">
         <option value="">Todos los profesionales</option>
       </select>
       <button class="btn-primary" onclick="loadAllAppointments()" style="padding:0.5rem 1.2rem">
@@ -79,11 +79,11 @@
           <div class="auth-field"><label>Fecha y hora *</label><input type="datetime-local" id="apptDateTime" /></div>
           <div class="auth-field">
             <label>Servicio *</label>
-            <select id="apptService" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+            <select id="apptService" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;"></select>
           </div>
           <div class="auth-field">
             <label>Profesional</label>
-            <select id="apptVet" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)"></select>
+            <select id="apptVet" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;"></select>
           </div>
           <div class="auth-field"><label>Nombre mascota</label><input type="text" id="apptPetName" placeholder="Nombre de la mascota" /></div>
           <div class="auth-field"><label>Tutor (nombre)</label><input type="text" id="apptGuestName" placeholder="Nombre tutor" /></div>
@@ -91,7 +91,7 @@
           <div class="auth-field"><label>Email tutor</label><input type="email" id="apptGuestEmail" placeholder="correo@ejemplo.cl" /></div>
           <div class="auth-field">
             <label>Origen</label>
-            <select id="apptSource" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+            <select id="apptSource" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;">
               <option value="walk-in">Presencial</option>
               <option value="phone">Teléfono</option>
               <option value="whatsapp">WhatsApp</option>
@@ -356,7 +356,7 @@
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeNotes}">${safeNotes || '-'}</td>
             <td>
               <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
-                <select onchange="changeStatus('${escapeHtml(a.id)}', this.value)" class="auth-input appointment-status-select">
+                <select onchange="changeStatus('${escapeHtml(a.id)}', this.value)" class="auth-input appointment-status-select" style="min-height:44px;">
                   <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
                   <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
                   <option value="en_curso" ${a.status === 'en_curso' ? 'selected' : ''}>En Curso</option>

@@ -1,5 +1,6 @@
 export function getVisibleCardsForWidth(viewportWidth) {
   const width = Number.isFinite(viewportWidth) ? viewportWidth : 0;
+  // Mobile UX Fix: Exactamente <= 768px y <= 1024px para alinear con media queries CSS
   if (width <= 768) return 1;
   if (width <= 1024) return 2;
   return 3;
