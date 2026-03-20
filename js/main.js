@@ -174,7 +174,9 @@ function lockBodyScroll() {
 function unlockBodyScroll() {
   document.body.classList.remove('nav-open');
   document.body.style.top = '';
+  document.documentElement.style.scrollBehavior = 'instant';
   window.scrollTo({ left: 0, top: scrollPos, behavior: 'instant' });
+  setTimeout(() => { document.documentElement.style.scrollBehavior = ''; }, 0);
 }
 
 function closeNavMenu() {

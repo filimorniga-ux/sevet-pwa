@@ -74,16 +74,6 @@ async function sendWhatsAppTemplate(
   }
 }
 
-function getDynamicOffset(): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Santiago',
-    timeZoneName: 'longOffset'
-  });
-  const parts = formatter.formatToParts(new Date());
-  const tzPart = parts.find(p => p.type === 'timeZoneName');
-  return tzPart?.value?.replace('GMT', '') || '-03:00';
-}
-
 function getTodayAndFutureDates(): {
   todayStr: string;
   in7days: string;
@@ -95,6 +85,7 @@ function getTodayAndFutureDates(): {
     timeZone: 'America/Santiago',
     year: 'numeric', month: '2-digit', day: '2-digit'
   });
+
   const parts = formatter.formatToParts(now);
   const year = parseInt(parts.find(p => p.type === 'year')!.value);
   const month = parseInt(parts.find(p => p.type === 'month')!.value);
@@ -102,10 +93,12 @@ function getTodayAndFutureDates(): {
 
   const todayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  const today = new Date(year, month - 1, day);
-  const d7 = new Date(today);
+  // Build a local date representing Santiago's midnight to accurately compute +7/+14 days locally
+  const localToday = new Date(year, month - 1, day);
+
+  const d7 = new Date(localToday);
   d7.setDate(d7.getDate() + 7);
-  const d14 = new Date(today);
+  const d14 = new Date(localToday);
   d14.setDate(d14.getDate() + 14);
 
   const in7days = `${d7.getFullYear()}-${String(d7.getMonth() + 1).padStart(2, '0')}-${String(d7.getDate()).padStart(2, '0')}`;
@@ -188,22 +181,8 @@ Deno.serve(async (req: Request) => {
         const vaccineName = vacc.vaccine_name || 'Vacuna';
         const dueDate = formatDate(vacc.next_due_date);
 
-        // Deduplicación: verificar si ya se envió este recordatorio
-        const { data: existing } = await supabase
-          .from('notification_log')
-          .select('id')
-          .eq('notification_type', 'reminder_vaccine')
-          .eq('recipient_phone', ownerPhone)
-          .gte('created_at', todayStr + 'T00:00:00' + getDynamicOffset())
-          .neq('status', 'failed')
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          results.push({ type: 'vaccine', pet: petName, owner: ownerName, status: 'skipped' });
-          continue;
-        }
-
         // Insert optimista
+        // Deduplicación basada en restricción de unicidad en BD
         const { data: logEntry, error: insertErr } = await supabase
           .from('notification_log')
           .insert({
@@ -265,7 +244,7 @@ Deno.serve(async (req: Request) => {
       .select(`
         id, date_time, service_type,
         guest_name, guest_phone, guest_pet_name,
-        service:services!appointments_service_id_fkey(name)
+        service:services!inner(name)
       `)
       .eq('service_type', 'control')
       .in('status', ['pendiente', 'confirmada'])
@@ -289,22 +268,8 @@ Deno.serve(async (req: Request) => {
           timeZone: 'America/Santiago'
         });
 
-        // Deduplicación
-        const { data: existing } = await supabase
-          .from('notification_log')
-          .select('id')
-          .eq('appointment_id', ctrl.id)
-          .eq('notification_type', 'reminder_control')
-          .eq('recipient_phone', phone)
-          .neq('status', 'failed')
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          results.push({ type: 'control', pet: petName, owner: clientName, status: 'skipped' });
-          continue;
-        }
-
         // Insert optimista
+        // Deduplicación basada en restricción de unicidad en BD
         const { data: logEntry, error: insertErr } = await supabase
           .from('notification_log')
           .insert({
@@ -319,7 +284,11 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (insertErr) {
-          results.push({ type: 'control', pet: petName, owner: clientName, status: 'skipped' });
+          if (insertErr.code === '23505') {
+            results.push({ type: 'control', pet: petName, owner: clientName, status: 'skipped' });
+            continue;
+          }
+          console.error(`[check-medical-reminders] Insert error for ${clientName}:`, insertErr);
           continue;
         }
 
