@@ -22,7 +22,7 @@
     <li><a href="/pages/agendar.html">Agendar</a></li>
     <li><a href="/pages/historial.html" class="active">Historial</a></li>
     <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
-    <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
+    <li><a href="#" onclick="window.signOutUser(event)" class="nav-cta">🚪 Cerrar Sesión</a></li>
   </ul>
     <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
   </nav>
@@ -125,15 +125,6 @@
 
       document.getElementById('exportBar').classList.remove('hidden');
 
-      document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut error:', err); }
-        try {
-          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
-          Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-')) sessionStorage.removeItem(k); });
-        } catch(err) {}
-        window.location.replace('/');
-      });
     }
     init();
 

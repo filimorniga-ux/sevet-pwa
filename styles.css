@@ -3098,8 +3098,10 @@ section { position: relative; z-index: 1; }
   letter-spacing: 0.5px;
   padding: 0.2rem 0.6rem;
   border-radius: 99px;
+  background: #f3f4f6; /* fallback */
   background: color-mix(in srgb, var(--svc-color, #6b7280) 12%, transparent);
   color: var(--svc-color, #6b7280);
+  border: 1px solid #e5e7eb; /* fallback */
   border: 1px solid color-mix(in srgb, var(--svc-color, #6b7280) 25%, transparent);
 }
 .asvc-status {
