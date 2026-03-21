@@ -247,11 +247,15 @@
     let currentProfile = null;
     let currentUserId = null;
     let currentSession = null;
+    let initDone = false;
 
     // ── Init: load session + profile ──
     async function init() {
+      if (initDone) return;
+      initDone = true;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        initDone = false;
         window.location.href = '/pages/auth.html';
         return;
       }

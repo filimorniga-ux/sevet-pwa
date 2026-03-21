@@ -116,12 +116,16 @@
     let pets = [];
     let selectedPetId = null;
     let currentTab = 'appointments';
+    let initDone = false;
 
     const escapeHtml = (s) => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
 
     async function init() {
+      if (initDone) return;
+      initDone = true;
+      document.getElementById('petTabContent').innerHTML = '<div class="loading-spinner">Cargando...</div>';
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '/pages/auth.html'; return; }
+      if (!session) { initDone = false; window.location.href = '/pages/auth.html'; return; }
 
       const { data: profile } = await supabase.from('profiles')
         .select('*').eq('user_id', session.user.id).single();
