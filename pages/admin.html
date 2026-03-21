@@ -914,7 +914,15 @@
       document.getElementById('staffSplitLayout').classList.remove('staff-split-open');
     };
 
+    document.addEventListener('keydown', (e) => {
+      const layout = document.getElementById('staffSplitLayout');
+      if (e.key === 'Escape' && layout && layout.classList.contains('staff-split-open')) {
+        hideStaffForm();
+      }
+    });
+
     window.filterStaffByRole = function(role, btn) {
+      if (!staffData || !staffData.length) return;
       staffActiveRoleFilter = role;
       document.querySelectorAll('#staffRoleFilterPills .spec-tab').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
@@ -942,7 +950,7 @@
         return `<div class="staff-member-card ${isActive ? '' : 'staff-card--inactive'}">
           <div class="smc-header" style="--role-color:${roleColor}">
             <div class="smc-avatar" style="background:${roleColor}22;color:${roleColor}">
-              ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(initials)}">` : `<span>${initials}</span>`}
+              ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" alt="Avatar de ${escapeHtml(u.full_name || 'Usuario')}">` : `<span>${initials}</span>`}
             </div>
             <span class="smc-role-badge" style="background:${roleColor}18;color:${roleColor};border-color:${roleColor}30">${roleLabel}</span>
             ${isAdminOrOwner ? `<button class="smc-status-pill ${isActive ? 'smc-active' : 'smc-inactive'}" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">
