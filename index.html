@@ -531,12 +531,14 @@
   async function loadServices() {
     const grid = document.getElementById('servicesGrid');
     const filterBar = document.getElementById('serviceCategoryFilter');
+
+    let servicesList = [];
     const { data: services, error } = await supabase
       .from('services').select('*').eq('active', true).order('name');
 
     if (error || !services?.length) {
       // Fallback con servicios estáticos si Supabase no retorna datos
-      const fallback = [
+      servicesList = [
         { name: 'Consulta General', icon: '🩺', category: 'Consultas', description: 'Revisión clínica completa del paciente.', price: null, duration_min: 30 },
         { name: 'Vacunación', icon: '💉', category: 'Vacunas', description: 'Plan de vacunas preventivo personalizado.', price: null, duration_min: 20 },
         { name: 'Cirugía', icon: '🏥', category: 'Cirugías', description: 'Procedimientos quirúrgicos con equipo especializado.', price: null, duration_min: 90 },
@@ -544,19 +546,19 @@
         { name: 'Urgencias', icon: '🚨', category: 'Urgencias', description: 'Atención inmediata para casos críticos.', price: null, duration_min: 45 },
         { name: 'Diagnóstico', icon: '🔬', category: 'Diagnóstico', description: 'Laboratorio, radiografía y ecografía.', price: null, duration_min: 30 },
       ];
-      renderServices(fallback);
-      return;
+    } else {
+      servicesList = services;
     }
 
     // Build category filter
-    const categories = [...new Set(services.map(s => s.category).filter(Boolean))].sort();
+    const categories = [...new Set(servicesList.map(s => s.category).filter(Boolean))].sort();
     filterBar.innerHTML = `<button class="spec-tab active" onclick="filterServices('all', this)">Todos</button>` +
       categories.map(c => `<button class="spec-tab" onclick="filterServices('${esc(c)}', this)">${esc(c)}</button>`).join('');
 
     window.filterServices = function(cat, btn) {
       document.querySelectorAll('#serviceCategoryFilter .spec-tab').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      renderServices(cat === 'all' ? services : services.filter(s => s.category === cat));
+      renderServices(cat === 'all' ? servicesList : servicesList.filter(s => s.category === cat));
     };
 
     let servicesObserver = null;
@@ -600,7 +602,7 @@
         grid.querySelectorAll('.reveal').forEach(el => servicesObserver.observe(el));
       }, 50);
     }
-    renderServices(services);
+    renderServices(servicesList);
   }
 
   // ── LOAD TEAM FROM SUPABASE ──
