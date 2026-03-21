@@ -492,6 +492,16 @@
       }).format(new Date(ts));
     }
 
+    function getDynamicOffset() {
+      const parts = new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        timeZoneName: 'longOffset'
+      }).formatToParts(new Date());
+      const tzPart = parts.find(p => p.type === 'timeZoneName')?.value;
+      if (!tzPart || !tzPart.startsWith('GMT')) return '-03:00';
+      return tzPart.replace('GMT', '');
+    }
+
     // ── Estado global ──
     let allRecords = [];
     let currentEditId = null;
@@ -520,8 +530,10 @@
 
       if (statusFilter) query = query.eq('payment_status', statusFilter);
       if (methodFilter) query = query.eq('payment_method', methodFilter);
-      if (desde) query = query.gte('created_at', desde + 'T00:00:00-03:00');
-      if (hasta) query = query.lte('created_at', hasta + 'T23:59:59-03:00');
+
+      const offset = getDynamicOffset();
+      if (desde) query = query.gte('created_at', desde + 'T00:00:00' + offset);
+      if (hasta) query = query.lte('created_at', hasta + 'T23:59:59' + offset);
 
       const { data, error } = await query;
       if (error) { console.error('Error cargando cobros:', error); return; }
