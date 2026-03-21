@@ -73,10 +73,17 @@
     let currentProfile = null;
     let currentPets = [];
     let allRecords = [];
+    let initDone = false;
 
     async function init() {
+      if (initDone) return;  // Guard: evita doble ejecución por onAuthStateChange
+      initDone = true;
+
+      // Mostrar spinner explícito
+      document.getElementById('historial-container').innerHTML = '<div class="loading-spinner">Cargando historial...</div>';
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '/pages/auth.html'; return; }
+      if (!session) { initDone = false; window.location.href = '/pages/auth.html'; return; }
 
       const { data: profile } = await supabase.from('profiles')
         .select('*').eq('user_id', session.user.id).single();
@@ -144,7 +151,10 @@
     function renderTimeline(records) {
       const container = document.getElementById('historial-container');
       if (!records.length) {
-        container.innerHTML = '<p class="summary-empty">No hay registros clínicos aún.</p>';
+        const msg = currentProfile?.role === 'client'
+          ? 'Esta mascota no tiene fichas clínicas aún.'
+          : 'No hay registros clínicos creados en el sistema aún.';
+        container.innerHTML = `<p class="summary-empty">${msg}</p>`;
         return;
       }
 

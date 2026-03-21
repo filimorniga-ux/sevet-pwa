@@ -150,7 +150,10 @@
 
     const escapeHtml = (s) => (s == null) ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+    let initDone = false;
     async function init() {
+      if (initDone) return;
+      initDone = true;
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { window.location.href = '/pages/auth.html'; return; }
