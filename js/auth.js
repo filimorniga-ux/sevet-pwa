@@ -232,27 +232,155 @@ function updateNavbarForRole(profile, user = null) {
   if (loginItem) loginItem.style.display = 'none';
 
   // ── Session Pill con Dropdown ──
-  const pill = document.createElement('li');
-  pill.id = 'sessionPill';
-  pill.className = 'nav-role-item session-pill-wrapper';
+  if (loginItem) loginItem.style.display = 'none';
+  _buildSessionPill(profile, config, navLinks, safeIcon, safeLabel, firstName);
+}
 
-  // Build dropdown menu items based on role
-  const menuItems = [];
+// ── Navbar para páginas App (/pages/) ──
+function buildAppNav(profile, config, navLinks) {
+  const role = profile.role;
+  const path = window.location.pathname;
 
-  // Common: perfil + mascotas + agendar (TODOS los usuarios tienen mascotas)
-  menuItems.push({ href: '/pages/perfil.html', icon: '👤', label: 'Mi Perfil' });
-  menuItems.push({ href: '/pages/mi-mascota.html', icon: '🐾', label: 'Mis Mascotas' });
-  menuItems.push({ href: '/pages/agendar.html', icon: '📅', label: 'Agendar Cita' });
-  menuItems.push({ href: '/pages/historial.html', icon: '📋', label: 'Historial de Citas' });
-  menuItems.push({ href: '/pages/ficha-clinica.html', icon: '📄', label: 'Fichas Clínicas' });
+  const NAV_STRUCTURE = {
+    client: [
+      { href: '/pages/mi-mascota.html',   label: '🐾 Mi Mascota' },
+      { href: '/pages/agendar.html',       label: '📅 Agendar Cita' },
+      { href: '/pages/historial.html',     label: '📋 Historial' },
+    ],
+    receptionist: [
+      { href: '/pages/mi-agenda.html',     label: '📅 Mi Agenda' },
+      { href: '/pages/gestion-citas.html', label: '📋 Gestión Citas' },
+      { href: '/pages/agendar.html',       label: '➕ Nueva Cita' },
+    ],
+    groomer: [
+      { href: '/pages/mi-agenda.html',   label: '📅 Mi Agenda' },
+      { href: '/pages/historial.html',   label: '📋 Historial' },
+    ],
+    vet: [
+      { href: '/pages/mi-agenda.html', label: '📅 Mi Agenda' },
+      { label: '📋 Clínica', dropdown: [
+        { href: '/pages/gestion-citas.html', label: '📆 Gestión Citas' },
+        { href: '/pages/historial.html',     label: '📋 Historial' },
+        { href: '/pages/ficha-clinica.html', label: '📄 Ficha Clínica' },
+      ]},
+    ],
+    admin: [
+      { href: '/pages/mi-agenda.html', label: '📅 Mi Agenda' },
+      { label: '📋 Clínica', dropdown: [
+        { href: '/pages/gestion-citas.html', label: '📆 Gestión Citas' },
+        { href: '/pages/historial.html',     label: '📋 Historial' },
+      ]},
+      { label: '⚙️ Admin', dropdown: [
+        { href: '/pages/admin.html', label: '📊 Dashboard' },
+      ]},
+    ],
+    owner: [
+      { href: '/pages/mi-agenda.html', label: '📅 Mi Agenda' },
+      { label: '📋 Clínica', dropdown: [
+        { href: '/pages/gestion-citas.html', label: '📆 Gestión Citas' },
+        { href: '/pages/historial.html',     label: '📋 Historial' },
+        { href: '/pages/ficha-clinica.html', label: '📄 Ficha Clínica' },
+      ]},
+      { label: '⚙️ Admin', dropdown: [
+        { href: '/pages/admin.html', label: '📊 Dashboard' },
+      ]},
+    ],
+  };
 
-  // Staff-specific
-  if (['vet', 'groomer', 'owner', 'admin', 'receptionist'].includes(profile.role)) {
-    menuItems.push({ href: config.home, icon: '🏠', label: 'Mi Panel' });
-    menuItems.push({ href: '/pages/mi-agenda.html', icon: '📅', label: 'Mi Agenda' });
-    menuItems.push({ href: '/pages/gestion-citas.html', icon: '📋', label: 'Gestión Citas' });
+  const items = NAV_STRUCTURE[role] || NAV_STRUCTURE.client;
+
+  // Reconstruir navLinks completamente
+  navLinks.innerHTML = `
+    <li><button class="nav-close-btn app-nav-close" aria-label="Cerrar menú">✕</button></li>
+    <li class="nav-role-item app-nav-home">
+      <a href="${escapeHtml(config.home)}" class="${path === config.home || path.includes(config.home) ? 'app-nav-active' : ''}">🏠 Inicio</a>
+    </li>
+  `;
+
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'nav-role-item';
+
+    if (item.dropdown) {
+      const isGroupActive = item.dropdown.some(sub => path.includes(sub.href));
+      li.className += ' app-nav-dropdown-wrapper';
+      li.innerHTML = `
+        <button class="app-nav-dropdown-trigger${isGroupActive ? ' app-nav-active' : ''}" aria-expanded="false">
+          ${escapeHtml(item.label)} <span class="app-nav-chevron">▾</span>
+        </button>
+        <ul class="app-nav-dropdown" role="menu">
+          ${item.dropdown.map(sub => `
+            <li role="menuitem">
+              <a href="${escapeHtml(sub.href)}" class="${path.includes(sub.href) ? 'app-nav-active' : ''}">
+                ${escapeHtml(sub.label)}
+              </a>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+      navLinks.appendChild(li);
+
+      const trigger  = li.querySelector('.app-nav-dropdown-trigger');
+      const dropdown = li.querySelector('.app-nav-dropdown');
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = li.classList.contains('open');
+        navLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
+        if (!isOpen) li.classList.add('open');
+        trigger.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      // Desktop: abrir al hover
+      li.addEventListener('mouseenter', () => { li.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); });
+      li.addEventListener('mouseleave', () => { li.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); });
+
+    } else {
+      const isActive = path.includes(item.href);
+      li.innerHTML = `<a href="${escapeHtml(item.href)}" class="${isActive ? 'app-nav-active' : ''}">${escapeHtml(item.label)}</a>`;
+      navLinks.appendChild(li);
+    }
+  });
+
+  // Cerrar dropdowns al click fuera o Escape
+  document.addEventListener('click', (e) => {
+    if (!navLinks.contains(e.target))
+      navLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape')
+      navLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
+  });
+
+  // Botón ✕ drawer móvil
+  const closeBtn = navLinks.querySelector('.app-nav-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+      document.getElementById('navbar')?.classList.remove('nav-open');
+    });
   }
 
+  const firstName = escapeHtml((profile.full_name || '').split(' ')[0] || 'Usuario');
+  _buildSessionPill(profile, config, navLinks, escapeHtml(config.icon), escapeHtml(config.label), firstName);
+}
+
+// ── Session Pill ──
+function _buildSessionPill(profile, config, navLinks, safeIcon, safeLabel, firstName) {
+  const role     = escapeHtml(profile.role);
+  const fullName = escapeHtml(profile.full_name || 'Usuario');
+
+  const menuItems = [
+    { href: '/pages/perfil.html',        icon: '👤', label: 'Mi Perfil' },
+    { href: '/pages/mi-mascota.html',   icon: '🐾', label: 'Mis Mascotas' },
+    { href: '/pages/agendar.html',       icon: '📅', label: 'Agendar Cita' },
+    { href: '/pages/historial.html',     icon: '📋', label: 'Historial de Citas' },
+    { href: '/pages/ficha-clinica.html', icon: '📄', label: 'Fichas Clínicas' },
+  ];
+  if (['vet', 'groomer', 'owner', 'admin', 'receptionist'].includes(profile.role)) {
+    menuItems.push({ href: config.home, icon: '🏠', label: 'Mi Panel' });
+    menuItems.push({ href: '/pages/mi-agenda.html',     icon: '📅', label: 'Mi Agenda' });
+    menuItems.push({ href: '/pages/gestion-citas.html', icon: '📆', label: 'Gestión Citas' });
+  }
   if (['owner', 'admin'].includes(profile.role)) {
     menuItems.push({ href: '/pages/admin.html', icon: '📊', label: 'Dashboard' });
     menuItems.push({ href: '/pages/configuracion.html', icon: '⚙️', label: 'Configuración' });
@@ -266,8 +394,9 @@ function updateNavbarForRole(profile, user = null) {
     </a>`
   ).join('');
 
-  const fullName = escapeHtml(profile.full_name || 'Usuario');
-
+  const pill = document.createElement('li');
+  pill.id = 'sessionPill';
+  pill.className = 'nav-role-item session-pill-wrapper';
   pill.innerHTML = `
     <div class="session-pill" data-role="${role}" style="--role-color:${escapeHtml(config.color)}" id="sessionPillTrigger">
       <span class="sp-avatar">${safeIcon}</span>
@@ -298,31 +427,17 @@ function updateNavbarForRole(profile, user = null) {
     </div>
   `;
 
-  if (ctaItem) {
-    navLinks.insertBefore(pill, ctaItem);
-    ctaItem.style.display = 'none';
-  } else {
-    navLinks.appendChild(pill);
-  }
+  const loginItem = navLinks.querySelector('.nav-login-btn')?.parentElement;
+  const ctaItem   = navLinks.querySelector('.nav-cta')?.parentElement;
+  if (loginItem) loginItem.style.display = 'none';
 
-  // Toggle dropdown on click
+  ctaItem ? navLinks.insertBefore(pill, ctaItem) : navLinks.appendChild(pill);
+  if (ctaItem) ctaItem.style.display = 'none';
+
   const trigger = pill.querySelector('#sessionPillTrigger');
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    pill.classList.toggle('open');
-  });
-
-  // Close on click outside
-  document.addEventListener('click', (e) => {
-    if (!pill.contains(e.target)) {
-      pill.classList.remove('open');
-    }
-  });
-
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') pill.classList.remove('open');
-  });
+  trigger.addEventListener('click', (e) => { e.stopPropagation(); pill.classList.toggle('open'); });
+  document.addEventListener('click', (e) => { if (!pill.contains(e.target)) pill.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pill.classList.remove('open'); });
 }
 
 // ── Profile completeness ──

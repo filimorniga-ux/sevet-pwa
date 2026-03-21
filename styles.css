@@ -3623,3 +3623,186 @@ section { position: relative; z-index: 1; }
   .staff-cards-grid { grid-template-columns: 1fr; }
   .staff-form-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   APP NAV CONTEXTUAL — páginas /pages/
+   Se activa cuando el usuario está logueado en una página app
+   ============================================================ */
+
+/* ── Estado activo — link de la página actual ── */
+.nav-links .app-nav-active,
+.nav-links a.app-nav-active {
+  color: var(--primary, #7c3aed) !important;
+  font-weight: 700;
+  position: relative;
+}
+
+.nav-links a.app-nav-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary, #7c3aed);
+  border-radius: 2px;
+}
+
+/* ── Dropdown trigger (botón con ▾) ── */
+.app-nav-dropdown-wrapper {
+  position: relative;
+  list-style: none;
+}
+
+.app-nav-dropdown-trigger {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--gray-600, #4b5563);
+  cursor: pointer;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.app-nav-dropdown-trigger:hover,
+.app-nav-dropdown-wrapper:hover .app-nav-dropdown-trigger {
+  color: var(--primary, #7c3aed);
+}
+
+.app-nav-chevron {
+  font-size: 0.7rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.app-nav-dropdown-wrapper.open .app-nav-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ── */
+.app-nav-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: white;
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 1000;
+  list-style: none;
+  padding: 0.4rem 0;
+  animation: appNavDropIn 0.15s ease;
+}
+
+@keyframes appNavDropIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.app-nav-dropdown-wrapper.open .app-nav-dropdown {
+  display: block;
+}
+
+.app-nav-dropdown li { list-style: none; }
+
+.app-nav-dropdown a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  color: var(--gray-700, #374151);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.app-nav-dropdown a:hover {
+  background: var(--gray-50, #f9fafb);
+  color: var(--primary, #7c3aed);
+}
+
+.app-nav-dropdown a.app-nav-active {
+  background: color-mix(in srgb, var(--primary, #7c3aed) 8%, transparent);
+  color: var(--primary, #7c3aed);
+  font-weight: 600;
+}
+
+.app-nav-dropdown a.app-nav-active::after {
+  display: none; /* no underline dentro del dropdown */
+}
+
+/* ── Flecha apuntando hacia el botón ── */
+.app-nav-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-left: 1px solid var(--gray-200, #e5e7eb);
+  border-top: 1px solid var(--gray-200, #e5e7eb);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* ── Móvil: Drawer lateral retráctil ── */
+@media (max-width: 768px) {
+  /* Dropdown en móvil: expandible vertical, no flotante */
+  .app-nav-dropdown {
+    position: static;
+    transform: none;
+    left: auto;
+    top: auto;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    background: var(--gray-50, #f9fafb);
+    padding: 0 0 0 1rem;
+    animation: none;
+  }
+
+  .app-nav-dropdown::before { display: none; }
+
+  .app-nav-dropdown a {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .app-nav-dropdown-trigger {
+    width: 100%;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--gray-100, #f3f4f6);
+  }
+
+  /* Links directos en móvil */
+  .nav-links.open .nav-role-item > a {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-100, #f3f4f6);
+    font-size: 1rem;
+  }
+
+  /* Estado activo en móvil — borde izquierdo */
+  .nav-links a.app-nav-active,
+  .app-nav-dropdown-trigger.app-nav-active {
+    border-left: 3px solid var(--primary, #7c3aed);
+    padding-left: calc(1rem - 3px);
+    background: color-mix(in srgb, var(--primary, #7c3aed) 5%, transparent);
+  }
+
+  .nav-links a.app-nav-active::after { display: none; }
+}
+
