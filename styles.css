@@ -3047,7 +3047,308 @@ section { position: relative; z-index: 1; }
   .progress-line { max-width: 30px; }
   .step-circle { width: 30px; height: 30px; font-size: 0.75rem; }
 }
+
+/* =========================================
+   ADMIN — GRID DE SERVICIOS (CARDS)
+   ========================================= */
+
+.admin-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.admin-svc-card {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-top: 4px solid var(--svc-color, #6b7280);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+.admin-svc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--hover-shadow);
+  border-color: var(--svc-color, #6b7280);
+}
+.admin-svc-card--inactive {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.asvc-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.asvc-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.asvc-cat-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--svc-color, #6b7280) 12%, transparent);
+  color: var(--svc-color, #6b7280);
+  border: 1px solid color-mix(in srgb, var(--svc-color, #6b7280) 25%, transparent);
+}
+.asvc-status {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+}
+.asvc-active {
+  background: #d1fae5;
+  color: #065f46;
+}
+.asvc-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.asvc-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+.asvc-desc {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.asvc-meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-top: 0.25rem;
+}
+.asvc-price {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--blue-600);
+}
+.asvc-dur {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  font-weight: 600;
+}
+.asvc-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-100);
+}
+.asvc-btn-edit,
+.asvc-btn-toggle {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  transition: var(--transition);
+  min-height: 36px;
+  text-align: center;
+}
+.asvc-btn-edit:hover {
+  background: var(--blue-50);
+  border-color: var(--blue-300);
+  color: var(--blue-700);
+}
+.asvc-btn-toggle:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+/* =========================================
+   ADMIN — MODAL FLOTANTE SERVICIOS
+   ========================================= */
+
+.svc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+.svc-modal-overlay.hidden {
+  display: none;
+}
+.svc-modal {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.svc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+  flex-shrink: 0;
+}
+.svc-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+.svc-modal-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--gray-100);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--gray-600);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.svc-modal-close:hover {
+  background: var(--gray-200);
+  color: var(--gray-900);
+}
+.svc-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+.svc-modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--gray-100);
+  flex-shrink: 0;
+}
+.svc-modal-footer .btn-back {
+  margin: 0;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  min-height: 44px;
+}
+
+/* =========================================
+   CLIENTE — TAB DE SERVICIOS (mi-mascota)
+   ========================================= */
+
+.client-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.client-service-card {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-left: 4px solid var(--cat-color, #6b7280);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.client-service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hover-shadow);
+}
+.csvc-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.csvc-body {
+  flex: 1;
+}
+.csvc-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+.csvc-desc {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+  margin-bottom: 0.4rem;
+}
+.csvc-meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+.csvc-price {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--blue-600);
+}
+.csvc-dur {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+.csvc-btn {
+  display: block;
+  text-align: center;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .admin-services-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  .client-services-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 @media (max-width: 480px) {
-  .professionals-grid { grid-template-columns: 1fr; }
-  .time-slots-grid { grid-template-columns: repeat(3, 1fr); }
+  .admin-services-grid { grid-template-columns: 1fr; }
+  .client-services-grid { grid-template-columns: 1fr; }
+  .svc-modal { max-height: 95vh; }
 }

@@ -139,37 +139,53 @@
         <div id="categoriesList" style="display:flex;flex-wrap:wrap;gap:0.5rem"></div>
       </div>
 
-      <!-- Services CRUD -->
+      <!-- Services CRUD — Grid de Cards -->
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <h3>🩺 Gestión de Servicios</h3>
-          <button class="btn-primary" onclick="showServiceForm()" style="padding:0.5rem 1rem">➕ Nuevo Servicio</button>
-        </div>
-        <div id="serviceFormContainer" class="hidden" style="margin-bottom:1.5rem">
-          <div class="confirmation-card">
-            <input type="hidden" id="svcEditId" />
-            <div class="soap-compose-grid">
-              <div class="auth-field"><label>Nombre *</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
-              <div class="auth-field"><label>Categoría *</label><select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;"></select></div>
-              <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
-              <div class="auth-field"><label>Precio ($CLP) *</label><input type="number" id="svcPrice" placeholder="25000"/></div>
-              <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30"/></div>
-              <div class="auth-field"><label>Especialidad requerida</label><input type="text" id="svcSpecialty" placeholder="general"/></div>
-              <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
-              <div class="auth-field" style="display:flex;align-items:center;gap:0.5rem">
-                <input type="checkbox" id="svcRequiresVet" checked />
-                <label for="svcRequiresVet" style="margin:0">Requiere Veterinario</label>
-              </div>
-            </div>
-            <div style="display:flex;gap:0.5rem;margin-top:1rem">
-              <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar</button>
-              <button class="btn-back" onclick="hideServiceForm()">Cancelar</button>
-            </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+            <div id="servicesCatFilter" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
+            <button class="btn-primary" onclick="showServiceModal()" style="padding:0.5rem 1rem">➕ Nuevo Servicio</button>
           </div>
         </div>
-        <div id="servicesTable" class="appointments-list"><div class="loading-spinner">Cargando servicios...</div></div>
+        <!-- Grid de Cards -->
+        <div id="servicesGrid" class="admin-services-grid">
+          <div class="loading-spinner">Cargando servicios...</div>
+        </div>
       </div>
     </div>
+
+    <!-- Modal Flotante crear/editar servicio -->
+    <div id="serviceModalOverlay" class="svc-modal-overlay hidden" onclick="if(event.target===this)hideServiceModal()">
+      <div class="svc-modal">
+        <div class="svc-modal-header">
+          <h3 id="svcModalTitle">➕ Nuevo Servicio</h3>
+          <button class="svc-modal-close" onclick="hideServiceModal()">✕</button>
+        </div>
+        <div class="svc-modal-body">
+          <input type="hidden" id="svcEditId" />
+          <div class="soap-compose-grid">
+            <div class="auth-field"><label>Nombre *</label><input type="text" id="svcName" placeholder="Nombre del servicio"/></div>
+            <div class="auth-field"><label>Categoría *</label><select id="svcCategory" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);min-height:44px;"></select></div>
+            <div class="auth-field"><label>Descripción</label><input type="text" id="svcDesc" placeholder="Descripción breve"/></div>
+            <div class="auth-field"><label>Precio ($CLP) *</label><input type="number" id="svcPrice" placeholder="25000" min="0"/></div>
+            <div class="auth-field"><label>Duración (min)</label><input type="number" id="svcDuration" placeholder="30" min="5"/></div>
+            <div class="auth-field"><label>Especialidad requerida</label><input type="text" id="svcSpecialty" placeholder="general"/></div>
+            <div class="auth-field"><label>Icono (emoji)</label><input type="text" id="svcIcon" placeholder="🩺" maxlength="4"/></div>
+            <div class="auth-field" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem">
+              <input type="checkbox" id="svcRequiresVet" checked />
+              <label for="svcRequiresVet" style="margin:0">Requiere Veterinario</label>
+            </div>
+          </div>
+          <div id="svcPricePreview" style="text-align:center;font-size:1.5rem;font-weight:800;color:var(--blue-700);margin:1rem 0 0"></div>
+        </div>
+        <div class="svc-modal-footer">
+          <button class="btn-back" onclick="hideServiceModal()">Cancelar</button>
+          <button class="btn-primary" onclick="saveService()" style="flex:1;justify-content:center">💾 Guardar Servicio</button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- STAFF PANEL -->
     <div class="admin-panel" id="panelUsers">
@@ -447,25 +463,8 @@
       }
     }
 
-    // Logout
-    document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await supabase.auth.signOut();
-      } catch(err) {
-        console.warn('Sign out error (expected in incognito):', err);
-      }
-      // Clear all Supabase storage (works in incognito too)
-      try {
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-')) localStorage.removeItem(key);
-        });
-        Object.keys(sessionStorage).forEach(key => {
-          if (key.startsWith('sb-')) sessionStorage.removeItem(key);
-        });
-      } catch(err) {}
-      window.location.replace('/');
-    });
+    // Logout — delegado al sistema centralizado en auth.js (window.signOutUser)
+    // El navbar con la session pill (que contiene el botón 🚪) es inyectado por main.js
 
     // Panel switching
     window.showPanel = function(panel, btn) {
@@ -702,46 +701,102 @@
 
     // ── SERVICES ──
     let editingServiceId = null;
+    let allServicesData = [];
+    let activeServicesFilter = 'all';
+
+    const CAT_COLORS = {
+      consulta:'#3b82f6', cirugia:'#ef4444', peluqueria:'#ec4899',
+      preventivo:'#16a34a', urgencia:'#f59e0b', laboratorio:'#8b5cf6',
+      nutricion:'#06b6d4', guarderia:'#f97316'
+    };
 
     async function loadServicesAdmin() {
       await loadCategories();
       const { data, error } = await supabase.from('services').select('*').order('category').order('name');
-      const container = document.getElementById('servicesTable');
-      if (error) { container.innerHTML = `<p class="summary-empty">Error: ${error.message}</p>`; return; }
-      if (!data?.length) { container.innerHTML = '<p class="summary-empty">No hay servicios</p>'; return; }
+      const grid = document.getElementById('servicesGrid');
+      if (error) { grid.innerHTML = `<p class="summary-empty">Error: ${error.message}</p>`; return; }
+      allServicesData = data || [];
+      if (!allServicesData.length) { grid.innerHTML = '<p class="summary-empty">No hay servicios aún. ¡Crea el primero!</p>'; return; }
 
-      container.innerHTML = data.map(s => `
-        <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
-          <span style="font-size:1.5rem">${escapeHtml(s.icon||'🩺')}</span>
-          <div style="flex:2;min-width:120px">
-            <strong>${escapeHtml(s.name)}</strong>
-            <div style="font-size:0.75rem;color:var(--gray-500)">${escapeHtml(s.description || '')}</div>
-          </div>
-          <span style="font-size:0.78rem;color:var(--gray-500)">${escapeHtml(s.category || 'general')}</span>
-          <span style="font-weight:700;color:var(--blue-600)">$${(s.price||0).toLocaleString('es-CL')}</span>
-          <span style="font-size:0.78rem">${escapeHtml(s.duration_min)} min</span>
-          <span style="color:${s.active?'#16a34a':'#ef4444'};font-weight:700;font-size:0.82rem">${s.active?'Activo':'Inactivo'}</span>
-          <div class="apt-actions">
-            <button onclick="editService('${s.id}')" title="Editar">✏️</button>
-            <button onclick="toggleServiceActive('${s.id}', ${!s.active})" title="${s.active?'Desactivar':'Activar'}">${s.active?'⏸️':'▶️'}</button>
-          </div>
-        </div>
-      `).join('');
+      // Build category filter pills
+      const filterBar = document.getElementById('servicesCatFilter');
+      const cats = [...new Set(allServicesData.map(s => s.category).filter(Boolean))].sort();
+      filterBar.innerHTML = `<button class="spec-tab ${activeServicesFilter==='all'?'active':''}" onclick="filterServices('all',this)">Todos</button>` +
+        cats.map(c => `<button class="spec-tab ${activeServicesFilter===c?'active':''}" style="--tab-color:${CAT_COLORS[c]||'#6b7280'}" onclick="filterServices('${escapeHtml(c)}',this)">${escapeHtml(c)}</button>`).join('');
+
+      renderServicesGrid(allServicesData);
     }
 
-    window.showServiceForm = () => {
+    window.filterServices = function(cat, btn) {
+      activeServicesFilter = cat;
+      document.querySelectorAll('#servicesCatFilter .spec-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const filtered = cat === 'all' ? allServicesData : allServicesData.filter(s => s.category === cat);
+      renderServicesGrid(filtered);
+    };
+
+    function renderServicesGrid(services) {
+      const grid = document.getElementById('servicesGrid');
+      if (!services.length) { grid.innerHTML = '<p class="summary-empty">No hay servicios en esta categoría</p>'; return; }
+
+      grid.innerHTML = services.map(s => {
+        const color = CAT_COLORS[s.category] || '#6b7280';
+        const priceStr = (s.price||0).toLocaleString('es-CL');
+        return `
+          <div class="admin-svc-card ${s.active?'':'admin-svc-card--inactive'}" style="--svc-color:${color}">
+            <div class="asvc-top">
+              <span class="asvc-icon">${escapeHtml(s.icon||'🩺')}</span>
+              <span class="asvc-cat-badge">${escapeHtml(s.category||'general')}</span>
+              <span class="asvc-status ${s.active?'asvc-active':'asvc-inactive'}">${s.active?'Activo':'Inactivo'}</span>
+            </div>
+            <div class="asvc-name">${escapeHtml(s.name)}</div>
+            ${s.description ? `<div class="asvc-desc">${escapeHtml(s.description)}</div>` : ''}
+            <div class="asvc-meta">
+              <span class="asvc-price">$${priceStr}</span>
+              ${s.duration_min ? `<span class="asvc-dur">⏱ ${s.duration_min} min</span>` : ''}
+            </div>
+            <div class="asvc-actions">
+              <button class="asvc-btn-edit" onclick="editService('${s.id}')" title="Editar">✏️ Editar</button>
+              <button class="asvc-btn-toggle" onclick="toggleServiceActive('${s.id}', ${!s.active})" title="${s.active?'Desactivar':'Activar'}">
+                ${s.active?'⏸️ Desactivar':'▶️ Activar'}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // Modal
+    window.showServiceModal = () => {
       editingServiceId = null;
+      document.getElementById('svcModalTitle').textContent = '➕ Nuevo Servicio';
       document.getElementById('svcEditId').value = '';
       ['svcName','svcDesc','svcPrice','svcDuration','svcIcon','svcSpecialty'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('svcRequiresVet').checked = true;
-      document.getElementById('serviceFormContainer').classList.remove('hidden');
+      document.getElementById('svcPricePreview').textContent = '';
+      document.getElementById('serviceModalOverlay').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     };
-    window.hideServiceForm = () => document.getElementById('serviceFormContainer').classList.add('hidden');
+    window.hideServiceModal = () => {
+      document.getElementById('serviceModalOverlay').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+    // Backward compat aliases
+    window.showServiceForm = window.showServiceModal;
+    window.hideServiceForm = window.hideServiceModal;
+
+    // Live price preview
+    document.getElementById('svcPrice')?.addEventListener('input', function() {
+      const val = parseInt(this.value) || 0;
+      const el = document.getElementById('svcPricePreview');
+      if (el && val > 0) el.textContent = '$' + val.toLocaleString('es-CL') + ' CLP';
+      else if (el) el.textContent = '';
+    });
 
     window.editService = async function(id) {
       const { data } = await supabase.from('services').select('*').eq('id', id).single();
       if (!data) return;
       editingServiceId = id;
+      document.getElementById('svcModalTitle').textContent = '✏️ Editar Servicio';
       document.getElementById('svcEditId').value = id;
       document.getElementById('svcName').value = data.name || '';
       document.getElementById('svcCategory').value = data.category || '';
@@ -751,7 +806,10 @@
       document.getElementById('svcIcon').value = data.icon || '';
       document.getElementById('svcSpecialty').value = data.specialty || '';
       document.getElementById('svcRequiresVet').checked = data.requires_vet !== false;
-      document.getElementById('serviceFormContainer').classList.remove('hidden');
+      const priceEl = document.getElementById('svcPricePreview');
+      if (priceEl && data.price) priceEl.textContent = '$' + (data.price||0).toLocaleString('es-CL') + ' CLP';
+      document.getElementById('serviceModalOverlay').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     };
 
     window.saveService = async function() {
@@ -765,9 +823,9 @@
 
       const svc = {
         name,
-        category: category,
+        category,
         description: document.getElementById('svcDesc').value.trim() || null,
-        price: parseInt(document.getElementById('svcPrice').value) || 0,
+        price: parseInt(price) || 0,
         duration_min: parseInt(document.getElementById('svcDuration').value) || 30,
         icon: document.getElementById('svcIcon').value || '🩺',
         specialty: document.getElementById('svcSpecialty').value.trim() || 'general',
@@ -780,7 +838,7 @@
         : await supabase.from('services').insert(svc);
 
       if (error) { alert('Error: ' + error.message); return; }
-      hideServiceForm();
+      hideServiceModal();
       loadServicesAdmin();
     };
 
@@ -788,6 +846,7 @@
       await supabase.from('services').update({ active }).eq('id', id);
       loadServicesAdmin();
     };
+
 
 
     // ── STAFF MANAGEMENT ──

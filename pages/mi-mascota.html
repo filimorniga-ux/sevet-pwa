@@ -17,14 +17,14 @@
       <img class="nav-logo-img" src="/assets/images/logo-transparente.png" alt="SEVET San Alberto" />
     </a>
     <ul class="nav-links" id="navLinks">
-    <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
-    <li><a href="/">Inicio</a></li>
-    <li><a href="/pages/agendar.html">Agendar</a></li>
-    <li><a href="/pages/mi-mascota.html" class="active">Mi Mascota</a></li>
-    <li><a href="/pages/historial.html">Historial</a></li>
-    <li><a href="#" class="nav-login-btn" style="display:none">Usuario</a></li>
-    <li><a href="#" id="logoutBtn" class="nav-cta">🚪 Cerrar Sesión</a></li>
-  </ul>
+      <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/agendar.html">Agendar</a></li>
+      <li><a href="/pages/mi-mascota.html" class="active">Mi Mascota</a></li>
+      <li><a href="/pages/historial.html">Historial</a></li>
+      <li><a href="#" class="nav-login-btn">Iniciar Sesión</a></li>
+      <li><a href="/pages/agendar.html" class="nav-cta">Agendar</a></li>
+    </ul>
     <div class="nav-burger" id="navBurger" onclick="toggleNav()"><span></span><span></span><span></span></div>
   </nav>
 
@@ -80,12 +80,13 @@
       <!-- Quick stats -->
       <div class="pet-stats-grid" id="petStatsGrid" style="margin-bottom:1.5rem"></div>
 
-      <!-- Tabs: Próximas citas, Vacunas, Historial, Recetas -->
+      <!-- Tabs: Próximas citas, Vacunas, Historial, Recetas, Servicios -->
       <div class="pet-tabs-bar" style="margin-bottom:1rem">
         <button class="spec-tab active" onclick="showPetTab('appointments', this)">📅 Citas</button>
         <button class="spec-tab" onclick="showPetTab('vaccines', this)">💉 Vacunas</button>
         <button class="spec-tab" onclick="showPetTab('history', this)">📋 Historial</button>
         <button class="spec-tab" onclick="showPetTab('prescriptions', this)">💊 Recetas</button>
+        <button class="spec-tab" onclick="showPetTab('services', this)">🩺 Servicios</button>
       </div>
 
       <!-- Download bar -->
@@ -134,16 +135,8 @@
 
       await loadPets();
 
-      // Logout
-      document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try { await supabase.auth.signOut(); } catch(err) { console.warn('signOut:', err); }
-        try {
-          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k); });
-          Object.keys(sessionStorage).forEach(k => { if (k.startsWith('sb-')) sessionStorage.removeItem(k); });
-        } catch(err) {}
-        window.location.replace('/');
-      });
+      // Logout — delegado al sistema centralizado en auth.js (window.signOutUser)
+      // El navbar con la session pill es inyectado automáticamente por main.js
     }
     init();
 
@@ -246,7 +239,7 @@
     }
 
     // ── PET TABS ──
-    window.showPetTab = function(tab, btn) {
+    window.showPetTab = async function(tab, btn) {
       currentTab = tab;
       if (btn) {
         document.querySelectorAll('#petDashboard .spec-tab').forEach(t => t.classList.remove('active'));
@@ -346,6 +339,43 @@
               <span style="font-size:0.82rem;font-weight:600">${escapeHtml(statusLabels[rx.status] || rx.status)}</span>
             </div>`;
         }).join('');
+
+      } else if (tab === 'services') {
+        // Carga servicios activos desde Supabase
+        container.innerHTML = '<div class="loading-spinner" style="padding:2rem;text-align:center">Cargando servicios...</div>';
+        const { data: svcs, error: svcErr } = await supabase
+          .from('services').select('*').eq('active', true).order('category').order('name');
+        if (svcErr || !svcs?.length) {
+          container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400)"><p style="font-size:1.5rem">🩺</p><p>No hay servicios disponibles en este momento</p></div>';
+          return;
+        }
+        // Agrupar por categoría
+        const grouped = svcs.reduce((acc, s) => {
+          const cat = s.category || 'general';
+          (acc[cat] = acc[cat] || []).push(s);
+          return acc;
+        }, {});
+        const catColors = { consulta:'#3b82f6', cirugia:'#ef4444', peluqueria:'#ec4899', preventivo:'#16a34a', urgencia:'#f59e0b', laboratorio:'#8b5cf6', nutricion:'#06b6d4', guarderia:'#f97316' };
+        container.innerHTML = Object.entries(grouped).map(([cat, services]) => `
+          <div style="margin-bottom:1.5rem">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:${catColors[cat]||'var(--gray-500)'};margin-bottom:0.75rem;padding:0.25rem 0.75rem;background:${catColors[cat]||'#6b7280'}15;border-radius:20px;display:inline-block">${cat}</div>
+            <div class="client-services-grid">
+              ${services.map(s => `
+                <div class="client-service-card" style="--cat-color:${catColors[s.category]||'#6b7280'}">
+                  <div class="csvc-icon">${escapeHtml(s.icon||'🩺')}</div>
+                  <div class="csvc-body">
+                    <div class="csvc-name">${escapeHtml(s.name)}</div>
+                    ${s.description ? `<div class="csvc-desc">${escapeHtml(s.description)}</div>` : ''}
+                    <div class="csvc-meta">
+                      <span class="csvc-price">$${(s.price||0).toLocaleString('es-CL')}</span>
+                      ${s.duration_min ? `<span class="csvc-dur">⏱ ${s.duration_min} min</span>` : ''}
+                    </div>
+                  </div>
+                  <a href="/pages/agendar.html?service_id=${escapeHtml(s.id)}&service_type=${encodeURIComponent(s.name)}" class="btn-primary csvc-btn">Agendar →</a>
+                </div>`).join('')}
+            </div>
+          </div>
+        `).join('');
       }
     };
 
