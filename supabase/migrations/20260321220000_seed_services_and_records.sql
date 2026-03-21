@@ -4,6 +4,8 @@
 -- ============================================================
 
 -- ── 1. SERVICIOS (para landing page y panel admin) ──────────
+ALTER TABLE public.services ADD CONSTRAINT services_name_key UNIQUE (name);
+
 INSERT INTO services (name, description, category, icon, price, duration_min, active)
 VALUES
   ('Consulta General', 'Revisión clínica completa del paciente. Diagnóstico y plan de tratamiento.', 'Consultas', '🩺', 15000, 30, true),
@@ -22,7 +24,7 @@ VALUES
   ('Ecografía Abdominal', 'Examen ecográfico abdominal para diagnóstico de órganos internos.', 'Diagnóstico', '📊', 45000, 30, true),
   ('Limpieza Dental', 'Profilaxis dental con ultrasonido bajo anestesia. Previene enfermedad periodontal.', 'Dental', '🦷', 55000, 60, true),
   ('Hospitalización Diaria', 'Cuidado y monitoreo durante 24 horas con veterinario de turno.', 'Hospitalización', '🏨', 35000, 1440, true)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 
 -- ── 2. FICHAS CLÍNICAS DE PRUEBA ────────────────────────────
 -- Necesitamos al menos un perfil de tipo vet y una mascota.
@@ -51,10 +53,10 @@ BEGIN
   -- Si existen ambos, insertar fichas de prueba
   IF v_vet_id IS NOT NULL AND v_pet_id IS NOT NULL THEN
 
-    INSERT INTO medical_records (pet_id, vet_id, record_type, subjective, objective, assessment, plan, created_at)
+    INSERT INTO medical_records (id, pet_id, vet_id, record_type, subjective, objective, assessment, plan, created_at)
     VALUES
       (
-        v_pet_id, v_vet_id, 'consulta',
+        '11111111-1111-1111-1111-111111111111', v_pet_id, v_vet_id, 'consulta',
         'Propietario reporta que el paciente lleva 2 días sin comer bien y con decaimiento generalizado.',
         'Temperatura: 39.1°C. FC: 88 lpm. FR: 22 rpm. Mucosas rosadas y húmedas. Linfnodos normales. Abdomen sin dolor a la palpación.',
         'Compatible con gastroenteritis leve. Descartar causa parasitaria.',
@@ -62,7 +64,7 @@ BEGIN
         NOW() - INTERVAL '30 days'
       ),
       (
-        v_pet_id, v_vet_id, 'vacuna',
+        '22222222-2222-2222-2222-222222222222', v_pet_id, v_vet_id, 'vacuna',
         'Paciente en control de vacunas anuales. Buen estado general, activo y con buen apetito.',
         'Peso: 12.3 kg. Temperatura: 38.6°C. Sin hallazgos patológicos al examen clínico.',
         'Paciente sano. Vacuna polivalente y antirrábica al día.',
@@ -70,14 +72,14 @@ BEGIN
         NOW() - INTERVAL '15 days'
       ),
       (
-        v_pet_id, v_vet_id, 'control',
+        '33333333-3333-3333-3333-333333333333', v_pet_id, v_vet_id, 'control',
         'Control post-gastroenteritis. Propietario indica que el paciente volvió a comer con normalidad desde hace 5 días.',
         'Peso: 12.5 kg. Temperatura: 38.4°C. Mucosas normales. Abdomen sin dolor. Deposiciones normales.',
         'Resolución completa de gastroenteritis. Paciente en buen estado general.',
         'Alta médica. Mantener dieta regular. Próximo control de vacunas en 11 meses.',
         NOW() - INTERVAL '8 days'
       )
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT (id) DO NOTHING;
 
     RAISE NOTICE 'Fichas clínicas de prueba insertadas correctamente.';
   ELSE
