@@ -535,7 +535,16 @@
       .from('services').select('*').eq('active', true).order('name');
 
     if (error || !services?.length) {
-      grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray-400);grid-column:1/-1"><p>No hay servicios disponibles.</p></div>';
+      // Fallback con servicios estáticos si Supabase no retorna datos
+      const fallback = [
+        { name: 'Consulta General', icon: '🩺', category: 'Consultas', description: 'Revisión clínica completa del paciente.', price: null, duration_min: 30 },
+        { name: 'Vacunación', icon: '💉', category: 'Vacunas', description: 'Plan de vacunas preventivo personalizado.', price: null, duration_min: 20 },
+        { name: 'Cirugía', icon: '🏥', category: 'Cirugías', description: 'Procedimientos quirúrgicos con equipo especializado.', price: null, duration_min: 90 },
+        { name: 'Peluquería', icon: '✂️', category: 'Peluquería', description: 'Baño, corte y cuidado estético profesional.', price: null, duration_min: 60 },
+        { name: 'Urgencias', icon: '🚨', category: 'Urgencias', description: 'Atención inmediata para casos críticos.', price: null, duration_min: 45 },
+        { name: 'Diagnóstico', icon: '🔬', category: 'Diagnóstico', description: 'Laboratorio, radiografía y ecografía.', price: null, duration_min: 30 },
+      ];
+      renderServices(fallback);
       return;
     }
 
