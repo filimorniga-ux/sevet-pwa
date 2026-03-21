@@ -8,6 +8,90 @@
   <title>Iniciar Sesión – SEVET Veterinaria San Alberto</title>
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
+  <style>
+    /* ── Tarjetas de perfil (login) ── */
+    .profile-cards-section {
+      margin: 0.75rem 0 0.5rem;
+      border-top: 1.5px solid #f3f4f6;
+      padding-top: 1rem;
+    }
+    .profile-cards-title {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: #9ca3af; text-align: center; margin-bottom: 0.6rem;
+    }
+    .profile-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    .profile-card {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0.6rem 0.4rem; border-radius: 12px;
+      border: 1.5px solid #f3f4f6; cursor: pointer;
+      transition: all 0.2s; background: #fafafa;
+      text-decoration: none;
+    }
+    .profile-card:hover {
+      border-color: var(--primary, #8b2d8b);
+      background: #fdf4ff; transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139,45,139,0.12);
+    }
+    .profile-card .pc-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .profile-card .pc-name { font-size: 0.68rem; font-weight: 700; color: #374151; text-align: center; }
+    .profile-card .pc-desc { font-size: 0.6rem; color: #9ca3af; text-align: center; line-height: 1.3; margin-top: 0.15rem; }
+
+    /* ── Selector de rol 2 niveles (registro) ── */
+    .role-level1 {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.75rem; margin-bottom: 0.75rem;
+    }
+    .role-card-l1 {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1rem 0.5rem; border-radius: 14px;
+      border: 2px solid #e5e7eb; cursor: pointer;
+      transition: all 0.2s; background: #fff;
+      text-align: center;
+    }
+    .role-card-l1.active {
+      border-color: var(--primary, #8b2d8b);
+      background: linear-gradient(135deg, #fdf4ff, #ede9fe);
+      box-shadow: 0 4px 16px rgba(139,45,139,0.18);
+    }
+    .role-card-l1 .rl1-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+    .role-card-l1 .rl1-title { font-size: 0.85rem; font-weight: 800; color: #111827; }
+    .role-card-l1 .rl1-desc { font-size: 0.7rem; color: #6b7280; margin-top: 0.2rem; line-height: 1.3; }
+
+    /* Subroles (nivel 2) */
+    .role-level2 { display: none; margin-bottom: 0.75rem; }
+    .role-level2.visible { display: block; }
+    .role-level2-label {
+      font-size: 0.75rem; font-weight: 700; color: #374151;
+      margin-bottom: 0.5rem; text-align: center;
+    }
+    .subrole-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    .subrole-btn {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0.6rem 0.3rem; border-radius: 10px;
+      border: 1.5px solid #e5e7eb; cursor: pointer;
+      background: #fff; transition: all 0.2s;
+    }
+    .subrole-btn.active {
+      border-color: #6b21a8;
+      background: linear-gradient(135deg, #faf5ff, #ede9fe);
+    }
+    .subrole-btn .sb-icon { font-size: 1.3rem; }
+    .subrole-btn .sb-name { font-size: 0.65rem; font-weight: 700; color: #374151; margin-top: 0.25rem; text-align:center; }
+    .security-note {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: 10px; padding: 0.6rem 0.75rem;
+      font-size: 0.75rem; color: #92400e; margin-bottom: 0.75rem;
+    }
+  </style>
 </head>
 <body>
   <canvas id="particles-canvas"></canvas>
@@ -64,7 +148,45 @@
         <p class="auth-footer-text" style="margin-top:0.5rem">
           <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
         </p>
-        <p class="auth-footer-text">
+
+        <!-- Tarjetas de perfil ILUSTRATIVAS (solo informativas) -->
+        <div class="profile-cards-section">
+          <div class="profile-cards-title">¿Cuál es tu perfil?</div>
+          <div class="profile-cards-grid">
+            <div class="profile-card">
+              <span class="pc-icon">🐕</span>
+              <span class="pc-name">Dueño/a</span>
+              <span class="pc-desc">Agenda citas y controla la salud de tu mascota</span>
+            </div>
+            <div class="profile-card">
+              <span class="pc-icon">🩺</span>
+              <span class="pc-name">Veterinario/a</span>
+              <span class="pc-desc">Gestiona tu agenda y fichas clínicas</span>
+            </div>
+            <div class="profile-card">
+              <span class="pc-icon">✂️</span>
+              <span class="pc-name">Peluquero/a</span>
+              <span class="pc-desc">Tu agenda de grooming y estética</span>
+            </div>
+            <div class="profile-card">
+              <span class="pc-icon">📋</span>
+              <span class="pc-name">Recepcionista</span>
+              <span class="pc-desc">Gestión de citas y atención</span>
+            </div>
+            <div class="profile-card">
+              <span class="pc-icon">⚙️</span>
+              <span class="pc-name">Administrador/a</span>
+              <span class="pc-desc">Contabilidad y reportes</span>
+            </div>
+            <div class="profile-card">
+              <span class="pc-icon">🏥</span>
+              <span class="pc-name">Director/a</span>
+              <span class="pc-desc">Acceso total al sistema</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="auth-footer-text" style="margin-top:0.75rem">
           ¿No tienes cuenta? <a href="#" onclick="window._switchAuthTab('register')">Regístrate aquí</a>
         </p>
       </form>
@@ -85,20 +207,64 @@
 
         <div class="auth-divider"><span>o con formulario</span></div>
 
-        <div class="auth-role-selector">
-          <button type="button" class="role-btn active" onclick="window._selectRole('client', this)">
-            <span>🐕</span> Soy Dueño
-          </button>
-          <button type="button" class="role-btn" onclick="window._selectRole('staff', this)">
-            <span>🩺</span> Soy Profesional
-          </button>
-          <button type="button" class="role-btn" onclick="window._selectRole('admin', this)">
-            <span>🏥</span> Administrativo
-          </button>
+        <!-- NIVEL 1: ¿Eres cliente o parte del equipo? -->
+        <div class="role-level1">
+          <div class="role-card-l1 active" id="rl1-client" onclick="window._selectLevel1('client')">
+            <div class="rl1-icon">🐕</div>
+            <div class="rl1-title">Soy Dueño/a</div>
+            <div class="rl1-desc">Tengo mascotas y quiero agendar citas</div>
+          </div>
+          <div class="role-card-l1" id="rl1-team" onclick="window._selectLevel1('team')">
+            <div class="rl1-icon">🔒</div>
+            <div class="rl1-title">Soy del Equipo</div>
+            <div class="rl1-desc">Trabajo en la clínica (requiere código)</div>
+          </div>
         </div>
-        <p class="auth-footer-text" style="margin-top:-0.2rem;margin-bottom:0.75rem">
-          El registro de perfiles profesionales y administrativos requiere código interno.
-        </p>
+
+        <!-- NIVEL 2: ¿Qué rol tienes en el equipo? (oculto hasta seleccionar "equipo") -->
+        <div class="role-level2" id="roleLevel2">
+          <div class="role-level2-label">Selecciona tu rol dentro del equipo:</div>
+          <div class="subrole-grid">
+            <button type="button" class="subrole-btn" data-subrole="vet" onclick="window._selectSubrole('vet', this)">
+              <span class="sb-icon">🩺</span>
+              <span class="sb-name">Veterinario/a</span>
+            </button>
+            <button type="button" class="subrole-btn" data-subrole="groomer" onclick="window._selectSubrole('groomer', this)">
+              <span class="sb-icon">✂️</span>
+              <span class="sb-name">Peluquero/a</span>
+            </button>
+            <button type="button" class="subrole-btn" data-subrole="receptionist" onclick="window._selectSubrole('receptionist', this)">
+              <span class="sb-icon">📋</span>
+              <span class="sb-name">Recepcionista</span>
+            </button>
+            <button type="button" class="subrole-btn" data-subrole="admin" onclick="window._selectSubrole('admin', this)">
+              <span class="sb-icon">⚙️</span>
+              <span class="sb-name">Administrador/a</span>
+            </button>
+            <button type="button" class="subrole-btn" data-subrole="owner" onclick="window._selectSubrole('owner', this)">
+              <span class="sb-icon">🏥</span>
+              <span class="sb-name">Director/a</span>
+            </button>
+          </div>
+          <div class="security-note" style="margin-top:0.6rem">
+            🔒 <span>Los roles de equipo requieren un <strong>código de acceso</strong> proporcionado por la dirección de la clínica.</span>
+          </div>
+          <div class="auth-field" id="teamCodeField" style="margin-top:0.4rem">
+            <label>Código de acceso del equipo *</label>
+            <input type="text" id="teamCode" placeholder="Código proporcionado por tu Director/a" autocomplete="off"/>
+          </div>
+        </div>
+
+        <!-- Campos legados (mantener compatibilidad) -->
+        <div class="auth-field" id="staffCodeField" style="display:none">
+          <label>Código de Staff</label>
+          <input type="text" id="staffCode" placeholder="Código proporcionado por la clínica" />
+        </div>
+        <div class="auth-field" id="adminCodeField" style="display:none">
+          <label>Código Administrativo</label>
+          <input type="text" id="adminCode" placeholder="Código proporcionado por la dirección" />
+        </div>
+
         <div class="auth-field">
           <label>Nombre completo *</label>
           <input type="text" id="regName" placeholder="Tu nombre completo" required autocomplete="name" />
@@ -118,14 +284,6 @@
         <div class="auth-field">
           <label>Confirmar contraseña *</label>
           <input type="password" id="regPasswordConfirm" placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password" />
-        </div>
-        <div class="auth-field" id="staffCodeField" style="display:none">
-          <label>Código de Staff</label>
-          <input type="text" id="staffCode" placeholder="Código proporcionado por la clínica" />
-        </div>
-        <div class="auth-field" id="adminCodeField" style="display:none">
-          <label>Código Administrativo</label>
-          <input type="text" id="adminCode" placeholder="Código proporcionado por la dirección" />
         </div>
         <button type="submit" class="auth-submit" id="btnRegister">Crear Cuenta</button>
         <p class="auth-footer-text">
@@ -200,13 +358,37 @@
       clearMessage();
     };
 
-    // ── ROLE SELECTION ──
+    // ── ROLE SELECTION (2 niveles) ──
+    let selectedLevel1 = 'client';
+    let selectedSubrole = '';
+
+    // Nuevo sistema de 2 niveles
+    window._selectLevel1 = function(level1) {
+      selectedLevel1 = level1;
+      selectedSubrole = '';
+      document.getElementById('rl1-client').classList.toggle('active', level1 === 'client');
+      document.getElementById('rl1-team').classList.toggle('active', level1 === 'team');
+      const level2El = document.getElementById('roleLevel2');
+      if (level1 === 'team') {
+        level2El.classList.add('visible');
+      } else {
+        level2El.classList.remove('visible');
+        document.querySelectorAll('.subrole-btn').forEach(b => b.classList.remove('active'));
+      }
+    };
+
+    window._selectSubrole = function(subrole, btn) {
+      selectedSubrole = subrole;
+      document.querySelectorAll('.subrole-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    };
+
+    // Compatibilidad legada (por si hay código externo que llame _selectRole)
     let selectedRole = 'client';
     window._selectRole = function(role, btn) {
       selectedRole = role;
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
-
       const visibility = getRoleFieldVisibility(selectedRole);
       document.getElementById('staffCodeField').style.display = visibility.showStaffCode ? 'block' : 'none';
       document.getElementById('adminCodeField').style.display = visibility.showAdminCode ? 'block' : 'none';
@@ -366,13 +548,17 @@
       if (password.length < 6) { showMessage('La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
       if (password !== passwordConfirm) { showMessage('Las contraseñas no coinciden.', 'error'); return; }
 
-      const roleValidationError = validateRoleSelection(selectedRole, {
+      // Validar según el nuevo sistema de 2 niveles
+      const teamCode = document.getElementById('teamCode')?.value || '';
+      const roleValidationError = validateRoleSelection(selectedLevel1, {
         staffCode: document.getElementById('staffCode')?.value || '',
         adminCode: document.getElementById('adminCode')?.value || '',
+        teamCode,
+        teamSubrole: selectedSubrole,
       });
       if (roleValidationError) { showMessage(roleValidationError, 'error'); return; }
 
-      const role = mapRoleSelection(selectedRole);
+      const role = mapRoleSelection(selectedLevel1, selectedSubrole);
 
       setLoading('btnRegister', true);
       window._isManualLogin = true;

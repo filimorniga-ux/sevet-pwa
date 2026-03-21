@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="description" content="SEVET – Contabilidad y facturación de servicios veterinarios."/>
+  <title>Contabilidad – SEVET Veterinaria San Alberto</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <!-- SheetJS para exportar Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF + AutoTable para exportar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ── Layout base ── */
+    body { background: var(--bg-light, #f7f5ff); }
+
+    .conta-hero {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+    .conta-hero .label-tag {
+      font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--primary, #8b2d8b); font-weight: 700; margin-bottom: 0.5rem;
+    }
+    .conta-hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 900;
+      color: var(--gray-900, #111827); margin: 0;
+    }
+    .conta-hero h1 span { color: var(--primary, #8b2d8b); }
+    .conta-hero p { color: var(--gray-500, #6b7280); margin-top: 0.4rem; }
+
+    /* ── Cards de estadísticas ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      max-width: 900px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(139,45,139,0.08);
+      border: 1px solid rgba(139,45,139,0.1);
+    }
+    .stat-card .stat-value {
+      font-size: 1.7rem; font-weight: 900; margin-bottom: 0.25rem;
+    }
+    .stat-card .stat-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--gray-500, #6b7280); font-weight: 600;
+    }
+    .stat-card.facturado .stat-value { color: #8b2d8b; }
+    .stat-card.cobrado   .stat-value { color: #16a34a; }
+    .stat-card.pendiente .stat-value { color: #f59e0b; }
+    .stat-card.noshow    .stat-value { color: #ef4444; }
+
+    /* ── Toolbar de filtros ── */
+    .conta-toolbar {
+      max-width: 1100px;
+      margin: 0 auto 1rem;
+      padding: 0 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .conta-toolbar input,
+    .conta-toolbar select {
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid var(--gray-200, #e5e7eb);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      background: #fff;
+      color: var(--gray-800, #1f2937);
+      min-height: 38px;
+    }
+    .conta-toolbar input:focus,
+    .conta-toolbar select:focus {
+      outline: none;
+      border-color: var(--primary, #8b2d8b);
+    }
+    .conta-toolbar input[type="date"] { max-width: 160px; }
+    .conta-toolbar input[type="search"] { min-width: 200px; }
+    .btn-toolbar {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 38px;
+      transition: all 0.2s;
+    }
+    .btn-buscar { background: var(--primary, #8b2d8b); color: #fff; }
+    .btn-buscar:hover { background: #6b1d73; }
+    .btn-nuevo { background: #16a34a; color: #fff; }
+    .btn-nuevo:hover { background: #15803d; }
+    .btn-excel { background: #1d6f42; color: #fff; }
+    .btn-excel:hover { background: #155234; }
+    .btn-pdf   { background: #e53e3e; color: #fff; }
+    .btn-pdf:hover { background: #c53030; }
+
+    /* ── Tabla de cobros ── */
+    .conta-table-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1rem 2rem;
+      overflow-x: auto;
+    }
+    .conta-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+    .conta-table thead {
+      background: linear-gradient(135deg, #8b2d8b, #6b1d73);
+      color: #fff;
+    }
+    .conta-table th {
+      padding: 0.75rem 1rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .conta-table td {
+      padding: 0.7rem 1rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle;
+    }
+    .conta-table tr:last-child td { border-bottom: none; }
+    .conta-table tr:hover td { background: #faf5ff; }
+
+    /* ── Badges de estado ── */
+    .badge-status {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge-pagado     { background: #dcfce7; color: #15803d; }
+    .badge-pendiente  { background: #fef3c7; color: #d97706; }
+    .badge-anulado    { background: #fee2e2; color: #dc2626; }
+
+    .badge-method {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      background: #ede9fe;
+      color: #6b21a8;
+      font-weight: 600;
+    }
+
+    /* ── Botones de acción en fila ── */
+    .action-btns { display: flex; gap: 0.35rem; }
+    .action-btns button {
+      border: 1px solid var(--gray-200, #e5e7eb);
+      border-radius: 8px;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      background: none;
+      font-size: 0.9rem;
+      min-height: 32px;
+      transition: all 0.15s;
+    }
+    .action-btns button:hover { background: #f3f4f6; }
+
+    /* ── Vacío ── */
+    .conta-empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--gray-400, #9ca3af);
+    }
+    .conta-empty .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+    /* ── Modal de cobro ── */
+    .billing-modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .billing-modal-backdrop.open { display: flex; }
+    .billing-modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .billing-modal h3 {
+      font-size: 1.2rem; font-weight: 800;
+      color: var(--gray-900, #111827);
+      margin: 0 0 1.5rem;
+    }
+    .billing-modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; font-size: 1.5rem;
+      cursor: pointer; color: var(--gray-400, #9ca3af);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block; font-size: 0.8rem; font-weight: 700;
+      color: var(--gray-700, #374151); margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 0.6rem 0.75rem;
+      border: 1.5px solid var(--gray-200, #e5e7eb);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none; border-color: var(--primary, #8b2d8b);
+    }
+    .amount-preview {
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .amount-preview .total-label { font-size: 0.75rem; color: #6b7280; font-weight: 600; text-transform: uppercase; }
+    .amount-preview .total-value { font-size: 2rem; font-weight: 900; color: #8b2d8b; }
+    .modal-actions {
+      display: flex; gap: 0.75rem; margin-top: 1.5rem;
+    }
+    .btn-save-billing {
+      flex: 1; padding: 0.75rem; background: var(--primary, #8b2d8b);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-save-billing:hover { background: #6b1d73; }
+    .btn-cancel-billing {
+      padding: 0.75rem 1.5rem; background: none;
+      color: var(--gray-500, #6b7280); border: 1.5px solid var(--gray-200, #e5e7eb);
+      border-radius: 12px; font-size: 0.95rem; cursor: pointer;
+    }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .conta-toolbar { flex-direction: column; align-items: stretch; }
+      .conta-toolbar input, .conta-toolbar select { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">
+      <img class="nav-logo-img" src="/assets/images/logo-transparente.png" alt="SEVET San Alberto"/>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><button class="nav-close-btn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button></li>
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/pages/gestion-citas.html">Gestión Citas</a></li>
+      <li><a href="/pages/contabilidad.html" class="active">Contabilidad</a></li>
+      <li><a href="/pages/admin.html">Dashboard</a></li>
+    </ul>
+    <div class="nav-burger" id="navBurger" onclick="toggleNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="conta-hero">
+    <div class="label-tag">💰 Finanzas / Admin</div>
+    <h1>Contabilidad de <span>Servicios</span></h1>
+    <p>Gestión de cobros, pagos y resumen financiero de la clínica</p>
+  </section>
+
+  <!-- Cards de estadísticas -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card facturado">
+      <div class="stat-value" id="statFacturado">$0</div>
+      <div class="stat-label">Total Facturado</div>
+    </div>
+    <div class="stat-card cobrado">
+      <div class="stat-value" id="statCobrado">$0</div>
+      <div class="stat-label">Total Cobrado</div>
+    </div>
+    <div class="stat-card pendiente">
+      <div class="stat-value" id="statPendiente">$0</div>
+      <div class="stat-label">Pendiente de Cobro</div>
+    </div>
+    <div class="stat-card noshow">
+      <div class="stat-value" id="statNoShow">0</div>
+      <div class="stat-label">No-Show del Período</div>
+    </div>
+  </div>
+
+  <!-- Toolbar de filtros -->
+  <div class="conta-toolbar">
+    <input type="search" id="filterCliente" placeholder="🔍 Buscar cliente..."/>
+    <input type="date" id="filterDesde" title="Desde"/>
+    <input type="date" id="filterHasta" title="Hasta"/>
+    <select id="filterEstado">
+      <option value="">Todos los estados</option>
+      <option value="pagado">✅ Pagado</option>
+      <option value="pendiente">🕐 Pendiente</option>
+      <option value="anulado">❌ Anulado</option>
+    </select>
+    <select id="filterMetodo">
+      <option value="">Todos los métodos</option>
+      <option value="efectivo">💵 Efectivo</option>
+      <option value="tarjeta">💳 Tarjeta</option>
+      <option value="transferencia">🏦 Transferencia</option>
+      <option value="cortesia">🎁 Cortesía</option>
+      <option value="pendiente">🕐 Pendiente</option>
+    </select>
+    <button class="btn-toolbar btn-buscar" onclick="loadBillingRecords()">🔍 Buscar</button>
+    <button class="btn-toolbar btn-nuevo" onclick="openBillingModal()">+ Nuevo Cobro</button>
+    <button class="btn-toolbar btn-excel" onclick="exportToExcel()">📊 Excel</button>
+    <button class="btn-toolbar btn-pdf" onclick="exportToPDF()">📄 PDF</button>
+  </div>
+
+  <!-- Tabla de cobros -->
+  <div class="conta-table-wrap">
+    <table class="conta-table" id="billingTable">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Mascota</th>
+          <th>Servicio</th>
+          <th>Monto</th>
+          <th>Descuento</th>
+          <th>Total</th>
+          <th>Método</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="billingTbody">
+        <tr>
+          <td colspan="10">
+            <div class="conta-empty">
+              <div class="empty-icon">💰</div>
+              <p>Cargando cobros...</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de Cobro (crear/editar) -->
+  <div class="billing-modal-backdrop" id="billingModalBackdrop">
+    <div class="billing-modal" style="position:relative">
+      <button class="billing-modal-close" onclick="closeBillingModal()">✕</button>
+      <h3 id="billingModalTitle">💰 Nuevo Cobro</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cliente *</label>
+          <select id="billClientId" required onchange="loadClientAppointments()">
+            <option value="">— Seleccionar cliente —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mascota</label>
+          <select id="billPetId">
+            <option value="">— Seleccionar mascota —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Cita asociada (opcional)</label>
+        <select id="billAppointmentId">
+          <option value="">— Sin cita asociada —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Servicio *</label>
+        <input type="text" id="billServiceName" placeholder="Ej: Consulta general, Baño y corte..." required/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto (CLP) *</label>
+          <input type="number" id="billAmount" placeholder="0" min="0" step="1" required oninput="updateTotalPreview()"/>
+        </div>
+        <div class="form-group">
+          <label>Descuento (CLP)</label>
+          <input type="number" id="billDiscount" placeholder="0" min="0" step="1" value="0" oninput="updateTotalPreview()"/>
+        </div>
+      </div>
+
+      <div class="amount-preview">
+        <div class="total-label">Total a cobrar</div>
+        <div class="total-value" id="totalPreview">$0</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Método de pago</label>
+          <select id="billMethod">
+            <option value="pendiente">🕐 Pendiente</option>
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta">💳 Tarjeta</option>
+            <option value="transferencia">🏦 Transferencia</option>
+            <option value="cortesia">🎁 Cortesía</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado del cobro</label>
+          <select id="billStatus">
+            <option value="pendiente">🕐 Pendiente</option>
+            <option value="pagado">✅ Pagado</option>
+            <option value="anulado">❌ Anulado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notas</label>
+        <textarea id="billNotes" rows="2" placeholder="Observaciones del cobro..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-save-billing" onclick="saveBillingRecord()">💾 Guardar cobro</button>
+        <button class="btn-cancel-billing" onclick="closeBillingModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    // ── Guard de acceso RBAC (skill: rbac-pin-security) ──
+    async function checkAccess() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/pages/auth.html'; return false; }
+      const { data: profile } = await supabase.from('profiles')
+        .select('role').eq('user_id', session.user.id).single();
+      if (!profile || !['owner','admin','receptionist'].includes(profile.role)) {
+        alert('⛔ Acceso restringido. Solo Owner, Admin y Recepcionista pueden ver contabilidad.');
+        window.location.href = '/';
+        return false;
+      }
+      return true;
+    }
+
+    // ── Utilidades financieras (skill: financial-precision-math) ──
+    // Todos los montos son INTEGER (CLP). Solo se formatean al mostrar.
+    function formatCLP(amount) {
+      if (amount == null) return '$0';
+      return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+    }
+    function safeInt(val) {
+      const n = parseInt(val, 10);
+      return isNaN(n) || n < 0 ? 0 : n;
+    }
+
+    // ── Formateo de fechas (skill: timezone-santiago) ──
+    function formatDate(ts) {
+      if (!ts) return '-';
+      return new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }).format(new Date(ts));
+    }
+
+    // ── Estado global ──
+    let allRecords = [];
+    let currentEditId = null;
+    let allClients = [];
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Cargar cobros ──
+    window.loadBillingRecords = async function() {
+      const clientFilter = document.getElementById('filterCliente').value.trim().toLowerCase();
+      const statusFilter = document.getElementById('filterEstado').value;
+      const methodFilter = document.getElementById('filterMetodo').value;
+      const desde = document.getElementById('filterDesde').value;
+      const hasta = document.getElementById('filterHasta').value;
+
+      let query = supabase.from('billing_records')
+        .select(`
+          *,
+          client:client_profile_id ( full_name, email, phone ),
+          pet:pet_id ( name )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (statusFilter) query = query.eq('payment_status', statusFilter);
+      if (methodFilter) query = query.eq('payment_method', methodFilter);
+      if (desde) query = query.gte('created_at', desde + 'T00:00:00-03:00');
+      if (hasta) query = query.lte('created_at', hasta + 'T23:59:59-03:00');
+
+      const { data, error } = await query;
+      if (error) { console.error('Error cargando cobros:', error); return; }
+
+      // Filtro de cliente en frontend (por nombre)
+      allRecords = clientFilter
+        ? (data || []).filter(r => r.client?.full_name?.toLowerCase().includes(clientFilter))
+        : (data || []);
+
+      renderBillingTable(allRecords);
+      updateStats(allRecords);
+    };
+
+    function renderBillingTable(records) {
+      const tbody = document.getElementById('billingTbody');
+      if (!records.length) {
+        tbody.innerHTML = `<tr><td colspan="10">
+          <div class="conta-empty">
+            <div class="empty-icon">💸</div>
+            <p>No hay cobros para los filtros seleccionados</p>
+          </div>
+        </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => {
+        const statusBadge = {
+          pagado:    `<span class="badge-status badge-pagado">✅ Pagado</span>`,
+          pendiente: `<span class="badge-status badge-pendiente">🕐 Pendiente</span>`,
+          anulado:   `<span class="badge-status badge-anulado">❌ Anulado</span>`,
+        }[r.payment_status] || r.payment_status;
+
+        const methodLabels = {
+          efectivo:      '💵 Efectivo',
+          tarjeta:       '💳 Tarjeta',
+          transferencia: '🏦 Transferencia',
+          cortesia:      '🎁 Cortesía',
+          pendiente:     '🕐 Pendiente',
+        };
+
+        return `<tr>
+          <td style="white-space:nowrap;font-size:0.78rem">${formatDate(r.created_at)}</td>
+          <td>
+            <strong>${escapeHtml(r.client?.full_name || 'Sin nombre')}</strong>
+            ${r.client?.phone ? `<br><small style="color:#9ca3af">${escapeHtml(r.client.phone)}</small>` : ''}
+          </td>
+          <td>${escapeHtml(r.pet?.name || '-')}</td>
+          <td>${escapeHtml(r.service_name)}</td>
+          <td style="font-weight:700">${formatCLP(r.amount_clp)}</td>
+          <td style="color:#16a34a">${r.discount_clp > 0 ? '-' + formatCLP(r.discount_clp) : '-'}</td>
+          <td style="font-weight:900;color:#8b2d8b">${formatCLP(r.total_clp)}</td>
+          <td><span class="badge-method">${methodLabels[r.payment_method] || r.payment_method}</span></td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="action-btns">
+              <button onclick="openBillingModal('${r.id}')" title="Editar cobro">✏️</button>
+              <button onclick="confirmAnular('${r.id}')" title="Anular cobro" ${r.payment_status === 'anulado' ? 'disabled' : ''}>🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateStats(records) {
+      const active = records.filter(r => r.payment_status !== 'anulado');
+      const pagado    = active.filter(r => r.payment_status === 'pagado');
+      const pendiente = active.filter(r => r.payment_status === 'pendiente');
+
+      // Todos los cálculos con enteros (skill: financial-precision-math)
+      const totalFacturado  = active.reduce((acc, r) => acc + (r.total_clp || 0), 0);
+      const totalCobrado    = pagado.reduce((acc, r) => acc + (r.total_clp || 0), 0);
+      const totalPendiente  = pendiente.reduce((acc, r) => acc + (r.total_clp || 0), 0);
+
+      document.getElementById('statFacturado').textContent = formatCLP(totalFacturado);
+      document.getElementById('statCobrado').textContent   = formatCLP(totalCobrado);
+      document.getElementById('statPendiente').textContent = formatCLP(totalPendiente);
+      // No-show: contar citas asociadas con las citas del período (simplificado)
+      document.getElementById('statNoShow').textContent = records.filter(r =>
+        r.appointment_id != null && r.payment_status === 'anulado'
+      ).length;
+    }
+
+    // ── Preview del total en modal ──
+    window.updateTotalPreview = function() {
+      const amount   = safeInt(document.getElementById('billAmount').value);
+      const discount = safeInt(document.getElementById('billDiscount').value);
+      const total    = Math.max(0, amount - discount); // siempre entero
+      document.getElementById('totalPreview').textContent = formatCLP(total);
+    };
+
+    // ── Cargar clientes en el selector ──
+    async function loadClientsSelect() {
+      const { data } = await supabase.from('profiles')
+        .select('id, full_name, email')
+        .eq('role', 'client')
+        .order('full_name');
+      allClients = data || [];
+      const sel = document.getElementById('billClientId');
+      sel.innerHTML = '<option value="">— Seleccionar cliente —</option>' +
+        allClients.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)} (${escapeHtml(c.email)})</option>`).join('');
+    }
+
+    // ── Cargar mascotas y citas del cliente ──
+    window.loadClientAppointments = async function() {
+      const clientId = document.getElementById('billClientId').value;
+      const petSel  = document.getElementById('billPetId');
+      const apptSel = document.getElementById('billAppointmentId');
+      if (!clientId) {
+        petSel.innerHTML = '<option value="">— Seleccionar mascota —</option>';
+        apptSel.innerHTML = '<option value="">— Sin cita asociada —</option>';
+        return;
+      }
+      // Cargar mascotas del cliente
+      const { data: pets } = await supabase.from('pets')
+        .select('id, name').eq('owner_id', clientId).order('name');
+      petSel.innerHTML = '<option value="">— Seleccionar mascota —</option>' +
+        (pets || []).map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+      // Cargar citas del cliente (a través de mascotas)
+      if (pets && pets.length > 0) {
+        const petIds = pets.map(p => `"${p.id}"`).join(',');
+        const { data: appts } = await supabase.from('appointments')
+          .select('id, date_time, service_name, status')
+          .in('pet_id', pets.map(p => p.id))
+          .order('date_time', { ascending: false })
+          .limit(30);
+        apptSel.innerHTML = '<option value="">— Sin cita asociada —</option>' +
+          (appts || []).map(a => {
+            const date = new Intl.DateTimeFormat('es-CL', {
+              timeZone: 'America/Santiago', day:'2-digit', month:'2-digit', year:'numeric'
+            }).format(new Date(a.date_time));
+            return `<option value="${a.id}">${date} – ${escapeHtml(a.service_name || a.status)}</option>`;
+          }).join('');
+      }
+    };
+
+    // ── Abrir modal ──
+    window.openBillingModal = async function(editId = null) {
+      currentEditId = editId;
+      document.getElementById('billingModalTitle').textContent = editId ? '✏️ Editar Cobro' : '💰 Nuevo Cobro';
+      await loadClientsSelect();
+
+      if (editId) {
+        // Pre-rellenar con datos existentes
+        const rec = allRecords.find(r => r.id === editId);
+        if (rec) {
+          document.getElementById('billClientId').value   = rec.client_profile_id || '';
+          await window.loadClientAppointments();
+          document.getElementById('billPetId').value      = rec.pet_id || '';
+          document.getElementById('billAppointmentId').value = rec.appointment_id || '';
+          document.getElementById('billServiceName').value   = rec.service_name || '';
+          document.getElementById('billAmount').value    = rec.amount_clp || 0;
+          document.getElementById('billDiscount').value  = rec.discount_clp || 0;
+          document.getElementById('billMethod').value    = rec.payment_method || 'pendiente';
+          document.getElementById('billStatus').value    = rec.payment_status || 'pendiente';
+          document.getElementById('billNotes').value     = rec.notes || '';
+          window.updateTotalPreview();
+        }
+      } else {
+        // Limpiar formulario
+        document.getElementById('billClientId').value   = '';
+        document.getElementById('billPetId').value      = '';
+        document.getElementById('billAppointmentId').value = '';
+        document.getElementById('billServiceName').value   = '';
+        document.getElementById('billAmount').value    = '';
+        document.getElementById('billDiscount').value  = '0';
+        document.getElementById('billMethod').value    = 'pendiente';
+        document.getElementById('billStatus').value    = 'pendiente';
+        document.getElementById('billNotes').value     = '';
+        document.getElementById('totalPreview').textContent = '$0';
+      }
+
+      document.getElementById('billingModalBackdrop').classList.add('open');
+    };
+
+    window.closeBillingModal = function() {
+      document.getElementById('billingModalBackdrop').classList.remove('open');
+      currentEditId = null;
+    };
+
+    // ── Guardar cobro ──
+    window.saveBillingRecord = async function() {
+      const clientId    = document.getElementById('billClientId').value;
+      const petId       = document.getElementById('billPetId').value;
+      const appointmentId = document.getElementById('billAppointmentId').value;
+      const serviceName = document.getElementById('billServiceName').value.trim();
+      const amount      = safeInt(document.getElementById('billAmount').value);
+      const discount    = safeInt(document.getElementById('billDiscount').value);
+      const method      = document.getElementById('billMethod').value;
+      const status      = document.getElementById('billStatus').value;
+      const notes       = document.getElementById('billNotes').value.trim();
+
+      if (!clientId)    { alert('Selecciona un cliente.'); return; }
+      if (!serviceName) { alert('Ingresa el nombre del servicio.'); return; }
+      if (amount <= 0)  { alert('El monto debe ser mayor a 0.'); return; }
+      if (discount > amount) { alert('El descuento no puede ser mayor al monto.'); return; }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data: myProfile } = await supabase.from('profiles')
+        .select('id').eq('user_id', session.user.id).single();
+
+      const payload = {
+        client_profile_id: clientId,
+        pet_id:            petId   || null,
+        appointment_id:    appointmentId || null,
+        service_name:      serviceName,
+        amount_clp:        amount,
+        discount_clp:      discount,
+        payment_method:    method,
+        payment_status:    status,
+        paid_at:           status === 'pagado' ? new Date().toISOString() : null,
+        notes:             notes || null,
+        created_by:        myProfile?.id || null,
+      };
+
+      let error;
+      if (currentEditId) {
+        ({ error } = await supabase.from('billing_records')
+          .update(payload).eq('id', currentEditId));
+      } else {
+        ({ error } = await supabase.from('billing_records').insert(payload));
+      }
+
+      if (error) {
+        alert('❌ Error al guardar: ' + error.message);
+        return;
+      }
+
+      window.closeBillingModal();
+      await window.loadBillingRecords();
+    };
+
+    // ── Anular cobro ──
+    window.confirmAnular = async function(id) {
+      if (!confirm('¿Anular este cobro? Esta acción se puede revertir editando el registro.')) return;
+      const { error } = await supabase.from('billing_records')
+        .update({ payment_status: 'anulado' }).eq('id', id);
+      if (error) { alert('Error al anular: ' + error.message); return; }
+      await window.loadBillingRecords();
+    };
+
+    // ── Exportar a Excel (SheetJS) ──
+    window.exportToExcel = function() {
+      if (!allRecords.length) { alert('No hay datos para exportar.'); return; }
+
+      const rows = allRecords.map(r => ({
+        'Fecha':     formatDate(r.created_at),
+        'Cliente':   r.client?.full_name || '',
+        'Email':     r.client?.email || '',
+        'Mascota':   r.pet?.name || '',
+        'Servicio':  r.service_name,
+        'Monto':     r.amount_clp,
+        'Descuento': r.discount_clp,
+        'Total':     r.total_clp,
+        'Método':    r.payment_method,
+        'Estado':    r.payment_status,
+        'Notas':     r.notes || '',
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+
+      // Anchos de columna
+      ws['!cols'] = [
+        {wch:18},{wch:25},{wch:28},{wch:15},{wch:25},
+        {wch:12},{wch:12},{wch:12},{wch:14},{wch:12},{wch:30}
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Cobros');
+      const fechaHoy = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago',
+        year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date()).replace(/\//g,'-');
+      XLSX.writeFile(wb, `SEVET_Cobros_${fechaHoy}.xlsx`);
+    };
+
+    // ── Exportar a PDF (jsPDF + AutoTable) ──
+    window.exportToPDF = function() {
+      if (!allRecords.length) { alert('No hay datos para exportar.'); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+
+      // Encabezado
+      doc.setFontSize(16);
+      doc.setTextColor(139, 45, 139);
+      doc.text('SEVET – Reporte de Contabilidad', 14, 16);
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      const fechaHoy = new Intl.DateTimeFormat('es-CL', {
+        timeZone:'America/Santiago', day:'2-digit', month:'long', year:'numeric'
+      }).format(new Date());
+      doc.text(`Generado el ${fechaHoy}`, 14, 22);
+
+      // Totales en encabezado
+      const active = allRecords.filter(r => r.payment_status !== 'anulado');
+      const totalFacturado = active.reduce((s, r) => s + (r.total_clp || 0), 0);
+      const totalCobrado   = active.filter(r => r.payment_status === 'pagado')
+                                   .reduce((s, r) => s + (r.total_clp || 0), 0);
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text(`Total Facturado: ${formatCLP(totalFacturado)}   Total Cobrado: ${formatCLP(totalCobrado)}`, 14, 29);
+
+      const tableData = allRecords.map(r => [
+        formatDate(r.created_at),
+        r.client?.full_name || '',
+        r.pet?.name || '-',
+        r.service_name,
+        formatCLP(r.amount_clp),
+        r.discount_clp > 0 ? '-' + formatCLP(r.discount_clp) : '-',
+        formatCLP(r.total_clp),
+        r.payment_method,
+        r.payment_status,
+      ]);
+
+      doc.autoTable({
+        head: [['Fecha','Cliente','Mascota','Servicio','Monto','Descuento','Total','Método','Estado']],
+        body: tableData,
+        startY: 34,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [139,45,139], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [250,245,255] },
+        columnStyles: {
+          0: { cellWidth: 28 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 45 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 22 },
+          6: { cellWidth: 22 },
+          7: { cellWidth: 25 },
+          8: { cellWidth: 20 },
+        },
+      });
+
+      const fechaArchivo = new Intl.DateTimeFormat('es-CL', {
+        timeZone:'America/Santiago', year:'numeric', month:'2-digit', day:'2-digit'
+      }).format(new Date()).replace(/\//g,'-');
+      doc.save(`SEVET_Cobros_${fechaArchivo}.pdf`);
+    };
+
+    // ── Inicializar filtros de fecha (por defecto: este mes) ──
+    function initDefaultFilters() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2,'0');
+      document.getElementById('filterDesde').value = `${y}-${m}-01`;
+      const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+      document.getElementById('filterHasta').value = `${y}-${m}-${lastDay}`;
+    }
+
+    // ── Arranque ──
+    (async () => {
+      const ok = await checkAccess();
+      if (!ok) return;
+      initDefaultFilters();
+      await window.loadBillingRecords();
+    })();
+  </script>
+</body>
+</html>
