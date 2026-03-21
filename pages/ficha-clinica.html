@@ -118,7 +118,7 @@
       if (initDone) return;
       initDone = true;
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '/pages/auth.html'; return; }
+      if (!session) { initDone = false; window.location.href = '/pages/auth.html'; return; }
 
       const { data: profile } = await supabase.from('profiles')
         .select('*').eq('user_id', session.user.id).single();
