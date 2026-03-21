@@ -229,13 +229,16 @@ button, a, input, select, textarea {
   position: relative; padding: 0.25rem 0;
   transition: var(--transition);
 }
-.nav-links a::after {
+.nav-login-btn, .nav-cta {
+  white-space: nowrap;
+}
+.nav-links a:not(.nav-login-btn):not(.nav-cta)::after {
   content: ''; position: absolute; bottom: -2px; left: 0;
   width: 0; height: 2px; background: var(--blue-600);
   transition: width 0.3s ease;
 }
-.nav-links a:hover { color: var(--gray-900); }
-.nav-links a:hover::after { width: 100%; }
+.nav-links a:not(.nav-login-btn):not(.nav-cta):hover { color: var(--gray-900); }
+.nav-links a:not(.nav-login-btn):not(.nav-cta):hover::after { width: 100%; }
 .nav-cta {
   background: linear-gradient(135deg, var(--blue-600), var(--blue-500)) !important;
   color: var(--white) !important;

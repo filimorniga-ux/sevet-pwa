@@ -124,7 +124,7 @@ CREATE POLICY "billing_owner_delete" ON public.billing_records
 
 -- ── Vista: Resumen de contabilidad por cliente ──
 -- (Usa timezone America/Santiago para fechas, skill: timezone-santiago)
-CREATE OR REPLACE VIEW public.billing_summary_by_client AS
+CREATE OR REPLACE VIEW public.billing_summary_by_client WITH (security_invoker = true) AS
 SELECT
   p.id                               AS client_profile_id,
   p.full_name                        AS client_name,
