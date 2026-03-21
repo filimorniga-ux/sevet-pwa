@@ -188,29 +188,44 @@
 
 
     <!-- STAFF PANEL -->
+    <!-- PANEL PERSONAL — Layout moderno split-view -->
     <div class="admin-panel" id="panelUsers">
-      <div class="chart-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+
+      <!-- Header toolbar -->
+      <div class="staff-toolbar">
+        <div class="staff-toolbar-left">
           <h3>👥 Gestión de Personal</h3>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-            <select id="staffRoleFilter" onchange="loadStaff()" style="padding:0.5rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.85rem;min-height:44px;">
-              <option value="">Todos los roles</option>
-              <option value="vet">Veterinarios</option>
-              <option value="groomer">Peluqueros</option>
-              <option value="receptionist">Recepcionistas</option>
-              <option value="admin">Administradores</option>
-              <option value="client">Clientes</option>
-            </select>
-            <button class="btn-primary" onclick="showStaffForm()" style="padding:0.5rem 1rem">➕ Nuevo</button>
+          <div id="staffRoleFilterPills" class="staff-filter-pills">
+            <button class="spec-tab active" onclick="filterStaffByRole('',this)">Todos</button>
+            <button class="spec-tab" onclick="filterStaffByRole('vet',this)" style="--tab-color:#3b82f6">🩺 Veterinarios</button>
+            <button class="spec-tab" onclick="filterStaffByRole('groomer',this)" style="--tab-color:#f59e0b">✂️ Peluqueros</button>
+            <button class="spec-tab" onclick="filterStaffByRole('receptionist',this)" style="--tab-color:#16a34a">📋 Recepcionistas</button>
+            <button class="spec-tab" onclick="filterStaffByRole('admin',this)" style="--tab-color:#8b2d8b">⚙️ Admin</button>
+            <button class="spec-tab" onclick="filterStaffByRole('client',this)" style="--tab-color:#6b7280">👤 Clientes</button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="showStaffForm()" style="flex-shrink:0;padding:0.55rem 1.2rem">➕ Nuevo Miembro</button>
+      </div>
+
+      <!-- Split layout: lista + drawer -->
+      <div class="staff-split-layout" id="staffSplitLayout">
+
+        <!-- Lista de cards de colaboradores -->
+        <div class="staff-cards-area" id="staffCardsArea">
+          <div id="usersTable" class="staff-cards-grid">
+            <div class="loading-spinner">Cargando personal...</div>
           </div>
         </div>
 
-        <!-- Staff Form (hidden by default) -->
-        <div id="staffFormContainer" class="hidden" style="margin-bottom:1.5rem">
-          <div class="confirmation-card">
-            <h4 id="staffFormTitle" style="margin-bottom:1rem;color:var(--purple-700)">➕ Nuevo Miembro del Equipo</h4>
+        <!-- Drawer lateral: formulario crear/editar -->
+        <div class="staff-drawer hidden" id="staffFormContainer">
+          <div class="staff-drawer-header">
+            <h4 id="staffFormTitle">➕ Nuevo Miembro</h4>
+            <button class="svc-modal-close" onclick="hideStaffForm()">✕</button>
+          </div>
+          <div class="staff-drawer-body">
             <input type="hidden" id="staffEditId" />
-            <div class="soap-compose-grid">
+            <div class="staff-form-grid">
               <div class="auth-field"><label>Nombre completo *</label><input type="text" id="staffName" placeholder="Nombre y apellidos" /></div>
               <div class="auth-field"><label>RUT</label><input type="text" id="staffRut" placeholder="12.345.678-9" /></div>
               <div class="auth-field"><label>Email *</label><input type="email" id="staffEmail" placeholder="correo@ejemplo.cl" /></div>
@@ -229,18 +244,18 @@
               </div>
               <div class="auth-field"><label>Cargo / Posición</label><input type="text" id="staffPosition" placeholder="Ej: Veterinario Jefe" /></div>
               <div class="auth-field"><label>Especialidad</label><input type="text" id="staffSpecialty" placeholder="Ej: Cardiología, Cirugía" /></div>
-              <div class="auth-field"><label>N° Licencia / Matrícula</label><input type="text" id="staffLicense" placeholder="Número profesional" /></div>
+              <div class="auth-field" style="grid-column:1/-1"><label>N° Licencia / Matrícula</label><input type="text" id="staffLicense" placeholder="Número profesional" /></div>
             </div>
-            <div style="display:flex;gap:0.5rem;margin-top:1rem">
-              <button class="btn-primary" onclick="saveStaffMember()" style="flex:1;justify-content:center">💾 Guardar</button>
-              <button class="btn-back" onclick="hideStaffForm()">Cancelar</button>
-            </div>
+          </div>
+          <div class="staff-drawer-footer">
+            <button class="btn-back" onclick="hideStaffForm()">Cancelar</button>
+            <button class="btn-primary" onclick="saveStaffMember()" style="flex:1;justify-content:center">💾 Guardar</button>
           </div>
         </div>
 
-        <div id="usersTable" class="appointments-list"><div class="loading-spinner">Cargando personal...</div></div>
       </div>
     </div>
+
 
     <!-- TIME OFF PANEL -->
     <div class="admin-panel" id="panelTimeoff">
@@ -857,13 +872,16 @@
 
 
     // ── STAFF MANAGEMENT ──
+    let staffData = [];
+    let staffActiveRoleFilter = '';
+
     window.showStaffForm = function(editData) {
-      const container = document.getElementById('staffFormContainer');
+      const drawer = document.getElementById('staffFormContainer');
+      const layout = document.getElementById('staffSplitLayout');
       const title = document.getElementById('staffFormTitle');
-      container.classList.remove('hidden');
 
       if (editData) {
-        title.textContent = '✏️ Editar Miembro del Equipo';
+        title.textContent = '✏️ Editar Miembro';
         document.getElementById('staffEditId').value = editData.id;
         document.getElementById('staffName').value = editData.full_name || '';
         document.getElementById('staffRut').value = editData.rut || '';
@@ -877,67 +895,84 @@
         document.getElementById('staffSpecialty').value = editData.specialty || '';
         document.getElementById('staffLicense').value = editData.license_number || '';
       } else {
-        title.textContent = '➕ Nuevo Miembro del Equipo';
+        title.textContent = '➕ Nuevo Miembro';
         document.getElementById('staffEditId').value = '';
         ['staffName','staffRut','staffEmail','staffPhone','staffWhatsapp','staffAddress','staffBirthDate','staffPosition','staffSpecialty','staffLicense'].forEach(id => {
           document.getElementById(id).value = '';
         });
         document.getElementById('staffRole').value = 'vet';
       }
+
+      drawer.classList.remove('hidden');
+      layout.classList.add('staff-split-open');
+      // Scroll to top of drawer on mobile
+      drawer.scrollTop = 0;
     };
 
     window.hideStaffForm = function() {
       document.getElementById('staffFormContainer').classList.add('hidden');
+      document.getElementById('staffSplitLayout').classList.remove('staff-split-open');
     };
 
-    window.saveStaffMember = async function() {
-      const editId = document.getElementById('staffEditId').value;
-      const fullName = document.getElementById('staffName').value.trim();
-      const email = document.getElementById('staffEmail').value.trim();
-      const role = document.getElementById('staffRole').value;
-
-      if (!fullName || !email || !role) {
-        alert('Nombre, email y rol son obligatorios.');
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('El formato del email no es válido.');
-        return;
-      }
-
-      const profileData = {
-        full_name: fullName,
-        rut: document.getElementById('staffRut').value.trim() || null,
-        email: email,
-        phone: document.getElementById('staffPhone').value.trim() || null,
-        whatsapp: document.getElementById('staffWhatsapp').value.trim() || null,
-        address: document.getElementById('staffAddress').value.trim() || null,
-        birth_date: document.getElementById('staffBirthDate').value || null,
-        role: role,
-        position: document.getElementById('staffPosition').value.trim() || null,
-        specialty: document.getElementById('staffSpecialty').value.trim() || null,
-        license_number: document.getElementById('staffLicense').value.trim() || null,
-        is_active: true,
-      };
-
-      if (editId) {
-        // Update existing
-        const { error } = await supabase.from('profiles').update(profileData).eq('id', editId);
-        if (error) { alert('Error al actualizar: ' + error.message); return; }
-        alert('Miembro actualizado correctamente.');
-      } else {
-        // Create new — insert profile directly (user_id will be linked when they register)
-        profileData.user_id = crypto.randomUUID(); // temp placeholder
-        const { error } = await supabase.from('profiles').insert(profileData);
-        if (error) { alert('Error al crear: ' + error.message); return; }
-        alert('Miembro creado correctamente. Podrá iniciar sesión cuando se registre con el email: ' + email);
-      }
-
-      hideStaffForm();
-      loadStaff();
+    window.filterStaffByRole = function(role, btn) {
+      staffActiveRoleFilter = role;
+      document.querySelectorAll('#staffRoleFilterPills .spec-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const filtered = role ? staffData.filter(s => s.role === role) : staffData;
+      renderStaffCards(filtered);
     };
+
+    function renderStaffCards(list) {
+      const container = document.getElementById('usersTable');
+      if (!list.length) {
+        container.innerHTML = '<p class="summary-empty">No hay personal en esta categoría.</p>';
+        return;
+      }
+      const roleColors = { admin:'#8b2d8b', owner:'#8b2d8b', vet:'#3b82f6', groomer:'#f59e0b', receptionist:'#16a34a', client:'#6b7280' };
+      const roleLabels = { admin:'Admin', owner:'Director', vet:'Veterinario', groomer:'Peluquero/a', receptionist:'Recepcionista', client:'Cliente' };
+      const isAdminOrOwner = ['admin','owner'].includes(adminProfile?.role);
+
+      container.innerHTML = list.map(u => {
+        const isActive = u.is_active !== false;
+        const initials = (u.full_name || 'SN').split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
+        const roleColor = roleColors[u.role] || '#6b7280';
+        const roleLabel = roleLabels[u.role] || u.role;
+        const age = u.birth_date ? Math.floor((Date.now() - new Date(u.birth_date)) / 31557600000) + ' años' : '';
+
+        return `<div class="staff-member-card ${isActive ? '' : 'staff-card--inactive'}">
+          <div class="smc-header" style="--role-color:${roleColor}">
+            <div class="smc-avatar" style="background:${roleColor}22;color:${roleColor}">
+              ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(initials)}">` : `<span>${initials}</span>`}
+            </div>
+            <span class="smc-role-badge" style="background:${roleColor}18;color:${roleColor};border-color:${roleColor}30">${roleLabel}</span>
+            ${isAdminOrOwner ? `<button class="smc-status-pill ${isActive ? 'smc-active' : 'smc-inactive'}" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">
+              ${isActive ? '● Activo' : '● Inactivo'}
+            </button>` : `<span class="smc-status-pill ${isActive ? 'smc-active' : 'smc-inactive'}">${isActive ? '● Activo' : '● Inactivo'}</span>`}
+          </div>
+          <div class="smc-body">
+            <div class="smc-name">${escapeHtml(u.full_name || 'Sin nombre')}</div>
+            ${u.position ? `<div class="smc-position">${escapeHtml(u.position)}${u.specialty ? ` · ${escapeHtml(u.specialty)}` : ''}</div>` : ''}
+            <div class="smc-meta">
+              ${u.email ? `<span>✉ ${escapeHtml(u.email)}</span>` : ''}
+              ${u.phone ? `<span>📞 ${escapeHtml(u.phone)}</span>` : ''}
+              ${age ? `<span>🎂 ${age}</span>` : ''}
+              ${u.rut ? `<span>🪪 ${escapeHtml(u.rut)}</span>` : ''}
+            </div>
+          </div>
+          ${isAdminOrOwner ? `<div class="smc-actions">
+            <button class="smc-btn-edit" onclick="editStaff('${u.id}')">✏️ Editar</button>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    async function loadStaff() {
+      let query = supabase.from('profiles').select('*').order('role').order('full_name');
+      const { data } = await query;
+      staffData = data || [];
+      const filtered = staffActiveRoleFilter ? staffData.filter(s => s.role === staffActiveRoleFilter) : staffData;
+      renderStaffCards(filtered);
+    }
 
     window.editStaff = function(id) {
       const row = staffData.find(s => s.id === id);
@@ -951,46 +986,50 @@
       loadStaff();
     };
 
-    let staffData = [];
+    window.saveStaffMember = async function() {
+      const editId = document.getElementById('staffEditId').value;
+      const fullName = document.getElementById('staffName').value.trim();
+      const email = document.getElementById('staffEmail').value.trim();
+      const role = document.getElementById('staffRole').value;
 
-    async function loadStaff() {
-      const roleFilter = document.getElementById('staffRoleFilter')?.value;
-      let query = supabase.from('profiles').select('*').order('role').order('full_name');
-      if (roleFilter) query = query.eq('role', roleFilter);
+      if (!fullName || !email || !role) { alert('Nombre, email y rol son obligatorios.'); return; }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) { alert('El formato del email no es válido.'); return; }
 
-      const { data } = await query;
-      staffData = data || [];
-      const container = document.getElementById('usersTable');
-      if (!staffData.length) { container.innerHTML = '<p class="summary-empty">No hay personal registrado.</p>'; return; }
+      const profileData = {
+        full_name: fullName,
+        rut: document.getElementById('staffRut').value.trim() || null,
+        email,
+        phone: document.getElementById('staffPhone').value.trim() || null,
+        whatsapp: document.getElementById('staffWhatsapp').value.trim() || null,
+        address: document.getElementById('staffAddress').value.trim() || null,
+        birth_date: document.getElementById('staffBirthDate').value || null,
+        role,
+        position: document.getElementById('staffPosition').value.trim() || null,
+        specialty: document.getElementById('staffSpecialty').value.trim() || null,
+        license_number: document.getElementById('staffLicense').value.trim() || null,
+        is_active: true,
+      };
 
-      const roleColors = { admin: '#8b2d8b', owner: '#8b2d8b', vet: '#3b82f6', groomer: '#f59e0b', receptionist: '#16a34a', client: '#6b7280' };
-      const roleLabels = { admin: 'Admin', owner: 'Director', vet: 'Veterinario', groomer: 'Peluquero', receptionist: 'Recepcionista', client: 'Cliente' };
+      if (editId) {
+        const { error } = await supabase.from('profiles').update(profileData).eq('id', editId);
+        if (error) { alert('Error al actualizar: ' + error.message); return; }
+        alert('Miembro actualizado correctamente.');
+      } else {
+        profileData.user_id = crypto.randomUUID();
+        const { error } = await supabase.from('profiles').insert(profileData);
+        if (error) { alert('Error al crear: ' + error.message); return; }
+        alert('Miembro creado. Podrá iniciar sesión cuando se registre con: ' + email);
+      }
 
-      const isAdminOrOwner = ['admin', 'owner'].includes(adminProfile?.role);
+      hideStaffForm();
+      loadStaff();
+    };
 
-      container.innerHTML = staffData.map(u => {
-        const isActive = u.is_active !== false;
-        const age = u.birth_date ? Math.floor((Date.now() - new Date(u.birth_date)) / 31557600000) + ' años' : '';
-        return `
-          <div class="appointment-row" style="flex-wrap:wrap;gap:0.5rem">
-            <span style="font-size:1.3rem">${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">` : '👤'}</span>
-            <div style="flex:2;min-width:140px">
-              <strong>${escapeHtml(u.full_name || 'Sin nombre')}</strong>
-              <div style="font-size:0.75rem;color:var(--gray-500)">${escapeHtml(u.email || '')} ${u.phone ? '· ' + escapeHtml(u.phone) : ''}</div>
-              ${u.position ? `<div style="font-size:0.75rem;color:var(--gray-400)">${escapeHtml(u.position)}${u.specialty ? ' · ' + escapeHtml(u.specialty) : ''}</div>` : ''}
-              ${age ? `<div style="font-size:0.72rem;color:var(--gray-400)">${age}</div>` : ''}
-            </div>
-            <span style="color:${roleColors[u.role]};font-weight:700;font-size:0.82rem">${roleLabels[u.role] || u.role}</span>
-            ${isAdminOrOwner ? `<span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;cursor:pointer" onclick="toggleStaffActive('${u.id}', ${isActive})" title="Click para cambiar">${isActive ? '● Activo':'● Inactivo'}</span>` : `<span style="color:${isActive ? '#16a34a':'#ef4444'};font-size:0.78rem;">${isActive ? '● Activo':'● Inactivo'}</span>`}
-            ${isAdminOrOwner ? `<button onclick="editStaff('${u.id}')" class="btn-back" style="padding:0.3rem 0.6rem;font-size:0.78rem">✏️ Editar</button>` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    // Alias for panel switch compatibility
+    // Aliases
     const loadUsers = loadStaff;
     window.loadStaff = loadStaff;
+
 
     // ── TIME OFF MANAGEMENT ──
     async function loadTimeOffRequests() {
