@@ -18,19 +18,28 @@ CREATE TABLE IF NOT EXISTS pet_vaccinations (
 ALTER TABLE pet_vaccinations ENABLE ROW LEVEL SECURITY;
 
 -- Vet/owner/admin pueden insertar
+DROP POLICY IF EXISTS "vet_insert_vaccinations" ON pet_vaccinations;
 CREATE POLICY "vet_insert_vaccinations" ON pet_vaccinations
   FOR INSERT TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    (EXISTS ( SELECT 1 FROM profiles WHERE (profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['vet'::text, 'admin'::text]))))
+    OR
+    (EXISTS ( SELECT 1 FROM pets WHERE (pets.id = pet_vaccinations.pet_id) AND (pets.owner_id = auth.uid()) ))
+  );
 
 -- Todos los autenticados pueden leer (el dueño filtra por su mascota en el JS)
+DROP POLICY IF EXISTS "auth_read_vaccinations" ON pet_vaccinations;
 CREATE POLICY "auth_read_vaccinations" ON pet_vaccinations
   FOR SELECT TO authenticated
   USING (true);
 
 -- Solo vet/admin pueden actualizar
+DROP POLICY IF EXISTS "vet_update_vaccinations" ON pet_vaccinations;
 CREATE POLICY "vet_update_vaccinations" ON pet_vaccinations
   FOR UPDATE TO authenticated
-  USING (true);
+  USING (
+    (EXISTS ( SELECT 1 FROM profiles WHERE (profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['vet'::text, 'admin'::text]))))
+  );
 
 -- ── Agregar campo proximo_control a medical_records si no existe ──
 ALTER TABLE medical_records

@@ -198,17 +198,28 @@
     </div>
   </section>
 
+  <div id="toast" class="tienda-toast"></div>
+
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
     import {
       loadVaccinations, addVaccination,
-      loadConsultations,
+      loadConsultations, addConsultation,
       renderVaccinationTable, renderConsultationTable
     } from '/js/modules/ficha-control.js';
 
     let currentProfile = null;
     let currentFcPetId = null;
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.background = isError ? '#fee2e2' : '#d1fae5';
+      toast.style.color = isError ? '#991b1b' : '#065f46';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
 
     let initDone = false;
     async function init() {
@@ -230,6 +241,7 @@
         `Registrando como ${profile.full_name}`;
 
       // Load all pets for SOAP select
+      // Punto 4 auditado: Las mascotas se cargan una sola vez para ambos selects (soapPet y fcPetSelect) evitando queries dobles.
       const { data: pets } = await supabase.from('pets')
         .select('id, name, species, breed, owner_id, profiles!pets_owner_id_fkey(full_name)')
         .order('name');
@@ -306,29 +318,30 @@
     };
 
     window.fcSaveVacuna = async function() {
-      if (!currentFcPetId) { alert('Selecciona un paciente primero.'); return; }
+      if (!currentFcPetId) { showToast('Selecciona un paciente primero.', true); return; }
       const fecha       = document.getElementById('fcVFecha').value;
       const descripcion = document.getElementById('fcVDescripcion').value.trim();
       const tipo        = document.getElementById('fcVTipo').value;
       const observaciones = document.getElementById('fcVObservaciones').value.trim();
-      if (!fecha || !descripcion) { alert('Fecha y descripción son obligatorios.'); return; }
+      if (!fecha || !descripcion) { showToast('Fecha y descripción son obligatorios.', true); return; }
       try {
         await addVaccination({ petId: currentFcPetId, vetId: currentProfile.id, fecha, descripcion, observaciones, tipo });
         document.getElementById('fcVDescripcion').value = '';
         document.getElementById('fcVObservaciones').value = '';
         await fcRefresh('vacunas');
-      } catch(err) { alert('Error: ' + err.message); }
+        showToast('✅ Vacuna registrada exitosamente.');
+      } catch(err) { showToast('Error: ' + err.message, true); }
     };
 
     window.fcSaveConsulta = async function() {
-      if (!currentFcPetId) { alert('Selecciona un paciente primero.'); return; }
+      if (!currentFcPetId) { showToast('Selecciona un paciente primero.', true); return; }
       const fecha        = document.getElementById('fcCFecha').value;
       const procedimiento = document.getElementById('fcCProcedimiento').value.trim();
       const proximaCita  = document.getElementById('fcCProximaCita').value || null;
       const motivo       = document.getElementById('fcCMotivo').value.trim();
-      if (!fecha || !procedimiento) { alert('Fecha y procedimiento son obligatorios.'); return; }
+      if (!fecha || !procedimiento) { showToast('Fecha y procedimiento son obligatorios.', true); return; }
       try {
-        await supabase.from('medical_records').insert({
+        await addConsultation({
           pet_id: currentFcPetId,
           vet_id: currentProfile.id,
           record_type: 'control',
@@ -340,14 +353,15 @@
         document.getElementById('fcCProximaCita').value = '';
         document.getElementById('fcCMotivo').value = '';
         await fcRefresh('consultas');
-      } catch(err) { alert('Error: ' + err.message); }
+        showToast('✅ Consulta registrada exitosamente.');
+      } catch(err) { showToast('Error: ' + err.message, true); }
     };
 
     window.saveSoapRecord = async function() {
       const petId = document.getElementById('soapPet').value;
       const recordType = document.getElementById('soapType').value;
-      if (!petId) { alert('Selecciona un paciente.'); return; }
-      if (!recordType) { alert('El tipo de registro es obligatorio.'); return; }
+      if (!petId) { showToast('Selecciona un paciente.', true); return; }
+      if (!recordType) { showToast('El tipo de registro es obligatorio.', true); return; }
       const record = {
         pet_id: petId, vet_id: currentProfile.id,
         record_type: document.getElementById('soapType').value,
@@ -362,9 +376,9 @@
         respiratory_rate: parseInt(document.getElementById('vitalRR').value) || null,
       };
       const { error } = await supabase.from('medical_records').insert(record);
-      if (error) { alert('Error al guardar: ' + error.message); return; }
-      alert('✅ Ficha clínica guardada exitosamente.');
-      window.location.href = '/pages/historial.html';
+      if (error) { showToast('Error al guardar: ' + error.message, true); return; }
+      showToast('✅ Ficha clínica guardada exitosamente.');
+      setTimeout(() => { window.location.href = '/pages/historial.html'; }, 1000);
     };
   </script>
 

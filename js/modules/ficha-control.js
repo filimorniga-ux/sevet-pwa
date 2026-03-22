@@ -44,6 +44,16 @@ export async function deleteVaccination(id) {
 }
 
 // ── CONSULTAS Y CONTROLES ──────────────────────────────────
+export async function addConsultation(recordData) {
+  const { data, error } = await supabase
+    .from('medical_records')
+    .insert(recordData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function loadConsultations(petId) {
   const { data, error } = await supabase
     .from('medical_records')
