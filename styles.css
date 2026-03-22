@@ -433,6 +433,7 @@ button, a, input, select, textarea {
   background: none; border: none; font-size: 1.8rem; cursor: pointer;
   color: var(--gray-700); z-index: 10002; line-height: 1;
 }
+.nav-close-btn.app-nav-close { display: none !important; }
 .nav-close-btn:hover { color: var(--blue-600); }
 
 /* ─────────────────────────────────────────
@@ -1142,7 +1143,7 @@ section { position: relative; z-index: 1; }
     padding: 0.55rem 0.85rem;
   }
   .nav-links.open a:hover { color: var(--blue-600); }
-  .nav-links.open .nav-close-btn { display: flex; }
+  .nav-links.open .nav-close-btn { display: flex !important; }
   .nav-burger { display: flex; }
   body.nav-open {
     overflow: hidden !important;
@@ -3800,6 +3801,7 @@ section { position: relative; z-index: 1; }
   .app-nav-dropdown-trigger.app-nav-active {
     border-left: 3px solid var(--primary, #7c3aed);
     padding-left: calc(1rem - 3px);
+    background: rgba(124, 58, 237, 0.05); /* fallback */
     background: color-mix(in srgb, var(--primary, #7c3aed) 5%, transparent);
   }
 

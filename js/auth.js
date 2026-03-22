@@ -9,6 +9,7 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentProfile = null;
 let initialized = false;
+let appNavListenersAdded = false;
 
 function escapeHtml(unsafe) {
   if (unsafe == null) return '';
@@ -293,7 +294,7 @@ function buildAppNav(profile, config, navLinks) {
   navLinks.innerHTML = `
     <li><button class="nav-close-btn app-nav-close" aria-label="Cerrar menú">✕</button></li>
     <li class="nav-role-item app-nav-home">
-      <a href="${escapeHtml(config.home)}" class="${path === config.home || path.includes(config.home) ? 'app-nav-active' : ''}">🏠 Inicio</a>
+      <a href="${escapeHtml(config.home)}" class="${path === config.home ? 'app-nav-active' : ''}">🏠 Inicio</a>
     </li>
   `;
 
@@ -302,7 +303,7 @@ function buildAppNav(profile, config, navLinks) {
     li.className = 'nav-role-item';
 
     if (item.dropdown) {
-      const isGroupActive = item.dropdown.some(sub => path.includes(sub.href));
+      const isGroupActive = item.dropdown.some(sub => path === sub.href);
       li.className += ' app-nav-dropdown-wrapper';
       li.innerHTML = `
         <button class="app-nav-dropdown-trigger${isGroupActive ? ' app-nav-active' : ''}" aria-expanded="false">
@@ -311,7 +312,7 @@ function buildAppNav(profile, config, navLinks) {
         <ul class="app-nav-dropdown" role="menu">
           ${item.dropdown.map(sub => `
             <li role="menuitem">
-              <a href="${escapeHtml(sub.href)}" class="${path.includes(sub.href) ? 'app-nav-active' : ''}">
+              <a href="${escapeHtml(sub.href)}" class="${path === sub.href ? 'app-nav-active' : ''}">
                 ${escapeHtml(sub.label)}
               </a>
             </li>
@@ -331,25 +332,34 @@ function buildAppNav(profile, config, navLinks) {
       });
 
       // Desktop: abrir al hover
-      li.addEventListener('mouseenter', () => { li.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); });
-      li.addEventListener('mouseleave', () => { li.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); });
+      if (window.matchMedia('(hover: hover)').matches) {
+        li.addEventListener('mouseenter', () => { li.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); });
+        li.addEventListener('mouseleave', () => { li.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); });
+      }
 
     } else {
-      const isActive = path.includes(item.href);
+      const isActive = path === item.href;
       li.innerHTML = `<a href="${escapeHtml(item.href)}" class="${isActive ? 'app-nav-active' : ''}">${escapeHtml(item.label)}</a>`;
       navLinks.appendChild(li);
     }
   });
 
   // Cerrar dropdowns al click fuera o Escape
-  document.addEventListener('click', (e) => {
-    if (!navLinks.contains(e.target))
-      navLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape')
-      navLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
-  });
+  if (!appNavListenersAdded) {
+    document.addEventListener('click', (e) => {
+      const currentNavLinks = document.getElementById('navLinks');
+      if (currentNavLinks && !currentNavLinks.contains(e.target))
+        currentNavLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const currentNavLinks = document.getElementById('navLinks');
+        if (currentNavLinks)
+          currentNavLinks.querySelectorAll('.app-nav-dropdown-wrapper.open').forEach(el => el.classList.remove('open'));
+      }
+    });
+    appNavListenersAdded = true;
+  }
 
   // Botón ✕ drawer móvil
   const closeBtn = navLinks.querySelector('.app-nav-close');
