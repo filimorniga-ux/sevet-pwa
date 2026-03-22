@@ -105,13 +105,110 @@
         </div>
       </div>
     </div>
+  <!-- ══ FICHA DE CONTROL DIGITAL ══ -->
+  <section class="section-pad" style="background:var(--gray-50);padding-top:2rem;padding-bottom:3rem">
+    <div class="section-header" style="margin-bottom:1.5rem">
+      <p class="section-tag">Digitalización Tarjetón</p>
+      <h2 class="section-title" style="font-size:1.8rem">Ficha de <span class="grad">Control</span></h2>
+      <p class="section-sub" style="font-size:0.9rem">Consultas, controles, vacunas y desparasitaciones por paciente</p>
+    </div>
+
+    <div style="max-width:900px;margin:0 auto">
+      <!-- Selector de paciente -->
+      <div class="confirmation-card" style="padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <span style="font-weight:700;white-space:nowrap">🐾 Paciente:</span>
+        <select id="fcPetSelect" style="flex:1;min-width:220px;padding:0.5rem 0.75rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:0.95rem">
+          <option value="">Selecciona un paciente para ver su ficha...</option>
+        </select>
+      </div>
+
+      <!-- Tabs Consultas / Vacunas -->
+      <div class="pet-tabs-bar" id="fcTabs" style="margin-bottom:1rem">
+        <button class="pet-tab active" id="tabConsultas" onclick="fcSwitchTab('consultas')">🩺 Consultas y Controles</button>
+        <button class="pet-tab" id="tabVacunas" onclick="fcSwitchTab('vacunas')">💉 Vacunas y Desparasitaciones</button>
+      </div>
+
+      <!-- ── Panel CONSULTAS ── -->
+      <div id="fcPanelConsultas">
+        <!-- Mini-form nueva consulta -->
+        <div class="confirmation-card" style="padding:1.25rem;margin-bottom:1rem">
+          <h4 style="margin:0 0 1rem;font-size:1rem;color:var(--gray-700)">➕ Registrar Consulta / Control</h4>
+          <div class="soap-compose-grid">
+            <div class="auth-field">
+              <label>Fecha *</label>
+              <input type="date" id="fcCFecha" />
+            </div>
+            <div class="auth-field">
+              <label>Procedimiento *</label>
+              <input type="text" id="fcCProcedimiento" placeholder="Ej: Consulta general, Control post-op..." />
+            </div>
+            <div class="auth-field">
+              <label>Próxima Cita</label>
+              <input type="date" id="fcCProximaCita" />
+            </div>
+          </div>
+          <div class="auth-field" style="margin-top:0.75rem">
+            <label>Motivo / Observaciones</label>
+            <textarea id="fcCMotivo" rows="2" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit" placeholder="Descripción breve del motivo o lo observado..."></textarea>
+          </div>
+          <button class="btn-primary" onclick="fcSaveConsulta()" style="margin-top:0.75rem;padding:0.6rem 1.5rem">💾 Registrar Consulta</button>
+        </div>
+        <!-- Tabla historial consultas -->
+        <div class="confirmation-card" style="padding:1.25rem;overflow-x:auto">
+          <h4 style="margin:0 0 0.75rem;font-size:0.95rem;color:var(--gray-500)">Historial de consultas y controles</h4>
+          <div id="fcConsultasTable"><p style="color:var(--gray-400);text-align:center;padding:1rem">Selecciona un paciente para ver su historial.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Panel VACUNAS ── -->
+      <div id="fcPanelVacunas" style="display:none">
+        <!-- Mini-form nueva vacuna -->
+        <div class="confirmation-card" style="padding:1.25rem;margin-bottom:1rem">
+          <h4 style="margin:0 0 1rem;font-size:1rem;color:var(--gray-700)">➕ Registrar Vacuna / Desparasitación</h4>
+          <div class="soap-compose-grid">
+            <div class="auth-field">
+              <label>Fecha *</label>
+              <input type="date" id="fcVFecha" />
+            </div>
+            <div class="auth-field">
+              <label>Tipo *</label>
+              <select id="fcVTipo" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md)">
+                <option value="vacuna">💉 Vacuna</option>
+                <option value="desparasitacion">🧪 Desparasitación</option>
+                <option value="otro">🔬 Otro preventivo</option>
+              </select>
+            </div>
+            <div class="auth-field">
+              <label>Descripción *</label>
+              <input type="text" id="fcVDescripcion" placeholder="Ej: Polivalente 5en1, Antirrábica, Milbemax..." />
+            </div>
+          </div>
+          <div class="auth-field" style="margin-top:0.75rem">
+            <label>Observaciones</label>
+            <textarea id="fcVObservaciones" rows="2" style="width:100%;padding:0.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-md);resize:vertical;font-family:inherit" placeholder="Lote, marca, reacciones, próxima dosis..."></textarea>
+          </div>
+          <button class="btn-primary" onclick="fcSaveVacuna()" style="margin-top:0.75rem;padding:0.6rem 1.5rem">💾 Registrar Vacuna</button>
+        </div>
+        <!-- Tabla historial vacunas -->
+        <div class="confirmation-card" style="padding:1.25rem;overflow-x:auto">
+          <h4 style="margin:0 0 0.75rem;font-size:0.95rem;color:var(--gray-500)">Historial de vacunas y desparasitaciones</h4>
+          <div id="fcVacunasTable"><p style="color:var(--gray-400);text-align:center;padding:1rem">Selecciona un paciente para ver sus vacunas.</p></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <script type="module" src="/js/main.js"></script>
   <script type="module">
     import { supabase } from '/js/supabase.js';
+    import {
+      loadVaccinations, addVaccination,
+      loadConsultations,
+      renderVaccinationTable, renderConsultationTable
+    } from '/js/modules/ficha-control.js';
 
     let currentProfile = null;
+    let currentFcPetId = null;
 
     let initDone = false;
     async function init() {
@@ -132,17 +229,19 @@
       document.getElementById('fichaSubtitle').textContent =
         `Registrando como ${profile.full_name}`;
 
-      // Load all pets for selector
+      // Load all pets for SOAP select
       const { data: pets } = await supabase.from('pets')
         .select('id, name, species, breed, owner_id, profiles!pets_owner_id_fkey(full_name)')
         .order('name');
 
-      const petSelect = document.getElementById('soapPet');
+      const soapPetSelect = document.getElementById('soapPet');
+      const fcPetSelect   = document.getElementById('fcPetSelect');
       (pets || []).forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.name} (${p.species || ''}) — Tutor: ${p.profiles?.full_name || 'N/A'}`;
-        petSelect.appendChild(opt);
+        const label = `${p.name} (${p.species || ''}) — Tutor: ${p.profiles?.full_name || 'N/A'}`;
+        const opt1 = document.createElement('option'); opt1.value = p.id; opt1.textContent = label;
+        const opt2 = document.createElement('option'); opt2.value = p.id; opt2.textContent = label;
+        soapPetSelect.appendChild(opt1);
+        fcPetSelect.appendChild(opt2);
       });
 
       // Load today's appointments for linking
@@ -162,38 +261,108 @@
         apptSelect.appendChild(opt);
       });
 
-      // Check URL params for pre-selection
+      // URL params
       const params = new URLSearchParams(window.location.search);
-      if (params.get('pet')) petSelect.value = params.get('pet');
+      if (params.get('pet')) { soapPetSelect.value = params.get('pet'); fcPetSelect.value = params.get('pet'); await fcLoadPet(params.get('pet')); }
       if (params.get('appointment')) apptSelect.value = params.get('appointment');
 
+      // Cambio de paciente en ficha de control
+      fcPetSelect.addEventListener('change', async () => {
+        const petId = fcPetSelect.value;
+        if (!petId) return;
+        await fcLoadPet(petId);
+      });
+
+      // Fecha por defecto = hoy
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fcCFecha').value = hoy;
+      document.getElementById('fcVFecha').value = hoy;
     }
     init();
+
+    async function fcLoadPet(petId) {
+      currentFcPetId = petId;
+      const tab = document.querySelector('.pet-tab.active')?.id === 'tabVacunas' ? 'vacunas' : 'consultas';
+      await fcRefresh(tab);
+    }
+
+    async function fcRefresh(tab) {
+      if (!currentFcPetId) return;
+      if (tab === 'vacunas') {
+        const vacs = await loadVaccinations(currentFcPetId);
+        renderVaccinationTable(vacs, 'fcVacunasTable', true);
+      } else {
+        const cons = await loadConsultations(currentFcPetId);
+        renderConsultationTable(cons, 'fcConsultasTable', false);
+      }
+    }
+
+    window.fcSwitchTab = function(tab) {
+      document.getElementById('fcPanelConsultas').style.display = tab === 'consultas' ? '' : 'none';
+      document.getElementById('fcPanelVacunas').style.display   = tab === 'vacunas'   ? '' : 'none';
+      document.getElementById('tabConsultas').classList.toggle('active', tab === 'consultas');
+      document.getElementById('tabVacunas').classList.toggle('active', tab === 'vacunas');
+      fcRefresh(tab);
+    };
+
+    window.fcSaveVacuna = async function() {
+      if (!currentFcPetId) { alert('Selecciona un paciente primero.'); return; }
+      const fecha       = document.getElementById('fcVFecha').value;
+      const descripcion = document.getElementById('fcVDescripcion').value.trim();
+      const tipo        = document.getElementById('fcVTipo').value;
+      const observaciones = document.getElementById('fcVObservaciones').value.trim();
+      if (!fecha || !descripcion) { alert('Fecha y descripción son obligatorios.'); return; }
+      try {
+        await addVaccination({ petId: currentFcPetId, vetId: currentProfile.id, fecha, descripcion, observaciones, tipo });
+        document.getElementById('fcVDescripcion').value = '';
+        document.getElementById('fcVObservaciones').value = '';
+        await fcRefresh('vacunas');
+      } catch(err) { alert('Error: ' + err.message); }
+    };
+
+    window.fcSaveConsulta = async function() {
+      if (!currentFcPetId) { alert('Selecciona un paciente primero.'); return; }
+      const fecha        = document.getElementById('fcCFecha').value;
+      const procedimiento = document.getElementById('fcCProcedimiento').value.trim();
+      const proximaCita  = document.getElementById('fcCProximaCita').value || null;
+      const motivo       = document.getElementById('fcCMotivo').value.trim();
+      if (!fecha || !procedimiento) { alert('Fecha y procedimiento son obligatorios.'); return; }
+      try {
+        await supabase.from('medical_records').insert({
+          pet_id: currentFcPetId,
+          vet_id: currentProfile.id,
+          record_type: 'control',
+          procedimiento,
+          proximo_control: proximaCita,
+          subjective: motivo || null,
+        });
+        document.getElementById('fcCProcedimiento').value = '';
+        document.getElementById('fcCProximaCita').value = '';
+        document.getElementById('fcCMotivo').value = '';
+        await fcRefresh('consultas');
+      } catch(err) { alert('Error: ' + err.message); }
+    };
 
     window.saveSoapRecord = async function() {
       const petId = document.getElementById('soapPet').value;
       const recordType = document.getElementById('soapType').value;
       if (!petId) { alert('Selecciona un paciente.'); return; }
       if (!recordType) { alert('El tipo de registro es obligatorio.'); return; }
-
       const record = {
-        pet_id: petId,
-        vet_id: currentProfile.id,
+        pet_id: petId, vet_id: currentProfile.id,
         record_type: document.getElementById('soapType').value,
         appointment_id: document.getElementById('soapAppointment').value || null,
-        subjective: document.getElementById('soapS').value.trim() || null,
-        objective: document.getElementById('soapO').value.trim() || null,
-        assessment: document.getElementById('soapA').value.trim() || null,
-        plan: document.getElementById('soapP').value.trim() || null,
-        weight_kg: parseFloat(document.getElementById('vitalWeight').value) || null,
-        temperature_c: parseFloat(document.getElementById('vitalTemp').value) || null,
-        heart_rate_bpm: parseInt(document.getElementById('vitalHR').value) || null,
+        subjective:  document.getElementById('soapS').value.trim() || null,
+        objective:   document.getElementById('soapO').value.trim() || null,
+        assessment:  document.getElementById('soapA').value.trim() || null,
+        plan:        document.getElementById('soapP').value.trim() || null,
+        weight_kg:        parseFloat(document.getElementById('vitalWeight').value) || null,
+        temperature_c:    parseFloat(document.getElementById('vitalTemp').value) || null,
+        heart_rate_bpm:   parseInt(document.getElementById('vitalHR').value) || null,
         respiratory_rate: parseInt(document.getElementById('vitalRR').value) || null,
       };
-
       const { error } = await supabase.from('medical_records').insert(record);
       if (error) { alert('Error al guardar: ' + error.message); return; }
-
       alert('✅ Ficha clínica guardada exitosamente.');
       window.location.href = '/pages/historial.html';
     };
@@ -207,6 +376,21 @@
     @media (max-width: 768px) {
       .soap-compose-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Ficha de Control ── */
+    .fc-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .fc-table th { background: var(--gray-50); color: var(--gray-600); font-weight: 600; text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--gray-200); white-space: nowrap; }
+    .fc-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+    .fc-table tr:last-child td { border-bottom: none; }
+    .fc-table tr:hover td { background: var(--gray-50); }
+    .fc-tipo-badge { padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+    .fc-tipo-vacuna        { background: #dbeafe; color: #1d4ed8; }
+    .fc-tipo-desparasitacion { background: #d1fae5; color: #065f46; }
+    .fc-tipo-otro          { background: #f3f4f6; color: #4b5563; }
+    .fc-del-btn { background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.4; transition: opacity 0.2s; }
+    .fc-del-btn:hover { opacity: 1; }
+    .fc-prox-cita { background: #fef9c3; color: #92400e; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
   </style>
 </body>
 </html>
+

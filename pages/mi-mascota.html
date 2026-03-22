@@ -87,6 +87,7 @@
         <button class="spec-tab" onclick="showPetTab('history', this)">📋 Historial</button>
         <button class="spec-tab" onclick="showPetTab('prescriptions', this)">💊 Recetas</button>
         <button class="spec-tab" onclick="showPetTab('services', this)">🩺 Servicios</button>
+        <button class="spec-tab" onclick="showPetTab('cartilla', this)">🏥 Cartilla de Salud</button>
       </div>
 
       <!-- Download bar -->
@@ -239,6 +240,7 @@
 
       // Store data for tabs
       window._petData = { appointments: upcomingAppts, vaccines, records, prescriptions };
+      window._currentPet = pet;
       showPetTab(currentTab);
     }
 
@@ -380,6 +382,61 @@
             </div>
           </div>
         `).join('');
+      } else if (tab === 'cartilla') {
+        // ── Cartilla de Salud Digital ──
+        const pet = window._currentPet || null;
+        if (!pet) { container.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--gray-400)">Selecciona una mascota para ver su cartilla.</p>'; return; }
+        container.innerHTML = '<div class="loading-spinner" style="padding:2rem;text-align:center">Cargando cartilla...</div>';
+
+        const [vacResult, consResult] = await Promise.all([
+          supabase.from('pet_vaccinations').select('*').eq('pet_id', pet.id).order('fecha', { ascending: false }),
+          supabase.from('medical_records').select('id, created_at, subjective, assessment, plan, proximo_control, procedimiento, record_type').eq('pet_id', pet.id).in('record_type', ['consulta', 'control']).order('created_at', { ascending: false })
+        ]);
+
+        const vaccinations  = vacResult.data || [];
+        const consultations = consResult.data || [];
+        const hoy = new Date();
+
+        const proxConsulta = consultations.find(c => c.proximo_control && new Date(c.proximo_control) >= hoy);
+        const formatDate = (str) => { if (!str) return '—'; const d = new Date(str + 'T00:00:00'); return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }); };
+
+        const proxAlert = proxConsulta
+          ? `<div class="fc-cartilla-alert">📅 Próximo control: <strong>${formatDate(proxConsulta.proximo_control)}</strong></div>`
+          : '<div class="fc-cartilla-alert" style="background:#d1fae5;color:#065f46">✅ Sin controles pendientes próximos</div>';
+
+        const vacunasHtml = vaccinations.slice(0, 5).map(v => `
+          <div class="fc-cartilla-row">
+            <span>${v.tipo === 'vacuna' ? '💉' : '🧪'} ${escapeHtml(v.descripcion)}</span>
+            <span class="fc-cartilla-fecha">${formatDate(v.fecha)}</span>
+          </div>`).join('') || '<p style="color:var(--gray-400);font-size:0.9rem;text-align:center;padding:0.5rem">Sin vacunas registradas aún.</p>';
+
+        const consultasHtml = consultations.slice(0, 5).map(r => `
+          <div class="fc-cartilla-row">
+            <span>🩺 ${escapeHtml(r.procedimiento || r.assessment || 'Consulta')}</span>
+            <span class="fc-cartilla-fecha">${formatDate(r.created_at?.slice(0, 10))}</span>
+          </div>`).join('') || '<p style="color:var(--gray-400);font-size:0.9rem;text-align:center;padding:0.5rem">Sin consultas registradas aún.</p>';
+
+        container.innerHTML = `
+          <div class="fc-cartilla">
+            <div class="fc-cartilla-header">
+              <span class="fc-cartilla-emoji">${pet.species === 'gato' ? '🐱' : pet.species === 'perro' ? '🐶' : '🐾'}</span>
+              <div>
+                <h3 class="fc-cartilla-name">${escapeHtml(pet.name)}</h3>
+                <p class="fc-cartilla-sub">${escapeHtml(pet.species || '')}${pet.breed ? ' · ' + escapeHtml(pet.breed) : ''}${pet.birth_date ? ' · Nac. ' + formatDate(pet.birth_date) : ''}</p>
+              </div>
+            </div>
+            ${proxAlert}
+            <div class="fc-cartilla-section">
+              <h4 class="fc-cartilla-section-title">💉 Vacunas y Desparasitaciones</h4>
+              ${vacunasHtml}
+              ${vaccinations.length > 5 ? `<p class="fc-cartilla-more">+${vaccinations.length - 5} registros anteriores</p>` : ''}
+            </div>
+            <div class="fc-cartilla-section">
+              <h4 class="fc-cartilla-section-title">🩺 Consultas y Controles</h4>
+              ${consultasHtml}
+              ${consultations.length > 5 ? `<p class="fc-cartilla-more">+${consultations.length - 5} consultas anteriores</p>` : ''}
+            </div>
+          </div>`;
       }
     };
 
