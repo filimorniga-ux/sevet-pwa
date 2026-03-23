@@ -268,7 +268,30 @@ window._confirmBooking = async function() {
           userEmail: user.email,
         }),
       });
+      clearTimeout(timeoutId);
     } catch { /* webhook failure is non-blocking */ }
+
+    // ── Google Calendar Sync (fire-and-forget) ──────────────
+    if (inserted?.id) {
+      try {
+        const userIdsToSync = [user.id];
+        if (selectedVet) userIdsToSync.push(selectedVet);
+        const { data: { session } } = await supabase.auth.getSession();
+        const authHeader = session?.access_token
+          ? { 'Authorization': `Bearer ${session.access_token}` }
+          : {};
+        fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/sync-to-gcal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+          body: JSON.stringify({
+            appointment_id: inserted.id,
+            user_ids: userIdsToSync,
+            action: 'create',
+          }),
+        }).catch(() => { /* gcal sync failure is non-blocking */ });
+      } catch { /* gcal sync failure is non-blocking */ }
+    }
+
 
     // Reset after 3s
     setTimeout(() => {
