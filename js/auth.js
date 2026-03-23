@@ -67,12 +67,13 @@ export async function initAuth() {
       if (event === 'SIGNED_IN' && session.provider_token && session.user.app_metadata?.provider === 'google') {
         try {
           const tokenExpires = new Date(Date.now() + 3600 * 1000).toISOString();
-          await supabase.from('profiles').update({
+          await supabase.from('user_tokens').upsert({
+            user_id:              session.user.id,
             google_access_token:  session.provider_token,
             google_refresh_token: session.provider_refresh_token ?? undefined,
-            google_token_expires:  tokenExpires,
+            google_token_expires: tokenExpires,
             gcal_enabled:         !!(session.provider_refresh_token),
-          }).eq('user_id', session.user.id);
+          }, { onConflict: 'user_id' });
           console.info('[auth] Google Calendar tokens guardados ✅');
         } catch (err) {
           console.warn('[auth] No se pudieron guardar tokens de Google Calendar:', err);
