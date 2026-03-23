@@ -114,7 +114,14 @@ export async function signIn(email, password) {
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: {
+      redirectTo: window.location.origin,
+      scopes: 'https://www.googleapis.com/auth/calendar.events',
+      queryParams: {
+        access_type: 'offline', // Necesario para obtener refresh_token y sincronizar GCal
+        prompt: 'consent',      // Fuerza pantalla de consentimiento para que el usuario acepte Calendar
+      },
+    },
   });
   if (error) throw error;
   return data;
