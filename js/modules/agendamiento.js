@@ -253,22 +253,26 @@ window._confirmBooking = async function() {
       const svc = SERVICES[selectedService];
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'new_appointment',
-          appointment_id: inserted?.id || null,
-          vet_id: selectedVet || null,
-          service: svc?.label,
-          date: dateStr,
-          time: selectedTime,
-          start_time: dateTime,                      // ISO 8601 con TZ
-          duration_min: svc?.duration || 30,
-          userEmail: user.email,
-        }),
-      });
-      clearTimeout(timeoutId);
+      try {
+        await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/webhook-appointment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'new_appointment',
+            appointment_id: inserted?.id || null,
+            vet_id: selectedVet || null,
+            service: svc?.label,
+            date: dateStr,
+            time: selectedTime,
+            start_time: dateTime,                      // ISO 8601 con TZ
+            duration_min: svc?.duration || 30,
+            userEmail: user.email,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch { /* webhook failure is non-blocking */ }
 
     // ── Google Calendar Sync (fire-and-forget) ──────────────

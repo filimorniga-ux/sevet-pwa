@@ -2,8 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')!;
-const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
+const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
+const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -13,8 +13,8 @@ async function refreshGoogleToken(refreshToken: string): Promise<string | null> 
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      client_secret: GOOGLE_CLIENT_SECRET,
+      client_id: GOOGLE_CLIENT_ID || '',
+      client_secret: GOOGLE_CLIENT_SECRET || '',
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
     }),
@@ -128,6 +128,10 @@ Deno.serve(async (req) => {
       action?: 'create' | 'update' | 'delete';
     };
 
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Google OAuth secrets not configured' }), { status: 500 });
+    }
+
     if (!appointment_id || !user_ids?.length) {
       return new Response(JSON.stringify({ error: 'appointment_id y user_ids son requeridos' }), { status: 400 });
     }
@@ -150,40 +154,52 @@ Deno.serve(async (req) => {
 
     // Sincronizar para cada usuario
     for (const userId of user_ids) {
+      // Obtener rol del perfil
       const { data: profile } = await supabase
         .from('profiles')
-        .select('google_refresh_token, gcal_enabled, role, google_gcal_event_ids')
+        .select('role')
         .eq('user_id', userId)
         .single();
 
-      if (!profile?.gcal_enabled || !profile?.google_refresh_token) {
+      const role = profile?.role || 'client';
+
+      // Obtener tokens de la tabla segura
+      const { data: tokens } = await supabase
+        .from('user_tokens')
+        .select('google_refresh_token, gcal_enabled, google_gcal_event_ids')
+        .eq('user_id', userId)
+        .single();
+
+      if (!tokens?.gcal_enabled || !tokens?.google_refresh_token) {
         results[userId] = 'skipped (gcal not enabled)';
         continue;
       }
 
-      const accessToken = await refreshGoogleToken(profile.google_refresh_token);
+      const accessToken = await refreshGoogleToken(tokens.google_refresh_token);
       if (!accessToken) {
         results[userId] = 'error (token refresh failed)';
         continue;
       }
 
-      const gcalEvent = buildGcalEvent(appt, profile.role);
-      const existingIds = (profile.google_gcal_event_ids as Record<string, string>) || {};
+      const gcalEvent = buildGcalEvent(appt, role);
+      const existingIds = (tokens.google_gcal_event_ids as Record<string, string>) || {};
       const existingId = existingIds[appointment_id];
 
       const newEventId = await syncEvent(accessToken, action, gcalEvent, existingId);
 
-      // Guardar el event ID para futuras actualizaciones/eliminaciones
+      // Guardar el event ID para futuras actualizaciones/eliminaciones usando RPC
       if (newEventId && action !== 'delete') {
-        await supabase.from('profiles').update({
-          google_gcal_event_ids: { ...existingIds, [appointment_id]: newEventId },
-        }).eq('user_id', userId);
+        await supabase.rpc('update_gcal_event_id', {
+          p_user_id: userId,
+          p_appointment_id: appointment_id,
+          p_event_id: newEventId
+        });
       } else if (action === 'delete') {
-        const updatedIds = { ...existingIds };
-        delete updatedIds[appointment_id];
-        await supabase.from('profiles').update({
-          google_gcal_event_ids: updatedIds,
-        }).eq('user_id', userId);
+        await supabase.rpc('update_gcal_event_id', {
+          p_user_id: userId,
+          p_appointment_id: appointment_id,
+          p_event_id: null
+        });
       }
 
       results[userId] = action === 'delete' ? 'deleted' : `synced:${newEventId}`;
