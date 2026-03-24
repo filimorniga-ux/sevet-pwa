@@ -257,23 +257,28 @@ async function findUserByPhone(
 
 // ── Crear cita en appointments ───────────────────────────────
 async function createAppointment(params: {
-  petId: string | null;
-  vetId: string | null;
+  petId:       string | null;
+  vetId:       string | null;
   serviceType: string;
-  dateTime: string;
-  triage: string;
-  notes: string;
+  dateTime:    string;
+  triage:      string;
+  notes:       string;
+  guestPhone:  string;
+  guestName?:  string;
 }): Promise<string | null> {
   const { data, error } = await supabase
     .from("appointments")
     .insert({
-      pet_id: params.petId,
-      vet_id: params.vetId,
+      pet_id:       params.petId,
+      vet_id:       params.vetId,
       service_type: params.serviceType,
-      date_time: params.dateTime,
-      status: "pendiente",
+      date_time:    params.dateTime,
+      status:       "pendiente",
       triage_level: params.triage,
-      notes: params.notes,
+      notes:        params.notes,
+      guest_phone:  params.guestPhone,
+      guest_name:   params.guestName ?? null,
+      source:       'whatsapp',
     })
     .select("id")
     .single();
@@ -407,12 +412,14 @@ async function processMessage(phone: string, text: string, convId: string | null
       : `Reserva vía WhatsApp (sin cuenta) — ${phone}`;
 
     const apptId = await createAppointment({
-      petId: null,
-      vetId: null,
+      petId:       null,
+      vetId:       null,
       serviceType: ctx.serviceType as string,
-      dateTime: ctx.dateTime as string,
-      triage: ctx.triage as string,
+      dateTime:    ctx.dateTime as string,
+      triage:      ctx.triage as string,
       notes,
+      guestPhone:  phone,
+      guestName:   ctx.petName as string ?? undefined,
     });
 
     if (!apptId) {

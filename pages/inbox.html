@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="theme-color" content="#8b2d8b"/>
+  <meta name="theme-color" content="#128c7e"/>
   <meta name="description" content="SEVET – Inbox de WhatsApp. Gestiona conversaciones con clientes en tiempo real."/>
   <title>Inbox WhatsApp – SEVET</title>
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="manifest" href="/manifest.json"/>
   <style>
+    /* ── Base ── */
+    body { overflow: hidden; background: #f0f2f5; }
+    #particles-canvas { display: none; }
+
     /* ── Layout ── */
-    body { overflow: hidden; }
     .inbox-layout {
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 340px 1fr;
       height: calc(100vh - 68px);
       margin-top: 68px;
-      background: var(--bg-dark, #0d0118);
     }
     @media (max-width: 680px) {
       .inbox-layout { grid-template-columns: 1fr; }
@@ -30,315 +32,172 @@
     .inbox-sidebar {
       display: flex;
       flex-direction: column;
-      border-right: 1px solid rgba(139,45,139,0.25);
-      background: rgba(255,255,255,0.02);
+      border-right: 1px solid #e9edef;
+      background: #fff;
     }
     .sidebar-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid rgba(139,45,139,0.2);
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid #e9edef;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      background: #f0f2f5;
     }
     .sidebar-header h2 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 700;
-      flex: 1;
+      margin: 0; font-size: 1rem; font-weight: 700; flex: 1; color: #111b21;
     }
     .badge-count {
-      background: #8b2d8b;
-      color: #fff;
-      border-radius: 50px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      min-width: 20px;
-      text-align: center;
+      background: #25d366; color: #fff; border-radius: 50px;
+      font-size: 0.72rem; font-weight: 700; padding: 2px 7px; min-width: 20px; text-align: center;
     }
     .sidebar-search {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid rgba(139,45,139,0.15);
+      padding: 0.6rem 1rem; border-bottom: 1px solid #e9edef; background: #f0f2f5;
     }
     .sidebar-search input {
-      width: 100%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(139,45,139,0.25);
-      border-radius: 50px;
-      color: #fff;
-      padding: 0.55rem 1rem;
-      font-size: 0.88rem;
-      outline: none;
-      box-sizing: border-box;
+      width: 100%; background: #fff; border: none; border-radius: 8px; color: #111b21;
+      padding: 0.5rem 1rem; font-size: 0.88rem; outline: none; box-sizing: border-box;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
+    .sidebar-search input::placeholder { color: #8696a0; }
+
     /* ── Filtros ── */
     .filter-tabs {
-      display: flex;
-      gap: 0;
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(139,45,139,0.15);
-      overflow-x: auto;
-      scrollbar-width: none;
+      display: flex; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e9edef;
+      overflow-x: auto; scrollbar-width: none; background: #fff;
     }
     .filter-tabs::-webkit-scrollbar { display: none; }
     .filter-tab {
-      background: transparent;
-      border: none;
-      color: rgba(255,255,255,.45);
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 0.35rem 0.75rem;
-      border-radius: 50px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all .2s;
+      background: transparent; border: none; color: #8696a0; font-size: 0.78rem;
+      font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 50px;
+      cursor: pointer; white-space: nowrap; transition: all .2s;
     }
-    .filter-tab.active {
-      background: rgba(139,45,139,0.25);
-      color: #c084c8;
-    }
-    .filter-tab:hover:not(.active) { color: rgba(255,255,255,.7); }
+    .filter-tab.active { background: #e9fbe4; color: #128c7e; }
+    .filter-tab:hover:not(.active) { color: #111b21; }
 
-    .conv-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.5rem 0;
-    }
+    /* ── Conv List ── */
+    .conv-list { flex: 1; overflow-y: auto; }
     .conv-item {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      padding: 0.85rem 1.25rem;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      transition: background .2s;
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 0.85rem 1.25rem; cursor: pointer;
+      border-bottom: 1px solid #f0f2f5; transition: background .15s;
     }
-    .conv-item:hover, .conv-item.active {
-      background: rgba(139,45,139,0.15);
-    }
+    .conv-item:hover, .conv-item.active { background: #f5f6f6; }
     .conv-avatar {
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#8b2d8b,#6b1d8b);
+      width: 46px; height: 46px; border-radius: 50%;
+      background: linear-gradient(135deg, #25d366, #128c7e);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 700; color: #fff;
-      flex-shrink: 0;
+      font-size: 1rem; font-weight: 700; color: #fff; flex-shrink: 0;
     }
     .conv-info { flex: 1; min-width: 0; }
-    .conv-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .conv-preview { font-size: 0.78rem; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .conv-name { font-weight: 600; font-size: 0.9rem; color: #111b21; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-preview { font-size: 0.78rem; color: #8696a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
     .conv-meta { text-align: right; flex-shrink: 0; }
-    .conv-time { font-size: 0.72rem; color: rgba(255,255,255,.4); }
+    .conv-time { font-size: 0.72rem; color: #8696a0; }
     .conv-unread {
-      background: #25d366;
-      color: #fff;
-      border-radius: 50%;
-      width: 20px; height: 20px;
-      font-size: 0.68rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      margin-top: 4px; margin-left: auto;
+      background: #25d366; color: #fff; border-radius: 50%; width: 20px; height: 20px;
+      font-size: 0.68rem; font-weight: 800; display: flex; align-items: center;
+      justify-content: center; margin-top: 4px; margin-left: auto;
     }
     .conv-status-badge {
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-      margin-top: 4px;
-      display: inline-block;
+      font-size: 0.62rem; padding: 2px 6px; border-radius: 4px;
+      font-weight: 700; margin-top: 4px; display: inline-block;
     }
-    .status-open { background: rgba(34,197,94,.2); color: #4ade80; }
-    .status-waiting { background: rgba(234,179,8,.2); color: #facc15; }
-    .status-resolved { background: rgba(255,255,255,.08); color: rgba(255,255,255,.4); }
+    .status-open     { background: #e9fbe4; color: #128c7e; }
+    .status-waiting  { background: #fef9c3; color: #92400e; }
+    .status-resolved { background: #f0f2f5; color: #8696a0; }
 
     /* ── Chat Panel ── */
-    .chat-panel {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
+    .chat-panel { display: flex; flex-direction: column; height: 100%; background: #efeae2; }
     .chat-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid rgba(139,45,139,0.2);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      background: rgba(255,255,255,0.02);
-      flex-shrink: 0;
+      padding: 0.85rem 1.5rem; border-bottom: 1px solid #e9edef;
+      display: flex; align-items: center; gap: 1rem; background: #f0f2f5; flex-shrink: 0;
     }
     .chat-header-avatar {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#8b2d8b,#6b1d8b);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #25d366, #128c7e);
       display: flex; align-items: center; justify-content: center;
       font-size: 0.95rem; font-weight: 700; color: #fff;
     }
     .chat-header-info { flex: 1; }
-    .chat-header-name { font-weight: 700; font-size: 0.95rem; }
-    .chat-header-phone { font-size: 0.78rem; color: rgba(255,255,255,.5); }
+    .chat-header-name  { font-weight: 600; font-size: 0.95rem; color: #111b21; }
+    .chat-header-phone { font-size: 0.78rem; color: #8696a0; }
     .chat-header-actions { display: flex; gap: 0.5rem; }
     .btn-action {
-      background: rgba(139,45,139,0.15);
-      border: 1px solid rgba(139,45,139,0.3);
-      color: #c084c8;
-      border-radius: 8px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
+      background: #fff; border: 1px solid #e9edef; color: #128c7e;
+      border-radius: 8px; padding: 0.4rem 0.8rem; font-size: 0.78rem;
+      font-weight: 600; cursor: pointer; transition: all .2s;
     }
-    .btn-action:hover { background: rgba(139,45,139,0.35); }
+    .btn-action:hover { background: #e9fbe4; }
 
     /* ── Messages ── */
     .messages-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      background: radial-gradient(ellipse at top, rgba(139,45,139,0.05) 0%, transparent 70%);
+      flex: 1; overflow-y: auto; padding: 1rem 8%;
+      display: flex; flex-direction: column; gap: 0.4rem;
+      background: #efeae2 url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d4cfc8' fill-opacity='0.25'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
     }
-    .msg-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 0.5rem;
-    }
-    .msg-row.inbound { justify-content: flex-start; }
+    .msg-row { display: flex; align-items: flex-end; gap: 0.4rem; }
+    .msg-row.inbound  { justify-content: flex-start; }
     .msg-row.outbound { justify-content: flex-end; }
-
     .msg-bubble {
-      max-width: 65%;
-      border-radius: 12px;
-      padding: 0.65rem 0.95rem;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      position: relative;
+      max-width: 65%; border-radius: 8px;
+      padding: 0.5rem 0.85rem 0.3rem; font-size: 0.9rem; line-height: 1.5;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
-    .msg-row.inbound .msg-bubble {
-      background: rgba(255,255,255,0.08);
-      border-bottom-left-radius: 4px;
-      color: #fff;
-    }
-    .msg-row.outbound .msg-bubble {
-      background: linear-gradient(135deg, rgba(139,45,139,0.7), rgba(107,29,139,0.7));
-      border-bottom-right-radius: 4px;
-      color: #fff;
-    }
-    .msg-meta {
-      font-size: 0.68rem;
-      color: rgba(255,255,255,.4);
-      margin-top: 3px;
-      text-align: right;
-    }
+    .msg-row.inbound  .msg-bubble { background: #fff; border-top-left-radius: 2px; color: #111b21; }
+    .msg-row.outbound .msg-bubble { background: #dcf8c6; border-top-right-radius: 2px; color: #111b21; }
+    .msg-meta { font-size: 0.68rem; color: #8696a0; margin-top: 2px; text-align: right; }
     .msg-row.inbound .msg-meta { text-align: left; }
     .msg-bot-badge {
-      font-size: 0.65rem;
-      background: rgba(139,45,139,.25);
-      color: #c084c8;
-      border-radius: 4px;
-      padding: 1px 5px;
-      margin-right: 4px;
+      font-size: 0.62rem; background: #e9fbe4; color: #128c7e;
+      border-radius: 4px; padding: 1px 5px; margin-right: 4px;
     }
-
     .msg-date-divider {
-      text-align: center;
-      font-size: 0.72rem;
-      color: rgba(255,255,255,.35);
-      margin: 0.5rem 0;
-      position: relative;
+      text-align: center; font-size: 0.72rem; color: #54656f;
+      background: #fff; border-radius: 8px; padding: 3px 10px;
+      margin: 0.75rem auto; width: fit-content; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
-    .msg-date-divider::before, .msg-date-divider::after {
-      content: '';
-      display: inline-block;
-      width: 60px;
-      height: 1px;
-      background: rgba(255,255,255,.1);
-      vertical-align: middle;
-      margin: 0 8px;
-    }
-
-    /* Botones WhatsApp en burbuja */
     .wa-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
     .wa-btn {
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.2);
-      border-radius: 8px;
-      color: #fff;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.8rem;
-      cursor: default;
+      background: #f0f2f5; border: 1px solid #e9edef; border-radius: 8px;
+      color: #128c7e; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;
     }
 
     /* ── Input ── */
     .chat-input-wrap {
-      padding: 1rem 1.25rem;
-      border-top: 1px solid rgba(139,45,139,0.2);
-      display: flex;
-      align-items: flex-end;
-      gap: 0.75rem;
-      background: rgba(255,255,255,0.02);
-      flex-shrink: 0;
+      padding: 0.75rem 1.25rem; display: flex; align-items: flex-end;
+      gap: 0.75rem; background: #f0f2f5; flex-shrink: 0;
     }
     .chat-input-wrap textarea {
-      flex: 1;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(139,45,139,0.3);
-      border-radius: 12px;
-      color: #fff;
-      padding: 0.75rem 1rem;
-      font-size: 0.9rem;
-      font-family: inherit;
-      resize: none;
-      outline: none;
-      min-height: 44px;
-      max-height: 120px;
-      overflow-y: auto;
+      flex: 1; background: #fff; border: none; border-radius: 12px; color: #111b21;
+      padding: 0.75rem 1rem; font-size: 0.9rem; font-family: inherit;
+      resize: none; outline: none; min-height: 44px; max-height: 120px;
+      overflow-y: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .chat-input-wrap textarea:focus { border-color: #8b2d8b; }
+    .chat-input-wrap textarea::placeholder { color: #8696a0; }
     .btn-send {
-      background: linear-gradient(135deg,#8b2d8b,#6b1d8b);
-      border: none;
-      border-radius: 50%;
-      width: 44px; height: 44px;
-      color: #fff;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: opacity .2s;
+      background: #25d366; border: none; border-radius: 50%;
+      width: 44px; height: 44px; color: #fff; font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s;
     }
-    .btn-send:hover { opacity: 0.8; }
-    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-send:hover   { background: #128c7e; }
+    .btn-send:disabled{ opacity: 0.4; cursor: not-allowed; }
 
     /* ── Empty state ── */
     .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,.3);
-      gap: 1rem;
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; color: #8696a0; gap: 1rem; background: #f0f2f5;
     }
-    .empty-state .icon { font-size: 3rem; }
-    .empty-state p { font-size: 0.9rem; }
+    .empty-state .icon { font-size: 3.5rem; }
+    .empty-state p { font-size: 0.95rem; font-weight: 500; color: #54656f; }
 
-    /* Typing indicator */
+    /* ── Typing ── */
     .typing-indicator {
-      display: none;
-      align-items: center;
-      gap: 4px;
-      padding: 0.5rem 0.9rem;
-      background: rgba(255,255,255,0.08);
-      border-radius: 12px;
-      width: fit-content;
+      display: none; align-items: center; gap: 4px; padding: 0.5rem 0.9rem;
+      background: #fff; border-radius: 8px; width: fit-content; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
     .typing-indicator.show { display: flex; }
     .typing-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.4);
+      width: 6px; height: 6px; border-radius: 50%; background: #8696a0;
       animation: bounce 1.2s infinite;
     }
     .typing-dot:nth-child(2) { animation-delay: .2s; }
@@ -379,13 +238,13 @@
         <input type="text" id="searchInput" placeholder="🔍 Buscar conversación..." oninput="applyFilters()"/>
       </div>
       <div class="filter-tabs">
-        <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">Todos</button>
-        <button class="filter-tab" data-filter="open" onclick="setFilter('open')">🟢 Abiertos</button>
-        <button class="filter-tab" data-filter="waiting" onclick="setFilter('waiting')">🟡 Esp.</button>
-        <button class="filter-tab" data-filter="resolved" onclick="setFilter('resolved')">✅ Resuelt.</button>
+        <button class="filter-tab active" data-filter="all"      onclick="setFilter('all')">Todos</button>
+        <button class="filter-tab"        data-filter="open"     onclick="setFilter('open')">🟢 Abiertos</button>
+        <button class="filter-tab"        data-filter="waiting"  onclick="setFilter('waiting')">🟡 Esp.</button>
+        <button class="filter-tab"        data-filter="resolved" onclick="setFilter('resolved')">✅ Resueltos</button>
       </div>
       <div class="conv-list" id="convList">
-        <div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3)">⏳ Cargando...</div>
+        <div style="text-align:center;padding:2rem;color:#8696a0">⏳ Cargando...</div>
       </div>
     </aside>
 
@@ -396,23 +255,20 @@
         <p>Selecciona una conversación para comenzar</p>
       </div>
 
-      <div id="chatMain" style="display:none;flex:1;flex-direction:column;height:100%;overflow:hidden;display:none">
+      <div id="chatMain" style="display:none;flex:1;flex-direction:column;height:100%;overflow:hidden">
         <div class="chat-header">
           <div class="chat-header-avatar" id="chatAvatar">?</div>
           <div class="chat-header-info">
-            <div class="chat-header-name" id="chatName">—</div>
+            <div class="chat-header-name"  id="chatName">—</div>
             <div class="chat-header-phone" id="chatPhone">—</div>
           </div>
           <div class="chat-header-actions">
             <button class="btn-action" onclick="markResolved()">✅ Resolver</button>
           </div>
-          <!-- Botón volver en mobile -->
           <button class="btn-action" style="display:none" id="btnBack" onclick="backToList()">← Volver</button>
         </div>
 
-        <div class="messages-area" id="messagesArea">
-          <!-- mensajes se insertan aquí -->
-        </div>
+        <div class="messages-area" id="messagesArea"></div>
 
         <div class="typing-indicator" id="typingIndicator">
           <div class="typing-dot"></div>
@@ -443,18 +299,17 @@
 
     const { data: profile } = await sb.from('profiles').select('role,full_name').eq('user_id', session.user.id).single();
     if (!profile || !['owner','admin','recepcionista'].includes(profile.role)) {
-      document.body.innerHTML = '<div style="text-align:center;padding:4rem"><h2>🔒 Sin acceso</h2></div>';
-      throw new Error('forbidden');
+      location.href = '/pages/auth.html';
     }
 
     window._session = session;
     window._profile = profile;
 
     // ── State ─────────────────────────────────────────────────
-    let conversations  = [];
-    let activeConvId   = null;
-    let realtimeSub    = null;
-    let activeFilter   = 'all';
+    let conversations = [];
+    let activeConvId  = null;
+    let realtimeSub   = null;
+    let activeFilter  = 'all';
 
     // ── Load conversations ─────────────────────────────────────
     async function loadConversations() {
@@ -472,7 +327,7 @@
     function renderConvList(convs) {
       const list = document.getElementById('convList');
       if (!convs.length) {
-        list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3)">Sin conversaciones aún.<br/><small>Los mensajes de WhatsApp aparecerán aquí.</small></div>';
+        list.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:#8696a0"><div style="font-size:2rem;margin-bottom:.5rem">💬</div><div style="font-weight:600;color:#54656f">Sin conversaciones aún</div><small>Los mensajes de WhatsApp aparecerán aquí.</small></div>';
         return;
       }
       list.innerHTML = convs.map(c => {
@@ -496,7 +351,7 @@
       }).join('');
     }
 
-    function statusLabel(s) { return {open:'Abierto',waiting:'Esperando',resolved:'Resuelto'}[s] || s; }
+    function statusLabel(s) { return {open:'Abierto',waiting:'Esperando',resolved:'Resuelto'}[s] || (s||'Abierto'); }
 
     function updateUnreadBadge() {
       const total = conversations.reduce((a, c) => a + (c.unread_count || 0), 0);
@@ -531,7 +386,6 @@
       const conv = conversations.find(c => c.id === convId);
       if (!conv) return;
 
-      // Update UI
       document.getElementById('emptyState').style.display = 'none';
       const main = document.getElementById('chatMain');
       main.style.display = 'flex';
@@ -541,34 +395,24 @@
 
       const initials = (conv.contact_name || conv.wa_contact_id || '?').slice(0,2).toUpperCase();
       document.getElementById('chatAvatar').textContent = initials;
-      document.getElementById('chatName').textContent = conv.contact_name || conv.contact_phone || conv.wa_contact_id;
+      document.getElementById('chatName').textContent  = conv.contact_name || conv.contact_phone || conv.wa_contact_id;
       document.getElementById('chatPhone').textContent = conv.contact_phone || conv.wa_contact_id;
 
-      // Mark as read
       if (conv.unread_count > 0) {
         await sb.from('wa_conversations').update({ unread_count: 0 }).eq('id', convId);
         conv.unread_count = 0;
         updateUnreadBadge();
       }
 
-      // Active state in list
       document.querySelectorAll('.conv-item').forEach(el => el.classList.toggle('active', el.dataset.convId === convId));
-
-      // Load messages
       await loadMessages(convId);
 
-      // Subscribe to realtime for this conversation
       if (realtimeSub) sb.removeChannel(realtimeSub);
       realtimeSub = sb.channel(`conv:${convId}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wa_messages', filter: `conversation_id=eq.${convId}` },
-          (payload) => {
-            appendMessage(payload.new);
-            scrollToBottom();
-          }
-        )
-        .subscribe();
+          (payload) => { appendMessage(payload.new); scrollToBottom(); }
+        ).subscribe();
 
-      // Subscribe to conv list updates
       sb.channel('conv-list')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'wa_conversations' },
           () => loadConversations()
@@ -578,13 +422,12 @@
     // ── Load messages ─────────────────────────────────────────
     async function loadMessages(convId) {
       const { data } = await sb.from('wa_messages')
-        .select('*')
-        .eq('conversation_id', convId)
+        .select('*').eq('conversation_id', convId)
         .order('created_at', { ascending: true });
       const area = document.getElementById('messagesArea');
       area.innerHTML = '';
       if (!data?.length) {
-        area.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.3);padding:2rem;font-size:.85rem">Sin mensajes aún</div>';
+        area.innerHTML = '<div style="text-align:center;color:#8696a0;padding:2rem;font-size:.85rem">Sin mensajes aún</div>';
         return;
       }
       let lastDate = '';
@@ -608,25 +451,18 @@
       row.className = `msg-row ${m.direction}`;
       row.dataset.msgId = m.id;
 
-      const time = new Date(m.created_at).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
+      const time    = new Date(m.created_at).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
       const botBadge = m.is_bot ? '<span class="msg-bot-badge">🤖 Bot</span>' : '';
       const content  = m.content || {};
       const text     = content.text || '';
 
       let bubbleHTML = `<div class="msg-bubble">`;
-
       if (m.message_type === 'buttons' && content.buttons) {
-        bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p>`;
-        bubbleHTML += `<div class="wa-buttons">`;
+        bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p><div class="wa-buttons">`;
         bubbleHTML += (content.buttons || []).map(b => `<span class="wa-btn">${b.title}</span>`).join('');
         bubbleHTML += `</div>`;
       } else if (m.message_type === 'list' && content.sections) {
-        bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p>`;
-        bubbleHTML += `<div style="font-size:.78rem;color:rgba(255,255,255,.5)">≡ Lista de opciones</div>`;
-      } else if (m.message_type === 'image') {
-        bubbleHTML += `<span>📷 Imagen</span>`;
-      } else if (m.message_type === 'audio') {
-        bubbleHTML += `<span>🎵 Audio</span>`;
+        bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p><div style="font-size:.78rem;color:#8696a0">≡ Lista de opciones</div>`;
       } else {
         bubbleHTML += text.replace(/\n/g, '<br/>');
       }
@@ -634,7 +470,6 @@
 
       row.innerHTML = bubbleHTML + `<div class="msg-meta">${botBadge}${time}${m.direction==='outbound'?' ✓✓':''}</div>`;
       area.appendChild(row);
-
       if (scroll) scrollToBottom();
     }
 
@@ -657,19 +492,11 @@
       const { data: { session: s } } = await sb.auth.getSession();
       const res = await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/send-whatsapp-reply', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${s.access_token}`,
-        },
-        body: JSON.stringify({
-          conversation_id: activeConvId,
-          message_type: 'text',
-          content: { text },
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.access_token}` },
+        body: JSON.stringify({ conversation_id: activeConvId, message_type: 'text', content: { text } }),
       });
 
       document.getElementById('sendBtn').disabled = false;
-
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         console.error('[inbox] Send error:', e);
@@ -711,13 +538,13 @@
       if (!t) {
         t = document.createElement('div');
         t.id = 'toast';
-        t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#1a0a2e;border:1px solid rgba(139,45,139,.5);border-radius:12px;padding:.9rem 1.2rem;color:#fff;font-size:.9rem;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:9999;transition:all .35s;transform:translateY(100px);opacity:0;max-width:300px';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#fff;border-radius:12px;padding:.9rem 1.2rem;color:#111b21;font-size:.9rem;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;transition:all .35s;transform:translateY(100px);opacity:0;max-width:300px;border-left:4px solid #25d366';
         document.body.appendChild(t);
       }
       t.textContent = msg;
-      t.style.borderColor = type === 'error' ? 'rgba(239,68,68,.4)' : 'rgba(34,197,94,.4)';
+      t.style.borderLeftColor = type === 'error' ? '#ef4444' : '#25d366';
       t.style.transform = 'translateY(0)';
-      t.style.opacity = '1';
+      t.style.opacity   = '1';
       clearTimeout(window._toast);
       window._toast = setTimeout(() => { t.style.transform = 'translateY(100px)'; t.style.opacity = '0'; }, 3500);
     };
@@ -725,30 +552,6 @@
 
   <script>
     window.toggleNav = () => document.getElementById('navLinks').classList.toggle('active');
-
-    // Particles
-    const c = document.getElementById('particles-canvas');
-    if (c) {
-      const ctx = c.getContext('2d');
-      const r = () => { c.width = innerWidth; c.height = innerHeight; };
-      r(); window.addEventListener('resize', r);
-      const pts = Array.from({length:30}, () => ({
-        x: Math.random()*innerWidth, y: Math.random()*innerHeight,
-        vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2,
-        rad: Math.random()*1.5+0.5, a: Math.random()*.3+.05
-      }));
-      (function loop() {
-        ctx.clearRect(0,0,c.width,c.height);
-        pts.forEach(p => {
-          p.x+=p.vx; p.y+=p.vy;
-          if(p.x<0)p.x=c.width; if(p.x>c.width)p.x=0;
-          if(p.y<0)p.y=c.height; if(p.y>c.height)p.y=0;
-          ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);
-          ctx.fillStyle=`rgba(139,45,139,${p.a})`; ctx.fill();
-        });
-        requestAnimationFrame(loop);
-      })();
-    }
   </script>
 </body>
 </html>
