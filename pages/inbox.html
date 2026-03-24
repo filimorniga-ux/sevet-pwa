@@ -18,10 +18,12 @@
     .inbox-layout {
       display: grid;
       grid-template-columns: 340px 1fr;
+      grid-template-rows: 1fr;      /* CLAVE: obliga al row a llenar el contenedor */
       position: fixed;
       top: var(--nav-h, 80px);
       left: 0; right: 0;
       bottom: 0;
+      overflow: hidden;             /* aísla el desborde */
     }
     @media (max-width: 680px) {
       .inbox-layout { grid-template-columns: 1fr; }
