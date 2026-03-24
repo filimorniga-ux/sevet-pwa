@@ -30,6 +30,8 @@ export default defineConfig({
         configuracion: resolve(__dirname, 'pages/configuracion.html'),
         inbox: resolve(__dirname, 'pages/inbox.html'),
         perfil: resolve(__dirname, 'pages/perfil.html'),
+        privacy: resolve(__dirname, 'privacy.html'),
+        terms: resolve(__dirname, 'terms.html'),
       },
     },
   },
