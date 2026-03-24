@@ -256,7 +256,7 @@
         <p>Selecciona una conversación para comenzar</p>
       </div>
 
-      <div id="chatMain" style="display:none;flex:1;flex-direction:column;overflow:visible;min-height:0">
+      <div id="chatMain" style="display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden">
         <div class="chat-header">
           <div class="chat-header-avatar" id="chatAvatar">?</div>
           <div class="chat-header-info">
@@ -483,24 +483,53 @@
       scrollToBottom();
     }
 
+    const WA_MEDIA_URL = 'https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/get-wa-media';
+
     function appendMessage(m, scroll = true) {
       const area = document.getElementById('messagesArea');
+      // Evitar duplicados
+      if (area.querySelector(`[data-msg-id="${m.id}"]`)) return;
+
       const row  = document.createElement('div');
       row.className = `msg-row ${m.direction}`;
       row.dataset.msgId = m.id;
 
-      const time    = new Date(m.created_at).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
+      const time     = new Date(m.created_at).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
       const botBadge = m.is_bot ? '<span class="msg-bot-badge">🤖 Bot</span>' : '';
       const content  = m.content || {};
       const text     = content.text || '';
+      const mediaId  = content.media_id || (text.match(/id:([\w]+)/)?.[1] ?? null);
 
       let bubbleHTML = `<div class="msg-bubble">`;
+
       if (m.message_type === 'buttons' && content.buttons) {
         bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p><div class="wa-buttons">`;
         bubbleHTML += (content.buttons || []).map(b => `<span class="wa-btn">${b.title}</span>`).join('');
         bubbleHTML += `</div>`;
       } else if (m.message_type === 'list' && content.sections) {
         bubbleHTML += `<p style="margin:0 0 .4rem">${text}</p><div style="font-size:.78rem;color:#8696a0">≡ Lista de opciones</div>`;
+      } else if (text.startsWith('[🎤') || m.message_type === 'audio') {
+        // Audio — reproductor HTML5 vía proxy
+        if (mediaId) {
+          bubbleHTML += `<div style="display:flex;align-items:center;gap:.5rem;min-width:200px">
+            <span style="font-size:1.3rem">🎤</span>
+            <audio controls style="flex:1;height:32px;outline:none;border-radius:8px"
+              src="${WA_MEDIA_URL}?id=${mediaId}&token=${window._session?.access_token || ''}">
+            </audio></div>`;
+        } else {
+          bubbleHTML += `<span style="opacity:.7">🎤 Nota de voz (sin ID de media)</span>`;
+        }
+      } else if (text.startsWith('[📷') || m.message_type === 'image') {
+        if (mediaId) {
+          bubbleHTML += `<img src="${WA_MEDIA_URL}?id=${mediaId}&token=${window._session?.access_token || ''}"
+            style="max-width:100%;border-radius:6px;display:block" alt="Imagen" loading="lazy"/>`;
+        } else {
+          bubbleHTML += `<span style="opacity:.7">📷 Imagen recibida</span>`;
+        }
+      } else if (text.startsWith('[')) {
+        // Otro tipo (documento, video, ubicación)
+        const label = text.replace('[','').replace(/\].*/,'');
+        bubbleHTML += `<span style="opacity:.8">${label}</span>`;
       } else {
         bubbleHTML += text.replace(/\n/g, '<br/>');
       }
