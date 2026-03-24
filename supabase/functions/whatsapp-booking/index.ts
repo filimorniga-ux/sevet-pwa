@@ -229,8 +229,14 @@ async function processMessage(phone: string, text: string, convId: string | null
     return;
   }
 
+  // Fallback — texto no reconocido fuera de ningún estado
   await clearSession(phone);
-  await sendAndSave(phone, '¡Hola! 🐾 Escribe "hola" para comenzar a agendar tu cita.', convId);
+  const CLINIC_PHONE = Deno.env.get("CLINIC_PHONE") ?? "+56 2 2775 4213";
+  await sendAndSave(phone,
+    `🙏 No entendí tu mensaje.\n\n` +
+    `Puedes:\n1️⃣ Escribir *"hola"* para agendar una cita\n` +
+    `2️⃣ O si prefieres hablar con alguien de la clínica:\n📞 ${CLINIC_PHONE}\n\n` +
+    `Un recepcionista también puede responder por aquí en horario de atención. 🩺`, convId);
 }
 
 Deno.serve(async (req) => {
@@ -258,11 +264,33 @@ Deno.serve(async (req) => {
           const phone   = m.from as string;
           const msgId   = m.id as string;
           const msgType = m.type as string;
-          if (msgType !== "text") continue;
-          const text        = ((m.text as Record<string, unknown>)?.body as string) ?? "";
           const contacts    = (value.contacts as unknown[]) ?? [];
           const contact     = (contacts[0] as Record<string, unknown>) ?? {};
           const displayName = ((contact.profile as Record<string, unknown>)?.name as string) ?? phone;
+
+          // ── Mensajes no-texto (audio, imagen, video, sticker, documento) ──
+          if (msgType !== "text") {
+            const mediaTypeLabels: Record<string, string> = {
+              audio: '🎤 Nota de voz', image: '📷 Imagen', video: '🎥 Video',
+              sticker: '😊 Sticker', document: '📄 Documento', location: '📍 Ubicación',
+            };
+            const mediaRef = (m[msgType] as Record<string, unknown>) ?? {};
+            const convId = await upsertConversation(phone, displayName, `[${mediaTypeLabels[msgType] ?? msgType}]`);
+            if (convId) {
+              await saveInboxMessage(convId, 'inbound',
+                `[${mediaTypeLabels[msgType] ?? msgType}]${mediaRef.id ? ` id:${mediaRef.id}` : ''}`,
+                false, msgId);
+            }
+            // Notificar al cliente que un humano lo verá
+            const CLINIC_PHONE = Deno.env.get("CLINIC_PHONE") ?? "+56 2 2775 4213";
+            await sendAndSave(phone,
+              `Recibimos tu ${(mediaTypeLabels[msgType] ?? msgType).toLowerCase()}. 🙏\n\n` +
+              `Nuestro equipo lo revisará y te responderá en horario de atención.\n\n` +
+              `Si es urgente, llámanos: 📞 ${CLINIC_PHONE}`, convId);
+            continue;
+          }
+
+          const text        = ((m.text as Record<string, unknown>)?.body as string) ?? "";
           const convId      = await upsertConversation(phone, displayName, text);
           if (convId) await saveInboxMessage(convId, 'inbound', text, false, msgId);
           await processMessage(phone, text, convId);
