@@ -611,7 +611,7 @@ button, a, input, select, textarea {
 /* ── Botón flotante WhatsApp ── */
 .wa-float {
   position: fixed;
-  bottom: 5.5rem;   /* apilado encima del botón AI (bottom 2rem + 60px btn + gap) */
+  bottom: 1.5rem;
   right: 1.5rem;
   z-index: 9000;
   background: #25d366;
@@ -963,7 +963,10 @@ section { position: relative; z-index: 1; }
    WIDGET IA FLOTANTE
    ───────────────────────────────────────── */
 .ai-widget {
-  position: fixed; bottom: 2rem; right: 2rem;
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  right: auto;
   z-index: 500;
 }
 .ai-toggle {
@@ -986,7 +989,7 @@ section { position: relative; z-index: 1; }
 @keyframes ring-pulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0; } }
 .ai-toggle:hover { transform: scale(1.1); }
 .ai-chat {
-  position: absolute; bottom: 75px; right: 0;
+  position: absolute; bottom: 75px; left: 0; right: auto;
   width: 320px;
   background: var(--white);
   border: 1px solid var(--gray-200);
@@ -1211,7 +1214,7 @@ section { position: relative; z-index: 1; }
   .product-card { min-width: calc(100% - 0); }
   .comparison-container { height: 300px; }
   .section-pad { padding: 4rem 5%; }
-  .ai-chat { width: 90vw; right: -1rem; }
+  .ai-chat { width: calc(100vw - 2rem); left: -1rem; right: auto; }
 }
 
 /* ─────────────────────────────────────────
@@ -2925,7 +2928,7 @@ section { position: relative; z-index: 1; }
   /* Footer */
   .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
 
-  .ai-widget { bottom: calc(1rem + env(safe-area-inset-bottom)); right: max(1rem, env(safe-area-inset-right)); }
+  .ai-widget { bottom: calc(1rem + env(safe-area-inset-bottom)); left: max(1rem, env(safe-area-inset-left)); right: auto; }
   .cart-badge { bottom: calc(24px + env(safe-area-inset-bottom)); right: max(24px, env(safe-area-inset-right)); }
 }
 
