@@ -611,7 +611,7 @@ button, a, input, select, textarea {
 /* ── Botón flotante WhatsApp ── */
 .wa-float {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 5.5rem;   /* apilado encima del botón AI (bottom 2rem + 60px btn + gap) */
   right: 1.5rem;
   z-index: 9000;
   background: #25d366;
