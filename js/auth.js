@@ -156,6 +156,18 @@ window.signOutUser = async function(e) {
   }
 };
 
+// Event delegation — captura clicks en cualquier botón de signout
+// funciona en TODAS las páginas sin depender del orden de carga de módulos
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.sp-dd-logout');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  window.signOutUser(e);
+}, true);
+
+
+
 // ── Obtener perfil ──
 async function fetchProfile(userId) {
   try {

@@ -10,15 +10,18 @@
   <link rel="manifest" href="/manifest.json"/>
   <style>
     /* ── Base ── */
-    body { overflow: hidden; background: #f0f2f5; }
+    html, body { height: 100%; overflow: hidden; margin: 0; }
+    body { background: #f0f2f5; }
     #particles-canvas { display: none; }
 
     /* ── Layout ── */
     .inbox-layout {
       display: grid;
       grid-template-columns: 340px 1fr;
-      height: calc(100vh - var(--nav-h, 80px));
-      margin-top: var(--nav-h, 80px);
+      position: fixed;
+      top: var(--nav-h, 80px);
+      left: 0; right: 0;
+      bottom: 0;
     }
     @media (max-width: 680px) {
       .inbox-layout { grid-template-columns: 1fr; }
@@ -414,32 +417,6 @@
       document.querySelectorAll('.conv-item').forEach(el => el.classList.toggle('active', el.dataset.convId === convId));
       await loadMessages(convId);
 
-      // ── Polling fallback (refresco cada 3s mensajes / 8s conversaciones) ──
-      let _pollMsg = null;
-      let _pollConv = setInterval(() => loadConversations(), 8000);
-
-      function startMsgPolling(convId) {
-        stopMsgPolling();
-        _pollMsg = setInterval(async () => {
-          if (activeConvId !== convId) return;
-          const area = document.getElementById('messagesArea');
-          const { data } = await sb.from('wa_messages')
-            .select('*').eq('conversation_id', convId)
-            .order('created_at', { ascending: true });
-          if (!data?.length) return;
-          const current = new Set([...area.querySelectorAll('[data-msg-id]')].map(el => el.dataset.msgId));
-          let added = false;
-          data.forEach(m => {
-            if (!current.has(m.id)) { appendMessage(m); added = true; }
-          });
-          if (added) scrollToBottom();
-        }, 3000);
-      }
-
-      function stopMsgPolling() { if (_pollMsg) { clearInterval(_pollMsg); _pollMsg = null; } }
-
-      window.addEventListener('beforeunload', () => { stopMsgPolling(); clearInterval(_pollConv); });
-
       if (realtimeSub) sb.removeChannel(realtimeSub);
       realtimeSub = sb.channel(`conv:${convId}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wa_messages', filter: `conversation_id=eq.${convId}` },
@@ -448,7 +425,6 @@
 
       startMsgPolling(convId);
 
-      // Realtime conv-list (crear solo una vez)
       if (!window._convListSub) {
         window._convListSub = sb.channel('conv-list-1')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'wa_conversations' },
@@ -456,6 +432,31 @@
           ).subscribe();
       }
     };
+
+    // ── Polling global único ──────────────────────────────────
+    let _pollMsg = null;
+    // Conv list polling cada 10s (no usa auth, query simple)
+    setInterval(() => loadConversations(), 10000);
+
+    function startMsgPolling(convId) {
+      if (_pollMsg) { clearInterval(_pollMsg); }
+      _pollMsg = setInterval(async () => {
+        if (activeConvId !== convId) { clearInterval(_pollMsg); return; }
+        const area = document.getElementById('messagesArea');
+        if (!area) return;
+        const { data } = await sb.from('wa_messages')
+          .select('*').eq('conversation_id', convId)
+          .order('created_at', { ascending: true });
+        if (!data?.length) return;
+        const current = new Set([...area.querySelectorAll('[data-msg-id]')].map(el => el.dataset.msgId));
+        let added = false;
+        data.forEach(m => { if (!current.has(m.id)) { appendMessage(m); added = true; } });
+        if (added) scrollToBottom();
+      }, 4000);
+    }
+
+    window.addEventListener('beforeunload', () => { if (_pollMsg) clearInterval(_pollMsg); });
+
 
     // ── Load messages ─────────────────────────────────────────
     async function loadMessages(convId) {
