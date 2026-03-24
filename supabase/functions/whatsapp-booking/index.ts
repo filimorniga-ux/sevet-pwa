@@ -113,12 +113,10 @@ function formatDateCL(date: Date): string {
 }
 
 // ── Enviar mensaje WhatsApp ───────────────────────────────────
-async function sendMessage(to: string, text: string): Promise<void> {
+async function sendMessage(to: string, text: string): Promise<string | null> {
   if (!WA_TOKEN || !WA_PHONE_ID) {
-    console.warn(
-      "[whatsapp-booking] Faltan WHATSAPP_ACCESS_TOKEN o WHATSAPP_PHONE_NUMBER_ID",
-    );
-    return;
+    console.warn('[whatsapp-booking] Faltan WHATSAPP_ACCESS_TOKEN o WHATSAPP_PHONE_NUMBER_ID');
+    return null;
   }
   const res = await fetch(
     `https://graph.facebook.com/v19.0/${WA_PHONE_ID}/messages`,
@@ -137,11 +135,55 @@ async function sendMessage(to: string, text: string): Promise<void> {
     },
   );
   if (!res.ok) {
-    console.error(
-      "[whatsapp-booking] Error enviando mensaje:",
-      await res.text(),
-    );
+    console.error('[whatsapp-booking] Error enviando mensaje:', await res.text());
+    return null;
   }
+  const data = await res.json().catch(() => ({}));
+  return (data as Record<string, unknown[]>)?.messages?.[0]
+    ? ((data as Record<string, unknown[]>).messages[0] as Record<string, string>).id ?? null
+    : null;
+}
+
+// ── Persistencia en Inbox ─────────────────────────────────────
+async function getOrCreateConversation(
+  phone: string,
+  lastMessage: string,
+  profileId: string | null = null,
+  contactName: string | null = null,
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc('upsert_wa_conversation', {
+    p_wa_contact_id: phone,
+    p_contact_phone: `+${phone}`,
+    p_contact_name:  contactName,
+    p_profile_id:    profileId,
+    p_last_message:  lastMessage,
+  });
+  if (error) { console.error('[inbox] upsert_wa_conversation error:', error); return null; }
+  return data as string;
+}
+
+async function saveInboxMessage(
+  convId: string,
+  direction: 'inbound' | 'outbound',
+  text: string,
+  isBot: boolean,
+  waMessageId: string | null = null,
+): Promise<void> {
+  const { error } = await supabase.from('wa_messages').insert({
+    conversation_id: convId,
+    wa_message_id:   waMessageId,
+    direction,
+    message_type:    'text',
+    content:         { text },
+    is_bot:          isBot,
+  });
+  if (error) console.error('[inbox] saveInboxMessage error:', error);
+}
+
+// Wrapper: enviar + guardar outbound en inbox
+async function sendAndSave(to: string, text: string, convId: string | null): Promise<void> {
+  const waId = await sendMessage(to, text);
+  if (convId) await saveInboxMessage(convId, 'outbound', text, true, waId);
 }
 
 // ── Gestión de sesión ────────────────────────────────────────
@@ -244,8 +286,8 @@ async function createAppointment(params: {
 }
 
 // ── Máquina de estados del bot ──────────────────────────────
-async function processMessage(phone: string, text: string): Promise<void> {
-  const input = text.trim().toLowerCase();
+async function processMessage(phone: string, text: string, convId: string | null): Promise<void> {
+  const input   = text.trim().toLowerCase();
   const session = await getSession(phone);
   const state = session.state;
   const ctx = session.context;
@@ -253,34 +295,30 @@ async function processMessage(phone: string, text: string): Promise<void> {
   // ── Comando de cancelar en cualquier momento ──
   if (["cancelar", "cancel", "salir", "exit", "0"].includes(input)) {
     await clearSession(phone);
-    await sendMessage(
-      phone,
+    await sendAndSave(phone,
       '❌ Reserva cancelada. Escribe "hola" cuando quieras agendar nuevamente.\n\n' +
-        `También puedes hacerlo desde nuestra app: ${APP_URL}`,
+      `También puedes hacerlo desde nuestra app: ${APP_URL}`,
+      convId
     );
     return;
   }
 
   // ─────────────────── ESTADO: idle ───────────────────────────
-  if (state === "idle") {
-    const success = await saveSession(phone, "selecting_service", {});
-    if (!success) {
-      console.warn(`[whatsapp-booking] Colisión en sesión para ${phone}`);
-      return;
-    }
-    await sendMessage(
-      phone,
-      "¡Hola! 🐾 Bienvenido a *SEVET Clínica Veterinaria*.\n\n" +
-        "Estoy aquí para ayudarte a agendar una cita.\n\n" +
-        "*¿Qué servicio necesitas?*\n\n" +
-        "1️⃣ Consulta Médica\n" +
-        "2️⃣ Vacunación\n" +
-        "3️⃣ Control\n" +
-        "4️⃣ Urgencia\n" +
-        "5️⃣ Peluquería\n" +
-        "6️⃣ Guardería\n\n" +
-        "_Responde con el número de tu elección._\n" +
-        "_Escribe *cancelar* en cualquier momento para salir._",
+  if (state === 'idle') {
+    await saveSession(phone, 'selecting_service', {});
+    await sendAndSave(phone,
+      '¡Hola! 🐾 Bienvenido a *SEVET Clínica Veterinaria*.\n\n' +
+      'Estoy aquí para ayudarte a agendar una cita.\n\n' +
+      '*¿Qué servicio necesitas?*\n\n' +
+      '1️⃣ Consulta Médica\n' +
+      '2️⃣ Vacunación\n' +
+      '3️⃣ Control\n' +
+      '4️⃣ Urgencia\n' +
+      '5️⃣ Peluquería\n' +
+      '6️⃣ Guardería\n\n' +
+      '_Responde con el número de tu elección._\n' +
+      '_Escribe *cancelar* en cualquier momento para salir._',
+      convId
     );
     return;
   }
@@ -289,30 +327,17 @@ async function processMessage(phone: string, text: string): Promise<void> {
   if (state === "selecting_service") {
     const svc = SERVICES[input];
     if (!svc) {
-      await sendMessage(
-        phone,
-        "⚠️ Por favor responde con un número del 1 al 6.",
-      );
+      await sendAndSave(phone, '⚠️ Por favor responde con un número del 1 al 6.', convId);
       return;
     }
 
-    const success = await saveSession(phone, "selecting_date", {
-      service: input,
-      serviceLabel: svc.label,
-      serviceType: svc.type,
-      triage: svc.triage,
-      duration: svc.duration,
-    }, state);
-    if (!success) {
-      console.warn(`[whatsapp-booking] Colisión en sesión para ${phone}`);
-      return;
-    }
-    await sendMessage(
-      phone,
+    await saveSession(phone, 'selecting_date', { service: input, serviceLabel: svc.label, serviceType: svc.type, triage: svc.triage, duration: svc.duration });
+    await sendAndSave(phone,
       `✅ *${svc.label}* seleccionada.\n\n` +
-        "*¿Qué día prefieres?*\n\n" +
-        "📅 Lunes\n📅 Martes\n📅 Miércoles\n📅 Jueves\n📅 Viernes\n📅 Sábado\n\n" +
-        '_Escribe el nombre del día (ej: "lunes")_',
+      '*¿Qué día prefieres?*\n\n' +
+      '📅 Lunes\n📅 Martes\n📅 Miércoles\n📅 Jueves\n📅 Viernes\n📅 Sábado\n\n' +
+      '_Escribe el nombre del día (ej: "lunes")_',
+      convId
     );
     return;
   }
@@ -321,34 +346,20 @@ async function processMessage(phone: string, text: string): Promise<void> {
   if (state === "selecting_date") {
     const dayNum = DAYS[input];
     if (!dayNum) {
-      await sendMessage(
-        phone,
-        "⚠️ No reconocí ese día. Por favor escribe: lunes, martes, miércoles, jueves, viernes o sábado.",
-      );
+      await sendAndSave(phone, '⚠️ No reconocí ese día. Por favor escribe: lunes, martes, miércoles, jueves, viernes o sábado.', convId);
       return;
     }
 
     const date = nextWeekday(dayNum);
     const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    const success = await saveSession(phone, "selecting_time", {
-      ...ctx,
-      date: dateStr,
-      dateLegible: formatDateCL(date),
-    }, state);
-    if (!success) {
-      console.warn(`[whatsapp-booking] Colisión en sesión para ${phone}`);
-      return;
-    }
-
-    // TODO: verificar disponibilidad real en tabla appointments
-    await sendMessage(
-      phone,
+    await saveSession(phone, 'selecting_time', { ...ctx, date: dateStr, dateLegible: formatDateCL(date) });
+    await sendAndSave(phone,
       `📅 *${formatDateCL(date)}*\n\n` +
-        "*Horarios disponibles (sujetos a disponibilidad):*\n\n" +
-        TIME_SLOTS.map((t, i) => `${String(i + 1).padStart(2, "0")}. ${t}`)
-          .join("\n") +
-        "\n\n_Responde con el número del horario que prefieres._",
+      '*Horarios disponibles:*\n\n' +
+      TIME_SLOTS.map((t, i) => `${String(i + 1).padStart(2, '0')}. ${t}`).join('\n') +
+      '\n\n_Responde con el número del horario que prefieres._',
+      convId
     );
     return;
   }
@@ -357,10 +368,7 @@ async function processMessage(phone: string, text: string): Promise<void> {
   if (state === "selecting_time") {
     const slotNum = parseInt(input) - 1;
     if (isNaN(slotNum) || slotNum < 0 || slotNum >= TIME_SLOTS.length) {
-      await sendMessage(
-        phone,
-        `⚠️ Por favor responde con un número del 1 al ${TIME_SLOTS.length}.`,
-      );
+      await sendAndSave(phone, `⚠️ Por favor responde con un número del 1 al ${TIME_SLOTS.length}.`, convId);
       return;
     }
 
@@ -368,19 +376,15 @@ async function processMessage(phone: string, text: string): Promise<void> {
     const dateTime = `${ctx.date}T${time}:00-03:00`;
     const newCtx = { ...ctx, time, dateTime };
 
-    const success = await saveSession(phone, "confirming", newCtx, state);
-    if (!success) {
-      console.warn(`[whatsapp-booking] Colisión en sesión para ${phone}`);
-      return;
-    }
-    await sendMessage(
-      phone,
+    await saveSession(phone, 'confirming', newCtx);
+    await sendAndSave(phone,
       `🕐 *${time} hrs* seleccionado.\n\n` +
-        "*¿Confirmas tu reserva?*\n\n" +
-        `📋 Servicio: ${ctx.serviceLabel}\n` +
-        `📅 Fecha: ${ctx.dateLegible}\n` +
-        `🕐 Hora: ${time} hrs\n\n` +
-        "Responde *sí* para confirmar o *no* para cancelar.",
+      '*¿Confirmas tu reserva?*\n\n' +
+      `📋 Servicio: ${ctx.serviceLabel}\n` +
+      `📅 Fecha: ${ctx.dateLegible}\n` +
+      `🕐 Hora: ${time} hrs\n\n` +
+      'Responde *sí* para confirmar o *no* para cancelar.',
+      convId
     );
     return;
   }
@@ -391,10 +395,7 @@ async function processMessage(phone: string, text: string): Promise<void> {
       !["sí", "si", "yes", "s", "1", "confirmar", "confirmo"].includes(input)
     ) {
       await clearSession(phone);
-      await sendMessage(
-        phone,
-        '❌ Reserva cancelada. Escribe "hola" cuando quieras intentarlo de nuevo.',
-      );
+      await sendAndSave(phone, '❌ Reserva cancelada. Escribe "hola" cuando quieras intentarlo de nuevo.', convId);
       return;
     }
 
@@ -415,9 +416,9 @@ async function processMessage(phone: string, text: string): Promise<void> {
     });
 
     if (!apptId) {
-      await sendMessage(
-        phone,
-        "❌ Hubo un problema al agendar tu cita. Por favor, intenta nuevamente más tarde o comunícate con nosotros.",
+      await sendAndSave(phone,
+        '❌ Hubo un problema al crear tu cita. Por favor intenta de nuevo o llámanos directamente.',
+        convId
       );
       return;
     }
@@ -426,32 +427,32 @@ async function processMessage(phone: string, text: string): Promise<void> {
 
     if (user) {
       // Cliente registrado ✅
-      await sendMessage(
-        phone,
+      await sendAndSave(phone,
         `✅ *¡Cita confirmada, ${user.full_name}!*\n\n` +
-          `📋 ${ctx.serviceLabel}\n` +
-          `📅 ${ctx.dateLegible}\n` +
-          `🕐 ${ctx.time} hrs\n\n` +
-          "🔔 Recibirás un recordatorio antes de tu cita.\n\n" +
-          `Gestiona todas tus citas desde la app:\n${APP_URL}`,
+        `📋 ${ctx.serviceLabel}\n` +
+        `📅 ${ctx.dateLegible}\n` +
+        `🕐 ${ctx.time} hrs\n\n` +
+        '🔔 Recibirás un recordatorio antes de tu cita.\n\n' +
+        `Gestiona todas tus citas desde la app:\n${APP_URL}`,
+        convId
       );
     } else {
       // Cliente sin cuenta 🆕
-      await sendMessage(
-        phone,
-        "✅ *¡Cita confirmada!*\n\n" +
-          `📋 ${ctx.serviceLabel}\n` +
-          `📅 ${ctx.dateLegible}\n` +
-          `🕐 ${ctx.time} hrs\n\n` +
-          "─────────────────\n" +
-          "🐾 *¿Sabías que puedes hacer mucho más con SEVET?*\n\n" +
-          "Regístrate gratis y accede a:\n" +
-          "• 📋 Historial clínico digital de tu mascota\n" +
-          "• 💉 Cartilla de vacunas y controles\n" +
-          "• 📅 Gestión de citas desde el celular\n" +
-          "• 🔔 Recordatorios automáticos\n\n" +
-          `👉 *Regístrate aquí (2 minutos):*\n${APP_URL}/pages/auth.html\n\n` +
-          "_Tu cita queda agendada de todas formas. ¡Hasta pronto! 🐶🐱_",
+      await sendAndSave(phone,
+        '✅ *¡Cita confirmada!*\n\n' +
+        `📋 ${ctx.serviceLabel}\n` +
+        `📅 ${ctx.dateLegible}\n` +
+        `🕐 ${ctx.time} hrs\n\n` +
+        '─────────────────\n' +
+        '🐾 *¿Sabías que puedes hacer mucho más con SEVET?*\n\n' +
+        'Regístrate gratis y accede a:\n' +
+        '• 📋 Historial clínico digital de tu mascota\n' +
+        '• 💉 Cartilla de vacunas y controles\n' +
+        '• 📅 Gestión de citas desde el celular\n' +
+        '• 🔔 Recordatorios automáticos\n\n' +
+        `👉 *Regístrate aquí (2 minutos):*\n${APP_URL}/pages/auth.html\n\n` +
+        '_Tu cita queda agendada de todas formas. ¡Hasta pronto! 🐶🐱_',
+        convId
       );
     }
 
@@ -467,18 +468,18 @@ async function processMessage(phone: string, text: string): Promise<void> {
 
   // ─────────────────── Estado desconocido → reset ─────────────
   await clearSession(phone);
-  await saveSession(phone, "selecting_service", {});
-  await sendMessage(
-    phone,
-    "¡Hola! 🐾 Bienvenido a *SEVET Clínica Veterinaria*.\n\n" +
-      "*¿Qué servicio necesitas?*\n\n" +
-      "1️⃣ Consulta Médica\n" +
-      "2️⃣ Vacunación\n" +
-      "3️⃣ Control\n" +
-      "4️⃣ Urgencia\n" +
-      "5️⃣ Peluquería\n" +
-      "6️⃣ Guardería\n\n" +
-      "_Responde con el número de tu elección._",
+  await saveSession(phone, 'selecting_service', {});
+  await sendAndSave(phone,
+    '¡Hola! 🐾 Bienvenido a *SEVET Clínica Veterinaria*.\n\n' +
+    '*¿Qué servicio necesitas?*\n\n' +
+    '1️⃣ Consulta Médica\n' +
+    '2️⃣ Vacunación\n' +
+    '3️⃣ Control\n' +
+    '4️⃣ Urgencia\n' +
+    '5️⃣ Peluquería\n' +
+    '6️⃣ Guardería\n\n' +
+    '_Responde con el número de tu elección._',
+    convId
   );
 }
 
@@ -586,7 +587,20 @@ Deno.serve(async (req) => {
       }
 
       if (text) {
-        await processMessage(phone, text);
+        // Buscar perfil para enriquecer la conversación
+        const profile = await findUserByPhone(phone).catch(() => null);
+        // Crear/actualizar conversación en inbox
+        const convId = await getOrCreateConversation(
+          phone,
+          text,
+          profile?.id ?? null,
+          profile?.full_name ?? null,
+        ).catch(() => null);
+        // Guardar mensaje entrante
+        const waId = (msg as Record<string, unknown>).id as string | null;
+        if (convId) await saveInboxMessage(convId, 'inbound', text, false, waId).catch(() => {});
+        // Procesar con el bot
+        await processMessage(phone, text, convId);
       }
     } catch (err) {
       console.error("[whatsapp-booking] Error procesando mensaje:", err);
