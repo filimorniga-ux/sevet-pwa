@@ -311,14 +311,31 @@
     window._session = session;
     window._profile = profile;
 
-    // ── Navbar height dinámico ─────────────────────────────────
-    function applyNavH() {
-      const nb = document.getElementById('navbar') || document.querySelector('.navbar');
-      if (nb) document.documentElement.style.setProperty('--nav-h', nb.offsetHeight + 'px');
+    // ── Navbar + Chat size (JS explícito para garantizar scroll) ─
+    function sizeChat() {
+      const nav = document.getElementById('navbar') || document.querySelector('nav.navbar');
+      const navH = nav ? nav.offsetHeight : 80;
+      document.documentElement.style.setProperty('--nav-h', navH + 'px');
+
+      const main = document.getElementById('chatMain');
+      if (!main || main.style.display === 'none') return;
+
+      const header = document.querySelector('.chat-header');
+      const input  = document.querySelector('.chat-input-wrap');
+      const area   = document.getElementById('messagesArea');
+      if (!area) return;
+
+      const headerH = header ? header.offsetHeight : 64;
+      const inputH  = input  ? input.offsetHeight  : 76;
+      const h = window.innerHeight - navH - headerH - inputH;
+      area.style.height    = Math.max(h, 100) + 'px';
+      area.style.minHeight = '0';
+      area.style.flex      = 'none';
+      area.style.overflowY = 'auto';
     }
-    applyNavH();
-    new ResizeObserver(applyNavH).observe(document.documentElement);
-    window.addEventListener('load', applyNavH);
+    window.addEventListener('resize', sizeChat);
+    window.addEventListener('load', sizeChat);
+    setTimeout(sizeChat, 300); // fallback si navbar cargó tarde
 
     // ── State ─────────────────────────────────────────────────
     let conversations = [];
@@ -418,6 +435,9 @@
 
       document.querySelectorAll('.conv-item').forEach(el => el.classList.toggle('active', el.dataset.convId === convId));
       await loadMessages(convId);
+      // Forzar altura JS explícita (garantiza scroll en todos los browsers)
+      setTimeout(sizeChat, 50);
+      setTimeout(sizeChat, 300);
 
       if (realtimeSub) sb.removeChannel(realtimeSub);
       realtimeSub = sb.channel(`conv:${convId}`)
