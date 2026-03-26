@@ -198,7 +198,7 @@
 
     /* ── Typing ── */
     .typing-indicator {
-      display: none; align-items: center; gap: 4px; padding: 0.5rem 0.9rem;
+      display: none !important; /* evitar que aparezca accidentalmente */ align-items: center; gap: 4px; padding: 0.5rem 0.9rem;
       background: #fff; border-radius: 8px; width: fit-content; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
     .typing-indicator.show { display: flex; }
@@ -579,10 +579,21 @@
       input.style.height = '';
       document.getElementById('sendBtn').disabled = true;
 
-      const { data: { session: s } } = await sb.auth.getSession();
+      // Token cacheado (evita auth lock del polling)
+      let token = window._session?.access_token;
+      if (!token) {
+        const { data } = await sb.auth.refreshSession();
+        token = data?.session?.access_token;
+        if (data?.session) window._session = data.session;
+      }
+      if (!token) {
+        showToast('Sesion expirada. Recarga la pagina.', 'error');
+        document.getElementById('sendBtn').disabled = false;
+        return;
+      }
       const res = await fetch('https://zyvwcxsqdbegzjlmgtou.supabase.co/functions/v1/send-whatsapp-reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ conversation_id: activeConvId, message_type: 'text', content: { text } }),
       });
 
@@ -590,7 +601,7 @@
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         console.error('[inbox] Send error:', e);
-        showToast('❌ Error al enviar. Verifica la configuración de WhatsApp.', 'error');
+        showToast('❌ Error al enviar: ' + (e.message || e.error || res.status), 'error');
       }
     };
 
