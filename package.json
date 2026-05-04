@@ -17,7 +17,7 @@
   "author": "filimorniga-ux",
   "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.0",
+    "@supabase/supabase-js": "^2.105.3",
     "vite": "^8.0.0"
   },
   "devDependencies": {
